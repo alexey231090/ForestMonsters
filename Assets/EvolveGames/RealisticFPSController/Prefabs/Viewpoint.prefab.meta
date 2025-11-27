@@ -1,0 +1,14 @@
+fileFormatVersion: 2
+guid: edede5b8a0ab40848bcc91cfa7c35cb4
+PrefabImporter:
+  externalObjects: {}
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 223479
+  packageName: Realistic FPS Controller Free
+  packageVersion: 0.3
+  assetPath: Assets/EvolveGames/RealisticFPSController/Prefabs/Viewpoint.prefab
+  uploadId: 508920

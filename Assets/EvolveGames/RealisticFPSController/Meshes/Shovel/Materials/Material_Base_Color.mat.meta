@@ -1,0 +1,15 @@
+fileFormatVersion: 2
+guid: f4863a64bdba9954081faa067f36b85d
+NativeFormatImporter:
+  externalObjects: {}
+  mainObjectFileID: 2100000
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 223479
+  packageName: Realistic FPS Controller Free
+  packageVersion: 0.3
+  assetPath: Assets/EvolveGames/RealisticFPSController/Meshes/Shovel/Materials/Material_Base_Color.mat
+  uploadId: 508920

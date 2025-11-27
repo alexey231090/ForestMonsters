@@ -1,0 +1,15 @@
+fileFormatVersion: 2
+guid: 039587a8095ec0b4e9d1544fae985bc1
+NativeFormatImporter:
+  externalObjects: {}
+  mainObjectFileID: 2100000
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 223479
+  packageName: Realistic FPS Controller Free
+  packageVersion: 0.3
+  assetPath: Assets/EvolveGames/RealisticFPSController/Meshes/Katana/Materials/DefaultMaterial_Base_Color.mat
+  uploadId: 508920

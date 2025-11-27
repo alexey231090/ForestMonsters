@@ -1,0 +1,15 @@
+fileFormatVersion: 2
+guid: 13e1e73f762a6dc40b45f7724f534925
+NativeFormatImporter:
+  externalObjects: {}
+  mainObjectFileID: 7400000
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 223479
+  packageName: Realistic FPS Controller Free
+  packageVersion: 0.3
+  assetPath: Assets/EvolveGames/RealisticFPSController/Animations/Hands/ItemHit.anim
+  uploadId: 508920

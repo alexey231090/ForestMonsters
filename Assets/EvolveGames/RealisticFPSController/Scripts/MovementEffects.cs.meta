@@ -1,0 +1,18 @@
+fileFormatVersion: 2
+guid: a12b9b87a06c1184c91c50e7ca0854b8
+MonoImporter:
+  externalObjects: {}
+  serializedVersion: 2
+  defaultReferences: []
+  executionOrder: 0
+  icon: {instanceID: 0}
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 223479
+  packageName: Realistic FPS Controller Free
+  packageVersion: 0.3
+  assetPath: Assets/EvolveGames/RealisticFPSController/Scripts/MovementEffects.cs
+  uploadId: 508920

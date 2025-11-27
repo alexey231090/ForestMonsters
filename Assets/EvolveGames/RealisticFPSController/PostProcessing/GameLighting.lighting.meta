@@ -1,0 +1,15 @@
+fileFormatVersion: 2
+guid: e781091a21b40c140ab23feb9d182fe8
+NativeFormatImporter:
+  externalObjects: {}
+  mainObjectFileID: 4890085278179872738
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 223479
+  packageName: Realistic FPS Controller Free
+  packageVersion: 0.3
+  assetPath: Assets/EvolveGames/RealisticFPSController/PostProcessing/GameLighting.lighting
+  uploadId: 508920

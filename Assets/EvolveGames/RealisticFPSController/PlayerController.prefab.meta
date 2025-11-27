@@ -1,0 +1,14 @@
+fileFormatVersion: 2
+guid: a01c7516e659bdf4b9897ab54df69b69
+PrefabImporter:
+  externalObjects: {}
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 223479
+  packageName: Realistic FPS Controller Free
+  packageVersion: 0.3
+  assetPath: Assets/EvolveGames/RealisticFPSController/PlayerController.prefab
+  uploadId: 508920

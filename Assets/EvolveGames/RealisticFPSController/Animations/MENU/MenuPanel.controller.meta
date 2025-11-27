@@ -1,0 +1,15 @@
+fileFormatVersion: 2
+guid: cf27a896506caab49bd106eef42ae4fc
+NativeFormatImporter:
+  externalObjects: {}
+  mainObjectFileID: 9100000
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 223479
+  packageName: Realistic FPS Controller Free
+  packageVersion: 0.3
+  assetPath: Assets/EvolveGames/RealisticFPSController/Animations/MENU/MenuPanel.controller
+  uploadId: 508920
