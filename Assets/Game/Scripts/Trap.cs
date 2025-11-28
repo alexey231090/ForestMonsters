@@ -13,6 +13,7 @@ public class Trap : MonoBehaviour
 
     // Сюда в инспекторе можно перетащить какой-то индикатор (лампочку), который загорится
     public GameObject activeVisual;
+    
 
     void Start()
     {
@@ -21,6 +22,7 @@ public class Trap : MonoBehaviour
 
     void OnTriggerEnter(Collider other)
     {
+        
         if (isUsed) return;
 
         if (other.CompareTag("Enemy"))

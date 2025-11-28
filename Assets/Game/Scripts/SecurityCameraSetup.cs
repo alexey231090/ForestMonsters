@@ -16,7 +16,7 @@ public class SecurityCameraSetup : MonoBehaviour
         }
         else
         {
-            if (myCam == null) Debug.LogWarning("�� ������� SecurityCamera ��� ���������� Camera!");
+            if (myCam == null) Debug.LogWarning(" SecurityCamera  Camera!");
         }
     }
 }

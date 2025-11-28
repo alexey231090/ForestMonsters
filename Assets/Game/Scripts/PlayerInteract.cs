@@ -106,6 +106,18 @@ public class PlayerInteract : MonoBehaviour
                         cctvManager.EnterMonitorMode();
                 }
             }
+
+            // 3. КРОВАТЬ
+            BedTrigger bed = hit.collider.GetComponent<BedTrigger>();
+            if (bed != null)
+            {
+                if (GameManager.instance != null)
+                {
+                    Debug.Log("Ложимся спать... Время перематывается.");
+                    GameManager.instance.SkipCurrentPhase();
+                }
+                return;
+            }
         }
     }
 }
