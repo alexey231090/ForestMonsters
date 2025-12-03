@@ -1,17 +1,33 @@
 using UnityEngine;
 using System.Collections.Generic;
 
-
 public class GameManager : MonoBehaviour
 {
     public static GameManager instance;
 
+    [Header("Tycoon Economy")]
+    public float money = 100f; // Дадим немного денег на старт
+    public int capturedCreatures = 0;
+    public float pricePerMeme = 1.5f;
+
+    [Header("Items Inventory (NEW)")]
+    public int trapsCount = 2;   // Стартовое кол-во ловушек
+    public int camerasCount = 1; // Стартовое кол-во камер
+    public float trapPrice = 20f;
+    public float cameraPrice = 50f;
+
+    // Список активных платформ
+    public List<ParkPlatform> activePlatforms = new List<ParkPlatform>();
+
+    [Header("Visitors")]
+    public VisitorSpawner visitorSpawner;
+
     [Header("Time Settings")]
-    public float dayDurationMinutes = 10f;   // Длительность дня в минутах
-    public float nightDurationMinutes = 10f; // Длительность ночи в минутах
+    public float dayDurationMinutes = 1f;
+    public float nightDurationMinutes = 1f;
 
     [Header("Lighting")]
-    public Light sunLight; // Ссылка на Directional Light
+    public Light sunLight;
     public Color dayFog = new Color(0.5f, 0.6f, 0.7f);
     public Color nightFog = new Color(0.02f, 0.02f, 0.05f);
 
@@ -22,7 +38,7 @@ public class GameManager : MonoBehaviour
 
     [Header("State (Read Only)")]
     public bool isNight = false;
-    public float currentPhaseTimer = 0f; // Текущее время в секундах
+    public float currentPhaseTimer = 0f;
 
     private List<GameObject> activeEnemies = new List<GameObject>();
 
@@ -33,113 +49,154 @@ public class GameManager : MonoBehaviour
 
     void Start()
     {
-        // При старте игры начинаем день
         StartDay();
     }
 
     void Update()
     {
-        // 1. Увеличиваем таймер
+        // Чит на деньги для тестов
+        if (Input.GetKeyDown(KeyCode.I))
+        {
+            Debug.Log($"$$$ БАЛАНС: {money} | Ловушек: {trapsCount} | Камер: {camerasCount}");
+        }
+
         currentPhaseTimer += Time.deltaTime;
 
-        // 2. Логика для ДНЯ
-        if (!isNight)
+        if (!isNight) // ДЕНЬ
         {
             float dayDurationSec = dayDurationMinutes * 60f;
-
-            // Вращаем солнце (от -90 до 90 градусов, имитация дня)
             if (sunLight)
             {
                 float progress = currentPhaseTimer / dayDurationSec;
-                // Поворот солнца вокруг оси X: 0 (утро) -> 180 (вечер)
                 float angle = Mathf.Lerp(0f, 180f, progress);
                 sunLight.transform.rotation = Quaternion.Euler(angle, 0, 0);
-                sunLight.intensity = 1f; // Днем ярко
+                sunLight.intensity = 1f;
             }
-
-            // Если время вышло -> Включаем НОЧЬ
-            if (currentPhaseTimer >= dayDurationSec)
-            {
-                StartNight();
-            }
+            if (currentPhaseTimer >= dayDurationSec) StartNight();
         }
-        // 3. Логика для НОЧИ
-        else
+        else // НОЧЬ
         {
             float nightDurationSec = nightDurationMinutes * 60f;
-
-            // Вращаем луну/солнце дальше (от 180 до 360)
             if (sunLight)
             {
                 float progress = currentPhaseTimer / nightDurationSec;
                 float angle = Mathf.Lerp(180f, 360f, progress);
                 sunLight.transform.rotation = Quaternion.Euler(angle, 0, 0);
-                sunLight.intensity = 0.1f; // Ночью темно
+                sunLight.intensity = 0.1f;
             }
-
-            // Если время вышло -> Включаем ДЕНЬ
-            if (currentPhaseTimer >= nightDurationSec)
-            {
-                StartDay();
-            }
+            if (currentPhaseTimer >= nightDurationSec) StartDay();
         }
     }
 
+    // --- МАГАЗИН И ИНВЕНТАРЬ ПРЕДМЕТОВ ---
+
+    public bool BuyTrap()
+    {
+        if (money >= trapPrice)
+        {
+            money -= trapPrice;
+            trapsCount++;
+            Debug.Log("Куплена ловушка!");
+            return true;
+        }
+        Debug.Log("Не хватает денег на ловушку!");
+        return false;
+    }
+
+    public bool BuyCamera()
+    {
+        if (money >= cameraPrice)
+        {
+            money -= cameraPrice;
+            camerasCount++;
+            Debug.Log("Куплена камера!");
+            return true;
+        }
+        Debug.Log("Не хватает денег на камеру!");
+        return false;
+    }
+
+    // Методы для использования предметов при строительстве
+    public bool TryUseTrap()
+    {
+        if (trapsCount > 0)
+        {
+            trapsCount--;
+            return true;
+        }
+        return false;
+    }
+
+    public bool TryUseCamera()
+    {
+        if (camerasCount > 0)
+        {
+            camerasCount--;
+            return true;
+        }
+        return false;
+    }
+
+    // --- ИНВЕНТАРЬ МЕМОВ ---
+    public void AddCreature()
+    {
+        capturedCreatures++;
+        Debug.Log($"[Инвентарь] Мем пойман! В мешке: {capturedCreatures}");
+    }
+
+    public bool TryRemoveCreature()
+    {
+        if (capturedCreatures > 0)
+        {
+            capturedCreatures--;
+            return true;
+        }
+        return false;
+    }
+
+    public void AddMoney(float amount)
+    {
+        money += amount;
+        Debug.Log($"+++ ПРИБЫЛЬ: +{amount}. Итого: {money}");
+    }
+
+    // --- ВРЕМЯ ---
     public void StartDay()
     {
         isNight = false;
         currentPhaseTimer = 0f;
-
-        // Настройка атмосферы
         RenderSettings.fogColor = dayFog;
         RenderSettings.ambientIntensity = 1f;
-
-        // Удаляем врагов (они сгорают на солнце или прячутся)
         ClearEnemies();
-
-        Debug.Log(">>> Наступил ДЕНЬ (Таймер сброшен)");
+        if (visitorSpawner != null) visitorSpawner.StartNewDay();
+        Debug.Log(">>> ДЕНЬ");
     }
 
     public void StartNight()
     {
         isNight = true;
         currentPhaseTimer = 0f;
-
-        // Настройка атмосферы
         RenderSettings.fogColor = nightFog;
         RenderSettings.ambientIntensity = 0.2f;
-
-        // Спавним врагов
+        if (visitorSpawner != null) visitorSpawner.StopSpawning();
         SpawnEnemies();
-
-        Debug.Log(">>> Наступила НОЧЬ (Таймер сброшен)");
+        Debug.Log(">>> НОЧЬ");
     }
 
-    // Метод для кровати (Пропуск текущей фазы)
     public void SkipCurrentPhase()
     {
-        if (isNight)
-        {
-            StartDay(); // Если была ночь -> Сразу утро
-        }
-        else
-        {
-            StartNight(); // Если был день -> Сразу ночь
-        }
+        if (isNight) StartDay();
+        else StartNight();
     }
 
     void SpawnEnemies()
     {
         if (spawnPoints.Length == 0) return;
-
-        // Очищаем старых на всякий случай
         ClearEnemies();
-
         for (int i = 0; i < enemiesPerNight; i++)
         {
             Transform randomPoint = spawnPoints[Random.Range(0, spawnPoints.Length)];
             GameObject newEnemy = Instantiate(enemyPrefab, randomPoint.position, Quaternion.identity);
-
             var ai = newEnemy.GetComponent<EnemyAi>();
             if (ai != null)
             {
@@ -147,7 +204,6 @@ public class GameManager : MonoBehaviour
                 if (player) ai.SetTarget(player.transform);
                 ai.StartPatrolWithDetection();
             }
-
             activeEnemies.Add(newEnemy);
         }
     }

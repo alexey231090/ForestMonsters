@@ -56,12 +56,16 @@ public class Trap : MonoBehaviour
     {
         if (caughtEnemy != null)
         {
-            Destroy(caughtEnemy); // Удаляем врага со сцены
-            Debug.Log("ДОБЫЧА СОБРАНА! (+1 очко)");
-            // Тут позже добавим ScoreManager.instance.AddScore(1);
+            Destroy(caughtEnemy); // Удаляем модельку врага из леса
+
+            // НОВОЕ: Добавляем +1 в инвентарь GameManager
+            if (GameManager.instance != null)
+            {
+                GameManager.instance.AddCreature();
+            }
         }
 
-        // Уничтожаем саму ловушку (одноразовая)
+        // Удаляем саму ловушку
         Destroy(gameObject);
     }
 }
