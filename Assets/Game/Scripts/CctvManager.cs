@@ -1,6 +1,5 @@
 using UnityEngine;
 using System.Collections.Generic;
-using UnityEngine.UI; // Для работы с UI
 using TMPro;
 
 public class CctvManager : MonoBehaviour
@@ -9,19 +8,22 @@ public class CctvManager : MonoBehaviour
 
     [Header("Main References")]
     public Camera playerCamera;
+    public Camera mapCamera; // <--- НОВОЕ: Ссылка на камеру карты
     public MonoBehaviour playerController;
 
     [Header("UI References")]
-    public GameObject monitorMenuUI; // Канвас с кнопками (Главное меню монитора)
-    public GameObject cctvViewUI;    // Канвас режима камер (Надписи CAM 1 и т.д.)
-    public TMP_Text balanceText;         // Текст внутри меню: "Баланс: $100"
+    public GameObject monitorMenuUI; // Главное меню
+    public GameObject cctvViewUI;    // Просмотр камер (CAM 1...)
+    public GameObject mapUI;         // Панель карты (только кнопка НАЗАД)
+    public TMP_Text balanceText;
 
     private List<Camera> securityCameras = new List<Camera>();
     private int currentCamIndex = 0;
 
     // Состояния
-    private bool isMonitorActive = false; // Мы вообще за монитором?
-    private bool isWatchingCameras = false; // Мы смотрим в камеры (или в меню)?
+    private bool isMonitorActive = false;
+    private bool isWatchingCameras = false;
+    private bool isWatchingMap = false;
     private float lastExitTime = -1f;
 
     void Awake()
@@ -37,64 +39,86 @@ public class CctvManager : MonoBehaviour
         securityCameras.Add(newCam);
     }
 
+    void Start()
+    {
+        // На старте выключаем карту
+        if (mapCamera) mapCamera.enabled = false;
+    }
+
     void Update()
     {
-        // Если мы за монитором
         if (isMonitorActive)
         {
-            // Обновляем текст баланса в меню
-            if (!isWatchingCameras && balanceText != null && GameManager.instance != null)
+            // Обновляем баланс в меню
+            if (!isWatchingCameras && !isWatchingMap && balanceText != null && GameManager.instance != null)
             {
                 balanceText.text = $"Баланс: ${GameManager.instance.money}\nЛовушек: {GameManager.instance.trapsCount}\nКамер: {GameManager.instance.camerasCount}";
             }
 
-            // Если смотрим камеры - управление A/D
+            // Управление камерами (A/D)
             if (isWatchingCameras)
             {
                 if (Input.GetKeyDown(KeyCode.D)) NextCamera();
                 if (Input.GetKeyDown(KeyCode.A)) PrevCamera();
             }
 
-            // Выход из всего монитора (ESC или E)
+            // Выход (E или ESC)
             if (Input.GetKeyDown(KeyCode.E) || Input.GetKeyDown(KeyCode.Escape))
             {
-                // Если мы смотрели камеры, вернемся в меню (опционально) или выйдем совсем
-                // Давай сделаем полный выход для простоты, или возврат в меню
-                if (isWatchingCameras)
+                if (isWatchingCameras || isWatchingMap)
                 {
-                    ReturnToMenu(); // Вернуться в меню магазина
+                    ReturnToMenu();
                 }
                 else
                 {
-                    ExitMonitorMode(); // Встать из-за стола
+                    ExitMonitorMode();
                 }
             }
         }
     }
 
-    // --- ВХОД В МОНИТОР (ОТКРЫВАЕТ МЕНЮ) ---
     public void EnterMonitorMode()
     {
         if (lastExitTime > 0f && Time.time - lastExitTime < 0.2f) return;
 
         isMonitorActive = true;
         isWatchingCameras = false;
+        isWatchingMap = false;
 
-        // Отключаем управление игрока
         if (playerController) playerController.enabled = false;
 
-        // Включаем КУРСОР, чтобы жать кнопки
         Cursor.lockState = CursorLockMode.None;
         Cursor.visible = true;
 
-        // Показываем меню
+        // Показываем меню, скрываем остальное
         if (monitorMenuUI) monitorMenuUI.SetActive(true);
         if (cctvViewUI) cctvViewUI.SetActive(false);
+        if (mapUI) mapUI.SetActive(false);
+
+        // Камеры выключены
+        if (mapCamera) mapCamera.enabled = false;
     }
 
-    // --- КНОПКИ UI ---
+    // --- КНОПКИ ---
 
-    // Кнопка "Камеры"
+    public void OnMapButtonClicked()
+    {
+        isWatchingMap = true;
+
+        // 1. UI
+        if (monitorMenuUI) monitorMenuUI.SetActive(false);
+        if (mapUI) mapUI.SetActive(true); // Включаем кнопку "НАЗАД"
+
+        // 2. Камеры
+        if (playerCamera) playerCamera.enabled = false; // Выкл игрока
+        if (mapCamera) mapCamera.enabled = true; // ВКЛ КАРТУ
+    }
+
+    public void OnBackFromMapClicked()
+    {
+        ReturnToMenu();
+    }
+
     public void OnCamerasButtonClicked()
     {
         if (securityCameras.Count == 0)
@@ -105,55 +129,52 @@ public class CctvManager : MonoBehaviour
 
         isWatchingCameras = true;
 
-        // Скрываем меню, скрываем курсор
         if (monitorMenuUI) monitorMenuUI.SetActive(false);
         if (cctvViewUI) cctvViewUI.SetActive(true);
 
-        // Выключаем камеру игрока
         if (playerCamera) playerCamera.enabled = false;
 
         Cursor.lockState = CursorLockMode.Locked;
         Cursor.visible = false;
 
-        // Включаем первую камеру
         currentCamIndex = 0;
         ActivateCamera(currentCamIndex);
     }
 
-    // Кнопка "Купить Ловушку"
     public void OnBuyTrapClicked()
     {
         if (GameManager.instance != null) GameManager.instance.BuyTrap();
     }
 
-    // Кнопка "Купить Камеру"
     public void OnBuyCameraClicked()
     {
         if (GameManager.instance != null) GameManager.instance.BuyCamera();
     }
 
-    // Кнопка "Выход"
     public void OnExitButtonClicked()
     {
         ExitMonitorMode();
     }
 
-    // --- СЛУЖЕБНЫЕ МЕТОДЫ ---
+    // --- СЛУЖЕБНЫЕ --
 
     void ReturnToMenu()
     {
         isWatchingCameras = false;
+        isWatchingMap = false;
 
-        // Выключаем камеры наблюдения
+        // Выключаем камеры и UI карты/камер
         foreach (Camera cam in securityCameras) if (cam) cam.enabled = false;
+        if (mapCamera) mapCamera.enabled = false; // ВЫКЛ КАРТУ
 
-        // Включаем камеру игрока (но не управление)
-        if (playerCamera) playerCamera.enabled = true;
-
-        // Включаем меню и курсор
-        if (monitorMenuUI) monitorMenuUI.SetActive(true);
         if (cctvViewUI) cctvViewUI.SetActive(false);
+        if (mapUI) mapUI.SetActive(false);
 
+        // Включаем меню
+        if (monitorMenuUI) monitorMenuUI.SetActive(true);
+
+        // Включаем игрока (визуально), курсор
+        if (playerCamera) playerCamera.enabled = true;
         Cursor.lockState = CursorLockMode.None;
         Cursor.visible = true;
     }
@@ -162,15 +183,15 @@ public class CctvManager : MonoBehaviour
     {
         isMonitorActive = false;
         isWatchingCameras = false;
+        isWatchingMap = false;
 
-        // Всё UI выключаем
         if (monitorMenuUI) monitorMenuUI.SetActive(false);
         if (cctvViewUI) cctvViewUI.SetActive(false);
+        if (mapUI) mapUI.SetActive(false);
 
-        // Выключаем камеры наблюдения
         foreach (Camera cam in securityCameras) if (cam) cam.enabled = false;
+        if (mapCamera) mapCamera.enabled = false;
 
-        // Включаем игрока
         if (playerCamera) playerCamera.enabled = true;
         if (playerController) playerController.enabled = true;
 
