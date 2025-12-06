@@ -6,21 +6,22 @@ public class GameManager : MonoBehaviour
     public static GameManager instance;
 
     [Header("Tycoon Economy")]
-    public float money = 100f; // Дадим немного денег на старт
-    public int capturedCreatures = 0;
+    public float money = 100f;        // Деньги
+    public int capturedCreatures = 0; // Инвентарь мемов
     public float pricePerMeme = 1.5f;
 
-    [Header("Items Inventory (NEW)")]
-    public int trapsCount = 2;   // Стартовое кол-во ловушек
-    public int camerasCount = 1; // Стартовое кол-во камер
+    [Header("Items Inventory")]
+    public int trapsCount = 2;   // Количество ловушек
+    public int camerasCount = 1; // Количество камер
     public float trapPrice = 20f;
-    public float cameraPrice = 50f;
+    public float cameraPrice = 15f;
 
-    // Список активных платформ
+    // Список активных платформ в парке
     public List<ParkPlatform> activePlatforms = new List<ParkPlatform>();
 
-    [Header("Visitors")]
-    public VisitorSpawner visitorSpawner;
+    [Header("Spawners")]
+    public VisitorSpawner visitorSpawner; // Ссылка на спавнер людей
+    public EnemySpawner enemySpawner;     // Ссылка на спавнер врагов (НОВОЕ)
 
     [Header("Time Settings")]
     public float dayDurationMinutes = 1f;
@@ -31,16 +32,9 @@ public class GameManager : MonoBehaviour
     public Color dayFog = new Color(0.5f, 0.6f, 0.7f);
     public Color nightFog = new Color(0.02f, 0.02f, 0.05f);
 
-    [Header("Enemies")]
-    public GameObject enemyPrefab;
-    public Transform[] spawnPoints;
-    public int enemiesPerNight = 5;
-
     [Header("State (Read Only)")]
     public bool isNight = false;
     public float currentPhaseTimer = 0f;
-
-    private List<GameObject> activeEnemies = new List<GameObject>();
 
     void Awake()
     {
@@ -50,14 +44,18 @@ public class GameManager : MonoBehaviour
     void Start()
     {
         StartDay();
+        if (enemySpawner == null)
+        {
+            Debug.Log("Нет enimySpavner.cs в GameManager");
+        }
     }
 
     void Update()
     {
-        // Чит на деньги для тестов
+        // Чит на проверку баланса
         if (Input.GetKeyDown(KeyCode.I))
         {
-            Debug.Log($"$$$ БАЛАНС: {money} | Ловушек: {trapsCount} | Камер: {camerasCount}");
+            Debug.Log($"$$$ Баланс: {money} | Ловушек: {trapsCount} | Камер: {camerasCount}");
         }
 
         currentPhaseTimer += Time.deltaTime;
@@ -88,7 +86,7 @@ public class GameManager : MonoBehaviour
         }
     }
 
-    // --- МАГАЗИН И ИНВЕНТАРЬ ПРЕДМЕТОВ ---
+    // --- МАГАЗИН И ПРЕДМЕТЫ ---
 
     public bool BuyTrap()
     {
@@ -116,7 +114,7 @@ public class GameManager : MonoBehaviour
         return false;
     }
 
-    // Методы для использования предметов при строительстве
+    // Методы для использования при строительстве
     public bool TryUseTrap()
     {
         if (trapsCount > 0)
@@ -137,7 +135,7 @@ public class GameManager : MonoBehaviour
         return false;
     }
 
-    // --- ИНВЕНТАРЬ МЕМОВ ---
+    // --- ЭКОНОМИКА МЕМОВ ---
     public void AddCreature()
     {
         capturedCreatures++;
@@ -160,16 +158,19 @@ public class GameManager : MonoBehaviour
         Debug.Log($"+++ ПРИБЫЛЬ: +{amount}. Итого: {money}");
     }
 
-    // --- ВРЕМЯ ---
+    // --- СМЕНА ФАЗ ---
     public void StartDay()
     {
         isNight = false;
         currentPhaseTimer = 0f;
         RenderSettings.fogColor = dayFog;
         RenderSettings.ambientIntensity = 1f;
-        ClearEnemies();
+
+        // Обращаемся к внешним скриптам
+        if (enemySpawner != null) enemySpawner.ClearEnemies();
         if (visitorSpawner != null) visitorSpawner.StartNewDay();
-        Debug.Log(">>> ДЕНЬ");
+
+        Debug.Log(">>> ДЕНЬ (Парк открыт)");
     }
 
     public void StartNight()
@@ -178,42 +179,17 @@ public class GameManager : MonoBehaviour
         currentPhaseTimer = 0f;
         RenderSettings.fogColor = nightFog;
         RenderSettings.ambientIntensity = 0.2f;
+
+        // Обращаемся к внешним скриптам
         if (visitorSpawner != null) visitorSpawner.StopSpawning();
-        SpawnEnemies();
-        Debug.Log(">>> НОЧЬ");
+        if (enemySpawner != null) enemySpawner.SpawnEnemies();
+
+        Debug.Log(">>> НОЧЬ (Охота началась)");
     }
 
     public void SkipCurrentPhase()
     {
         if (isNight) StartDay();
         else StartNight();
-    }
-
-    void SpawnEnemies()
-    {
-        if (spawnPoints.Length == 0) return;
-        ClearEnemies();
-        for (int i = 0; i < enemiesPerNight; i++)
-        {
-            Transform randomPoint = spawnPoints[Random.Range(0, spawnPoints.Length)];
-            GameObject newEnemy = Instantiate(enemyPrefab, randomPoint.position, Quaternion.identity);
-            var ai = newEnemy.GetComponent<EnemyAi>();
-            if (ai != null)
-            {
-                GameObject player = GameObject.FindGameObjectWithTag("Player");
-                if (player) ai.SetTarget(player.transform);
-                ai.StartPatrolWithDetection();
-            }
-            activeEnemies.Add(newEnemy);
-        }
-    }
-
-    void ClearEnemies()
-    {
-        foreach (var enemy in activeEnemies)
-        {
-            if (enemy != null) Destroy(enemy);
-        }
-        activeEnemies.Clear();
     }
 }
