@@ -122,9 +122,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 9a155b5ca2b2ddb488a0c894ad451bdd, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  markerPrefab: {fileID: 5549388868837008765, guid: 19c39dab1c2803b459de28d81b417a20,
+  markerPrefab: {fileID: 2758713028606129635, guid: f7c7c59ca18919941801631d1cf6ce9f,
     type: 3}
-  detectionCooldown: 1000
+  detectionCooldown: 30
 --- !u!54 &6501192601534509843
 Rigidbody:
   m_ObjectHideFlags: 0

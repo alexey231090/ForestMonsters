@@ -7,15 +7,15 @@ public class VisitorSpawner : MonoBehaviour
     public int minVisitors = 1;
     public int maxVisitors = 15;
 
-    // Ссылка на корутину, чтобы можно было остановить её ночью
+    // Reference to the coroutine so it can be stopped at night
     private Coroutine dailyRoutine;
 
     public void StartNewDay()
     {
-        // Останавливаем предыдущие процессы, если были
+        // Stop previous processes if any
         StopSpawning();
 
-        // Запускаем новый день
+        // Start a new day
         dailyRoutine = StartCoroutine(VirtualVisitorRoutine());
     }
 
@@ -30,31 +30,31 @@ public class VisitorSpawner : MonoBehaviour
 
     IEnumerator VirtualVisitorRoutine()
     {
-        // 1. Решаем, сколько людей придет сегодня
+        // 1. Decide how many people will come today
         int visitorsCount = Random.Range(minVisitors, maxVisitors + 1);
-        Debug.Log($"[Прогноз] Сегодня парк планируют посетить {visitorsCount} человек.");
+        Debug.Log($"[Forecast] Today the park is expected to be visited by {visitorsCount} people.");
 
         for (int i = 0; i < visitorsCount; i++)
         {
-            // Случайная задержка между посетителями (от 2 до 5 секунд)
+            // Random delay between visitors (from 2 to 5 seconds)
             yield return new WaitForSeconds(Random.Range(2f, 5f));
 
-            // 2. ПРОВЕРКА: Есть ли мемы в парке?
+            // 2. CHECK: Are there memes in the park?
             int memesCount = GameManager.instance.activePlatforms.Count;
 
             if (memesCount > 0)
             {
-                // Расчет цены: кол-во мемов * цену
+                // Price calculation: number of memes * price
                 float payAmount = memesCount * GameManager.instance.pricePerMeme;
 
-                Debug.Log($"[Посетитель #{i + 1}] Осмотрел {memesCount} мемов.");
+                Debug.Log($"[Visitor #{i + 1}] Viewed {memesCount} memes.");
                 GameManager.instance.AddMoney(payAmount);
             }
             else
             {
-                // Если мемов нет - посетитель не приходит или уходит молча
-                // Можно раскомментировать строку ниже, если хочешь видеть жалобы
-                // Debug.Log($"[Посетитель #{i+1}] Развернулся у входа: «В парке пусто!»");
+                // If there are no memes - visitor doesn't come or leaves quietly
+                // You can uncomment the line below if you want to see complaints
+                // Debug.Log($"[Visitor #{i+1}] Turned around at the entrance: \"The park is empty!\"");
             }
         }
     }

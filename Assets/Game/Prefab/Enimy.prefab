@@ -109,7 +109,7 @@ CapsuleCollider:
   m_Enabled: 1
   serializedVersion: 2
   m_Radius: 0.5
-  m_Height: 2
+  m_Height: 0
   m_Direction: 1
   m_Center: {x: 0, y: 0, z: 0}
 --- !u!114 &8970811822297501169
@@ -129,15 +129,15 @@ MonoBehaviour:
     \u0446\u0435\u043B\u0438 \u043F\u043E NavMesh; \u0443\u0447\u0438\u0442\u044B\u0432\u0430\u0435\u0442
     \u043E\u0433\u043B\u0443\u0448\u0435\u043D\u0438\u0435 \u043B\u043E\u0432\u0443\u0448\u043A\u043E\u0439."
   target: {fileID: 0}
-  activationRadius: 37.2
-  disengageDistance: 150
+  activationRadius: 14.6
+  disengageDistance: 31
   stoppingDistance: 5
   repathInterval: 0.25
-  moveSpeed: 6
+  moveSpeed: 4
   acceleration: 12
   angularSpeed: 120
   enablePatrol: 1
-  patrolRadius: 50
+  patrolRadius: 24
   patrolWaitTime: 2
   patrolSpeed: 4
   isPatrolMode: 1
