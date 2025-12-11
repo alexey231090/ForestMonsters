@@ -6,22 +6,22 @@ public class GameManager : MonoBehaviour
     public static GameManager instance;
 
     [Header("Tycoon Economy")]
-    public float money = 100f;        // Деньги
-    public int capturedCreatures = 0; // Инвентарь мемов
+    public float money = 100f;        // пїЅпїЅпїЅпїЅпїЅпїЅ
+    public int capturedCreatures = 0; // пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅ
     public float pricePerMeme = 1.5f;
 
     [Header("Items Inventory")]
-    public int trapsCount = 2;   // Количество ловушек
-    public int camerasCount = 1; // Количество камер
+    public int trapsCount = 2;   // пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ
+    public int camerasCount = 1; // пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅ
     public float trapPrice = 20f;
     public float cameraPrice = 15f;
 
-    // Список активных платформ в парке
+    // пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅ пїЅпїЅпїЅпїЅпїЅ
     public List<ParkPlatform> activePlatforms = new List<ParkPlatform>();
 
     [Header("Spawners")]
-    public VisitorSpawner visitorSpawner; // Ссылка на спавнер людей
-    public EnemySpawner enemySpawner;     // Ссылка на спавнер врагов (НОВОЕ)
+    public VisitorSpawner visitorSpawner; // пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅ
+    public EnemySpawner enemySpawner;     // пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ (пїЅпїЅпїЅпїЅпїЅ)
 
     [Header("Time Settings")]
     public float dayDurationMinutes = 1f;
@@ -46,21 +46,21 @@ public class GameManager : MonoBehaviour
         StartDay();
         if (enemySpawner == null)
         {
-            Debug.Log("Нет enimySpavner.cs в GameManager");
+            Debug.Log("пїЅпїЅпїЅ enimySpavner.cs пїЅ GameManager");
         }
     }
 
     void Update()
     {
-        // Чит на проверку баланса
+        // пїЅпїЅпїЅ пїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ
         if (Input.GetKeyDown(KeyCode.I))
         {
-            Debug.Log($"$$$ Баланс: {money} | Ловушек: {trapsCount} | Камер: {camerasCount}");
+            Debug.Log($"$$$ пїЅпїЅпїЅпїЅпїЅпїЅ: {money} | пїЅпїЅпїЅпїЅпїЅпїЅпїЅ: {trapsCount} | пїЅпїЅпїЅпїЅпїЅ: {camerasCount}");
         }
 
         currentPhaseTimer += Time.deltaTime;
 
-        if (!isNight) // ДЕНЬ
+        if (!isNight) // пїЅпїЅпїЅпїЅ
         {
             float dayDurationSec = dayDurationMinutes * 60f;
             if (sunLight)
@@ -72,7 +72,7 @@ public class GameManager : MonoBehaviour
             }
             if (currentPhaseTimer >= dayDurationSec) StartNight();
         }
-        else // НОЧЬ
+        else // пїЅпїЅпїЅпїЅ
         {
             float nightDurationSec = nightDurationMinutes * 60f;
             if (sunLight)
@@ -86,7 +86,7 @@ public class GameManager : MonoBehaviour
         }
     }
 
-    // --- МАГАЗИН И ПРЕДМЕТЫ ---
+    // --- пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ ---
 
     public bool BuyTrap()
     {
@@ -94,10 +94,10 @@ public class GameManager : MonoBehaviour
         {
             money -= trapPrice;
             trapsCount++;
-            Debug.Log("Куплена ловушка!");
+            Debug.Log("пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ!");
             return true;
         }
-        Debug.Log("Не хватает денег на ловушку!");
+        Debug.Log("пїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅ пїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ!");
         return false;
     }
 
@@ -107,14 +107,14 @@ public class GameManager : MonoBehaviour
         {
             money -= cameraPrice;
             camerasCount++;
-            Debug.Log("Куплена камера!");
+            Debug.Log("пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ!");
             return true;
         }
-        Debug.Log("Не хватает денег на камеру!");
+        Debug.Log("пїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅ пїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ!");
         return false;
     }
 
-    // Методы для использования при строительстве
+    // пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ
     public bool TryUseTrap()
     {
         if (trapsCount > 0)
@@ -135,11 +135,11 @@ public class GameManager : MonoBehaviour
         return false;
     }
 
-    // --- ЭКОНОМИКА МЕМОВ ---
+    // --- пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅ ---
     public void AddCreature()
     {
         capturedCreatures++;
-        Debug.Log($"[Инвентарь] Мем пойман! В мешке: {capturedCreatures}");
+        Debug.Log($"[пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ] пїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ! пїЅ пїЅпїЅпїЅпїЅпїЅ: {capturedCreatures}");
     }
 
     public bool TryRemoveCreature()
@@ -155,10 +155,10 @@ public class GameManager : MonoBehaviour
     public void AddMoney(float amount)
     {
         money += amount;
-        Debug.Log($"+++ ПРИБЫЛЬ: +{amount}. Итого: {money}");
+        Debug.Log($"+++ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ: +{amount}. пїЅпїЅпїЅпїЅпїЅ: {money}");
     }
 
-    // --- СМЕНА ФАЗ ---
+    // --- пїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅ ---
     public void StartDay()
     {
         isNight = false;
@@ -166,11 +166,11 @@ public class GameManager : MonoBehaviour
         RenderSettings.fogColor = dayFog;
         RenderSettings.ambientIntensity = 1f;
 
-        // Обращаемся к внешним скриптам
+        // пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ
         if (enemySpawner != null) enemySpawner.ClearEnemies();
         if (visitorSpawner != null) visitorSpawner.StartNewDay();
 
-        Debug.Log(">>> ДЕНЬ (Парк открыт)");
+        Debug.Log(">>> пїЅпїЅпїЅпїЅ (пїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ)");
     }
 
     public void StartNight()
@@ -180,11 +180,11 @@ public class GameManager : MonoBehaviour
         RenderSettings.fogColor = nightFog;
         RenderSettings.ambientIntensity = 0.2f;
 
-        // Обращаемся к внешним скриптам
+        // пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ
         if (visitorSpawner != null) visitorSpawner.StopSpawning();
         if (enemySpawner != null) enemySpawner.SpawnEnemies();
 
-        Debug.Log(">>> НОЧЬ (Охота началась)");
+        Debug.Log(">>> пїЅпїЅпїЅпїЅ (пїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ)");
     }
 
     public void SkipCurrentPhase()

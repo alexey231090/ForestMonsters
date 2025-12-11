@@ -5,6 +5,7 @@ public class Trap : MonoBehaviour
 {
     [Header("Description")]
     [TextArea(2,5)] public string description = "Ловушка: оглушает врага, позволяет собрать добычу по E и затем уничтожается.";
+
     private bool isUsed = false;
     public float trapStunDuration = 10f;
 
