@@ -6,10 +6,10 @@ public class SecurityCameraSetup : MonoBehaviour
     [TextArea(2,5)] public string description = "Настройка охранной камеры: находит дочернюю Camera и регистрирует её в CctvManager.";
     void Start()
     {
-        // ���� ��������� Camera � ���� ������� ��� ��� �����
+        //  Camera 
         Camera myCam = GetComponentInChildren<Camera>();
 
-        // ���������� � CctvManager 
+        // CctvManager 
         if (myCam != null && CctvManager.instance != null)
         {
             CctvManager.instance.RegisterCamera(myCam);
