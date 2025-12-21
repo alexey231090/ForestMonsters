@@ -4,71 +4,86 @@ using UnityEngine.AI;
 public class Trap : MonoBehaviour
 {
     [Header("Description")]
-    [TextArea(2,5)] public string description = "Ловушка: оглушает врага, позволяет собрать добычу по E и затем уничтожается.";
+    [TextArea(2,5)] public string description = "Ловушка: оглушает врага, притягивает в центр, проигрывает анимацию и партиклы.";
 
-    private bool isUsed = false;
+    [Header("Settings")]
     public float trapStunDuration = 10f;
+    private bool isUsed = false;
 
-    // Ссылка на пойманного врага
+    [Header("References")]
+    public Animator animatorCell; 
+    public Transform captureCenterPoint; 
+    public ParticleSystem captureParticles; 
+    public GameObject activeVisual; 
+
     private GameObject caughtEnemy;
-
-    // Сюда в инспекторе можно перетащить какой-то индикатор (лампочку), который загорится
-    public GameObject activeVisual;
-    
 
     void Start()
     {
         if (activeVisual != null) activeVisual.SetActive(false);
+        if (animatorCell == null) animatorCell = GetComponentInParent<Animator>();
     }
 
     void OnTriggerEnter(Collider other)
     {
-        
         if (isUsed) return;
 
         if (other.CompareTag("Enemy"))
         {
             Debug.Log("Враг попался!");
 
-            var enemy = other.GetComponent<EnemyAi>();
-            if (enemy != null)
+            var enemyAI = other.GetComponent<EnemyAi>();
+            if (enemyAI != null)
             {
-                enemy.StunByTrap(trapStunDuration);
+                // 1. ВЫКЛЮЧАЕМ МОЗГИ ВРАГА (Это исправит ошибку!)
+                // Чтобы он перестал обращаться к NavMeshAgent
+                enemyAI.enabled = false; 
 
-                // Запоминаем врага и блокируем ловушку
+                // 2. Отключаем NavMeshAgent
+                var agent = other.GetComponent<NavMeshAgent>();
+                if (agent != null) agent.enabled = false;
+
+                // 3. Отключаем физику (Rigidbody)
+                var rb = other.GetComponent<Rigidbody>();
+                if (rb != null) rb.isKinematic = true;
+
+                // 4. Притягиваем к центру
+                if (captureCenterPoint != null)
+                {
+                    other.transform.position = captureCenterPoint.position;
+                    other.transform.rotation = captureCenterPoint.rotation;
+                    other.transform.SetParent(captureCenterPoint);
+                }
+
+                // 5. Партиклы
+                if (captureParticles != null) captureParticles.Play();
+
+                // 6. Анимация клетки
+                if (animatorCell != null) animatorCell.SetBool("CellOpenClose", true);
+
+                // 7. Визуал
+                if (activeVisual != null) activeVisual.SetActive(true);
+                if (GetComponent<Renderer>()) GetComponent<Renderer>().material.color = Color.red;
+
+                // Финализация
                 caughtEnemy = other.gameObject;
                 isUsed = true;
-
-                // Визуальный эффект (покраснение)
-                GetComponent<Renderer>().material.color = Color.red;
-                if (activeVisual != null) activeVisual.SetActive(true);
             }
         }
     }
 
-    // Этот метод проверит, есть ли добыча
     public bool HasCatch()
     {
         return isUsed && caughtEnemy != null;
     }
 
-    // Этот метод вызовет игрок, когда нажмет E
     public void CollectPrey()
     {
         if (caughtEnemy != null)
         {
-            Destroy(caughtEnemy); // Удаляем модельку врага из леса
-
-            // НОВОЕ: Добавляем +1 в инвентарь GameManager
-            if (GameManager.instance != null)
-            {
-                GameManager.instance.AddCreature();
-            }
+            Destroy(caughtEnemy); 
+            if (GameManager.instance != null) GameManager.instance.AddCreature();
         }
-
-        // Удаляем саму ловушку
         Destroy(gameObject);
     }
 }
-
-

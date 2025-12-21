@@ -11,6 +11,8 @@ public class EnemyMarker : MonoBehaviour
         {
             Destroy(gameObject);
         }
+
+		
     }
     
 }
