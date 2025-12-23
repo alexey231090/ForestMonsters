@@ -7,7 +7,6 @@ public class Trap : MonoBehaviour
     [TextArea(2,5)] public string description = "Ловушка: оглушает врага, притягивает в центр, проигрывает анимацию и партиклы.";
 
     [Header("Settings")]
-    public float trapStunDuration = 10f;
     private bool isUsed = false;
 
     [Header("References")]
@@ -17,11 +16,14 @@ public class Trap : MonoBehaviour
     public GameObject activeVisual; 
 
     private GameObject caughtEnemy;
+    private TrapBox trapbox;
 
     void Start()
     {
         if (activeVisual != null) activeVisual.SetActive(false);
-        if (animatorCell == null) animatorCell = GetComponentInParent<Animator>();
+        if (animatorCell == null) animatorCell = GetComponentInChildren<Animator>();
+        if (trapbox == null) trapbox = GetComponentInParent<TrapBox>();
+        
     }
 
     void OnTriggerEnter(Collider other)
@@ -30,7 +32,7 @@ public class Trap : MonoBehaviour
 
         if (other.CompareTag("Enemy"))
         {
-            Debug.Log("Враг попался!");
+            Debug.Log("Враг попался");
 
             var enemyAI = other.GetComponent<EnemyAi>();
             if (enemyAI != null)
@@ -61,9 +63,8 @@ public class Trap : MonoBehaviour
                 // 6. Анимация клетки
                 if (animatorCell != null) animatorCell.SetBool("CellOpenClose", true);
 
-                // 7. Визуал
-                if (activeVisual != null) activeVisual.SetActive(true);
-                if (GetComponent<Renderer>()) GetComponent<Renderer>().material.color = Color.red;
+                //7.Включаем коллайдер на клетке
+                trapbox.GetComponent<BoxCollider>().enabled = true;
 
                 // Финализация
                 caughtEnemy = other.gameObject;
@@ -84,6 +85,9 @@ public class Trap : MonoBehaviour
             Destroy(caughtEnemy); 
             if (GameManager.instance != null) GameManager.instance.AddCreature();
         }
-        Destroy(gameObject);
+        
+        
+        
+        Destroy(trapbox.gameObject);
     }
 }

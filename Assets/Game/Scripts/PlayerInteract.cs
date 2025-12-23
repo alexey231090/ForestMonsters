@@ -15,8 +15,11 @@ public class PlayerInteract : MonoBehaviour
 
     [Header("References")]
     public Transform cameraPrefab;
-    public float embedDepth = 0f;
     public CctvManager cctvManager;
+
+    [Header("Placement Settings (Offsets)")]
+    public float trapEmbedDepth = 0f;   // Настройка высоты для ЛОВУШКИ
+    public float cameraEmbedDepth = 0f; // Настройка высоты для КАМЕРЫ
 
     private int selectedItemIndex = 0; // 0 = Trap, 1 = Camera
 
@@ -58,6 +61,7 @@ public class PlayerInteract : MonoBehaviour
             // Проверка наличия ресурсов перед установкой
             bool canPlace = false;
             GameObject objectToSpawn = null;
+            float currentEmbedDepth = 0f; // Временная переменная для текущей высоты
 
             if (selectedItemIndex == 0) // Ловушка
             {
@@ -65,6 +69,7 @@ public class PlayerInteract : MonoBehaviour
                 {
                     canPlace = true;
                     objectToSpawn = trapPrefab;
+                    currentEmbedDepth = trapEmbedDepth; // Используем настройку ловушки
                 }
                 else
                 {
@@ -77,6 +82,7 @@ public class PlayerInteract : MonoBehaviour
                 {
                     canPlace = true;
                     objectToSpawn = cameraItemPrefab;
+                    currentEmbedDepth = cameraEmbedDepth; // Используем настройку камеры
                 }
                 else
                 {
@@ -95,7 +101,9 @@ public class PlayerInteract : MonoBehaviour
                     if (lookPos != Vector3.zero) rotation = Quaternion.LookRotation(lookPos);
                 }
 
-                Vector3 position = hit.point - hit.normal * embedDepth;
+                // Используем правильную глубину для конкретного предмета
+                Vector3 position = hit.point - hit.normal * currentEmbedDepth;
+                
                 Instantiate(objectToSpawn, position, rotation);
             }
         }
@@ -106,8 +114,17 @@ public class PlayerInteract : MonoBehaviour
         RaycastHit hit;
         if (Physics.Raycast(origin.position, origin.forward, out hit, interactDistance))
         {
-            // 1. ЛОВУШКА
+            // 1. ЛОВУШКА (С поддержкой TrapBox, как у тебя было)
+            // Пытаемся найти компонент на самом объекте или в родителях
+            TrapBox trapbox = hit.collider.GetComponentInParent<TrapBox>(); 
+            // Если TrapBox не найден, ищем просто Trap
             Trap trap = hit.collider.GetComponent<Trap>();
+
+            if (trapbox != null)
+            {
+                trap = trapbox.GetComponentInChildren<Trap>();
+            }
+
             if (trap != null)
             {
                 if (trap.HasCatch()) trap.CollectPrey();

@@ -10,9 +10,9 @@ GameObject:
   m_Component:
   - component: {fileID: 5149151057949659088}
   - component: {fileID: 8264685214043483968}
+  - component: {fileID: 9120127017690105623}
   - component: {fileID: 1713976010914843967}
   - component: {fileID: 3942155535329617451}
-  - component: {fileID: 9120127017690105623}
   - component: {fileID: 3249409906954110524}
   m_Layer: 0
   m_Name: Trap
@@ -44,6 +44,26 @@ MeshFilter:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 5946694874925091206}
   m_Mesh: {fileID: 10202, guid: 0000000000000000e000000000000000, type: 0}
+--- !u!114 &9120127017690105623
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5946694874925091206}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: fda3384deb0a1174a8db5574b70efea2, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  description: "\u041B\u043E\u0432\u0443\u0448\u043A\u0430: \u043E\u0433\u043B\u0443\u0448\u0430\u0435\u0442
+    \u0432\u0440\u0430\u0433\u0430, \u043F\u043E\u0437\u0432\u043E\u043B\u044F\u0435\u0442
+    \u0441\u043E\u0431\u0440\u0430\u0442\u044C \u0434\u043E\u0431\u044B\u0447\u0443
+    \u043F\u043E E \u0438 \u0437\u0430\u0442\u0435\u043C \u0443\u043D\u0438\u0447\u0442\u043E\u0436\u0430\u0435\u0442\u0441\u044F."
+  animatorCell: {fileID: 0}
+  captureCenterPoint: {fileID: 0}
+  captureParticles: {fileID: 0}
+  activeVisual: {fileID: 0}
 --- !u!23 &1713976010914843967
 MeshRenderer:
   m_ObjectHideFlags: 0
@@ -110,24 +130,6 @@ BoxCollider:
   serializedVersion: 3
   m_Size: {x: 1, y: 1, z: 1}
   m_Center: {x: 0, y: 0, z: 0}
---- !u!114 &9120127017690105623
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 5946694874925091206}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: fda3384deb0a1174a8db5574b70efea2, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  description: "\u041B\u043E\u0432\u0443\u0448\u043A\u0430: \u043E\u0433\u043B\u0443\u0448\u0430\u0435\u0442
-    \u0432\u0440\u0430\u0433\u0430, \u043F\u043E\u0437\u0432\u043E\u043B\u044F\u0435\u0442
-    \u0441\u043E\u0431\u0440\u0430\u0442\u044C \u0434\u043E\u0431\u044B\u0447\u0443
-    \u043F\u043E E \u0438 \u0437\u0430\u0442\u0435\u043C \u0443\u043D\u0438\u0447\u0442\u043E\u0436\u0430\u0435\u0442\u0441\u044F."
-  trapStunDuration: 10
-  activeVisual: {fileID: 0}
 --- !u!54 &3249409906954110524
 Rigidbody:
   m_ObjectHideFlags: 0
