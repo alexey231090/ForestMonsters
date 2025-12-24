@@ -1,5 +1,6 @@
 using UnityEngine;
 using UnityEngine.AI;
+using DG.Tweening;
 
 public class Trap : MonoBehaviour
 {
@@ -8,6 +9,7 @@ public class Trap : MonoBehaviour
 
     [Header("Settings")]
     private bool isUsed = false;
+    public float attractionDuration = 1f;
 
     [Header("References")]
     public Animator animatorCell; 
@@ -52,9 +54,11 @@ public class Trap : MonoBehaviour
                 // 4. Притягиваем к центру
                 if (captureCenterPoint != null)
                 {
-                    other.transform.position = captureCenterPoint.position;
-                    other.transform.rotation = captureCenterPoint.rotation;
-                    other.transform.SetParent(captureCenterPoint);
+                    other.transform.DOMove(captureCenterPoint.position, attractionDuration);
+                    other.transform.DORotateQuaternion(captureCenterPoint.rotation, attractionDuration).OnComplete(() =>
+                    {
+                        other.transform.SetParent(captureCenterPoint);
+                    });
                 }
 
                 // 5. Партиклы

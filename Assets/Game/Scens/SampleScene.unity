@@ -15372,8 +15372,8 @@ MonoBehaviour:
   money: 0
   capturedCreatures: 0
   pricePerMeme: 1.5
-  trapsCount: 2
-  camerasCount: 1
+  trapsCount: 20
+  camerasCount: 10
   trapPrice: 20
   cameraPrice: 50
   activePlatforms: []
@@ -16152,10 +16152,16 @@ MonoBehaviour:
     type: 3}
   cameraItemPrefab: {fileID: 4928821375868304528, guid: 2f24afb6e9bed94478e184b12c3295a3,
     type: 3}
+  trapGhostPrefab: {fileID: 5061125028860472579, guid: b4c32d3553f41f343911bc93414a9cf5,
+    type: 3}
+  cameraGhostPrefab: {fileID: 419918267513510063, guid: 30a000734ad8d034caabb21d2a0be056,
+    type: 3}
   cameraPrefab: {fileID: 2082357092}
   cctvManager: {fileID: 884477781}
   trapEmbedDepth: -1.1
   cameraEmbedDepth: -0.1
+  trapGhostOffset: 0
+  cameraGhostOffset: 0
 --- !u!114 &2001431994 stripped
 MonoBehaviour:
   m_CorrespondingSourceObject: {fileID: 4582019824381016672, guid: a01c7516e659bdf4b9897ab54df69b69,
@@ -17805,6 +17811,11 @@ PrefabInstance:
         type: 3}
       propertyPath: m_Name
       value: TrapBox
+      objectReference: {fileID: 0}
+    - target: {fileID: 7000602505178049698, guid: e87b932db89928e498b1c887c856b8da,
+        type: 3}
+      propertyPath: attractionDuration
+      value: 0.55
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []

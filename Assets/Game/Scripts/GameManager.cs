@@ -6,13 +6,13 @@ public class GameManager : MonoBehaviour
     public static GameManager instance;
 
     [Header("Tycoon Economy")]
-    public float money = 100f;        // ������
-    public int capturedCreatures = 0; // ��������� �����
+    public float money = 100f;        // Money
+    public int capturedCreatures = 0; // Captured creatures
     public float pricePerMeme = 1.5f;
 
     [Header("Items Inventory")]
-    public int trapsCount = 2;   // ���������� �������
-    public int camerasCount = 1; // ���������� �����
+    public int trapsCount = 12;   
+    public int camerasCount = 10; 
     public float trapPrice = 20f;
     public float cameraPrice = 15f;
 
@@ -20,7 +20,7 @@ public class GameManager : MonoBehaviour
     public List<ParkPlatform> activePlatforms = new List<ParkPlatform>();
 
     [Header("Spawners")]
-    public VisitorSpawner visitorSpawner; // ������ �� ������� �����
+    public VisitorSpawner visitorSpawner; // Spawner for visitor creatures
     public EnemySpawner enemySpawner;     // ������ �� ������� ������ (�����)
 
     [Header("Time Settings")]

@@ -125,7 +125,7 @@ MonoBehaviour:
   markerPrefab: {fileID: 2758713028606129635, guid: f7c7c59ca18919941801631d1cf6ce9f,
     type: 3}
   detectionCooldown: 30
-  spawnHeight: -0.4
+  spawnHeight: 0
 --- !u!54 &6501192601534509843
 Rigidbody:
   m_ObjectHideFlags: 0
