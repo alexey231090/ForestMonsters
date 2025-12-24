@@ -4,21 +4,21 @@ using DG.Tweening;
 
 public class Trap : MonoBehaviour
 {
-    [Header("Description")]
-    [TextArea(2,5)] public string description = "Ловушка: оглушает врага, притягивает в центр, проигрывает анимацию и партиклы.";
-
     [Header("Settings")]
-    private bool isUsed = false;
     public float attractionDuration = 1f;
+    public float pickUpDuration = 0.5f; // Скорость подъема к рукам
+    public float dropDuration = 0.5f;   // Скорость опускания на землю
 
     [Header("References")]
-    public Animator animatorCell; 
-    public Transform captureCenterPoint; 
-    public ParticleSystem captureParticles; 
-    public GameObject activeVisual; 
+    public Animator animatorCell;
+    public Transform captureCenterPoint;
+    public ParticleSystem captureParticles;
+    public GameObject activeVisual;
+    public TrapBox trapbox; // Ссылка на родительский объект (сама коробка)
 
+    private bool isUsed = false;
     private GameObject caughtEnemy;
-    private TrapBox trapbox;
+    private Collider myCollider; // Коллайдер самой ловушки/триггера
 
     void Start()
     {
@@ -26,6 +26,8 @@ public class Trap : MonoBehaviour
         if (animatorCell == null) animatorCell = GetComponentInChildren<Animator>();
         if (trapbox == null) trapbox = GetComponentInParent<TrapBox>();
         
+        // Получаем коллайдер триггера, чтобы отключать его при переноске
+        myCollider = GetComponent<Collider>();
     }
 
     void OnTriggerEnter(Collider other)
@@ -35,42 +37,29 @@ public class Trap : MonoBehaviour
         if (other.CompareTag("Enemy"))
         {
             Debug.Log("Враг попался");
-
             var enemyAI = other.GetComponent<EnemyAi>();
             if (enemyAI != null)
             {
-                // 1. ВЫКЛЮЧАЕМ МОЗГИ ВРАГА (Это исправит ошибку!)
-                // Чтобы он перестал обращаться к NavMeshAgent
-                enemyAI.enabled = false; 
-
-                // 2. Отключаем NavMeshAgent
+                enemyAI.enabled = false; // Выключаем мозг
                 var agent = other.GetComponent<NavMeshAgent>();
                 if (agent != null) agent.enabled = false;
-
-                // 3. Отключаем физику (Rigidbody)
                 var rb = other.GetComponent<Rigidbody>();
                 if (rb != null) rb.isKinematic = true;
 
-                // 4. Притягиваем к центру
+                // Притягиваем
                 if (captureCenterPoint != null)
                 {
                     other.transform.DOMove(captureCenterPoint.position, attractionDuration);
-                    other.transform.DORotateQuaternion(captureCenterPoint.rotation, attractionDuration).OnComplete(() =>
-                    {
-                        other.transform.SetParent(captureCenterPoint);
-                    });
+                    other.transform.DORotateQuaternion(captureCenterPoint.rotation, attractionDuration)
+                        .OnComplete(() => other.transform.SetParent(captureCenterPoint));
                 }
 
-                // 5. Партиклы
                 if (captureParticles != null) captureParticles.Play();
-
-                // 6. Анимация клетки
                 if (animatorCell != null) animatorCell.SetBool("CellOpenClose", true);
 
-                //7.Включаем коллайдер на клетке
-                trapbox.GetComponent<BoxCollider>().enabled = true;
+                // Включаем физический коллайдер на коробке (если он был выключен)
+                if(trapbox.GetComponent<BoxCollider>()) trapbox.GetComponent<BoxCollider>().enabled = true;
 
-                // Финализация
                 caughtEnemy = other.gameObject;
                 isUsed = true;
             }
@@ -82,16 +71,35 @@ public class Trap : MonoBehaviour
         return isUsed && caughtEnemy != null;
     }
 
-    public void CollectPrey()
+    // --- ЛОГИКА ПЕРЕНОСКИ ---
+
+    public void AnimatePickUp(Transform holdParent)
     {
-        if (caughtEnemy != null)
+        // Отключаем физику и коллайдеры, чтобы не толкать игрока
+        if (myCollider) myCollider.enabled = false;
+        if (trapbox.GetComponent<Collider>()) trapbox.GetComponent<Collider>().enabled = false;
+
+        // Перемещаем к рукам
+        transform.parent.SetParent(holdParent); // Берем всего родителя (TrapBox)
+        
+        // Анимация полета в руки
+        transform.parent.DOLocalMove(Vector3.zero, pickUpDuration);
+        transform.parent.DOLocalRotate(Vector3.zero, pickUpDuration);
+    }
+
+    public void AnimateDrop(Vector3 targetPosition, Quaternion targetRotation)
+    {
+        // Отцепляем от игрока
+        transform.parent.SetParent(null);
+
+        // Анимация падения на землю
+        transform.parent.DOMove(targetPosition, dropDuration).SetEase(Ease.OutBounce).OnComplete(() =>
         {
-            Destroy(caughtEnemy); 
-            if (GameManager.instance != null) GameManager.instance.AddCreature();
-        }
-        
-        
-        
-        Destroy(trapbox.gameObject);
+            // Когда упала - включаем коллайдеры обратно (чтобы можно было снова взять)
+            if (myCollider) myCollider.enabled = true;
+            if (trapbox.GetComponent<Collider>()) trapbox.GetComponent<Collider>().enabled = true;
+        });
+
+        transform.parent.DORotateQuaternion(targetRotation, dropDuration);
     }
 }

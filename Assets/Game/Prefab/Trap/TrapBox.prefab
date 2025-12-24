@@ -593,6 +593,11 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 9120127017690105623, guid: 20dc3765b35ef2a42a75bc53ce6f6d34,
         type: 3}
+      propertyPath: attractionDuration
+      value: 0.55
+      objectReference: {fileID: 0}
+    - target: {fileID: 9120127017690105623, guid: 20dc3765b35ef2a42a75bc53ce6f6d34,
+        type: 3}
       propertyPath: captureCenterPoint
       value: 
       objectReference: {fileID: 4765035152909711748}
