@@ -1336,6 +1336,7 @@ GameObject:
   m_Component:
   - component: {fileID: 4582019824381016678}
   - component: {fileID: 7143720155793013764}
+  - component: {fileID: 3157448655848743834}
   - component: {fileID: 4582019824381016679}
   - component: {fileID: 4582019824381016672}
   - component: {fileID: 4434987455403460021}
@@ -1375,17 +1376,18 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 0d24dbe552c7d1946b18546e3275c417, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  interactDistance: 4
-  buildDistance: 10
+  description: "\u0418\u043D\u0442\u0435\u0440\u0430\u043A\u0446\u0438\u044F: \u0423\u0441\u0442\u0430\u043D\u043E\u0432\u043A\u0430
+    (\u041B\u041A\u041C), \u0438 \u043F\u0435\u0440\u0435\u0434\u0430\u0447\u0430
+    \u0443\u043F\u0440\u0430\u0432\u043B\u0435\u043D\u0438\u044F \u0432 PlayerCarrier
+    \u043F\u0440\u0438 \u0437\u0430\u0436\u0430\u0442\u0438\u0438 E."
+  interactDistance: 2
+  buildDistance: 4
   interactLayer:
     serializedVersion: 2
     m_Bits: 1
   groundLayer:
     serializedVersion: 2
     m_Bits: 256
-  holdTimeRequired: 1
-  holdProgressBar: {fileID: 0}
-  holdPoint: {fileID: 8875260735145204406}
   trapPrefab: {fileID: 6030652623916111981, guid: e87b932db89928e498b1c887c856b8da,
     type: 3}
   cameraItemPrefab: {fileID: 4928821375868304528, guid: 2f24afb6e9bed94478e184b12c3295a3,
@@ -1395,11 +1397,29 @@ MonoBehaviour:
   cameraGhostPrefab: {fileID: 419918267513510063, guid: 30a000734ad8d034caabb21d2a0be056,
     type: 3}
   cameraPrefab: {fileID: 4582019822591254235}
-  cctvManager: {fileID: 0}
   trapEmbedDepth: -1.1
-  cameraEmbedDepth: 0
+  cameraEmbedDepth: -0.05
   trapGhostOffset: 0
-  cameraGhostOffset: 0
+  cameraGhostOffset: 0.05
+--- !u!114 &3157448655848743834
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4582019824381016673}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 7733abec21270f4448075a4b9b85141c, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  holdPoint: {fileID: 0}
+  holdTimeRequired: 1
+  dropEmbedDepth: 0.2
+  groundLayer:
+    serializedVersion: 2
+    m_Bits: 0
+  holdProgressBar: {fileID: 0}
 --- !u!143 &4582019824381016679
 CharacterController:
   m_ObjectHideFlags: 0

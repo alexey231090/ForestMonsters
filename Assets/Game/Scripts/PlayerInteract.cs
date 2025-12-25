@@ -1,69 +1,71 @@
 using UnityEngine;
-using UnityEngine.UI;
-using DG.Tweening;
 
+// Этот атрибут гарантирует, что скрипт переноски тоже висит на игроке
+[RequireComponent(typeof(PlayerCarrier))]
 public class PlayerInteract : MonoBehaviour
 {
+    [Header("Description")]
+    [TextArea(2, 5)] public string description = "Интеракция: Установка (ЛКМ), Призраки, Взаимодействие (E). Переноску (Hold E) делегирует в PlayerCarrier.";
+
     [Header("Settings")]
-    public float interactDistance = 4f;     // Дистанция для E
-    public float buildDistance = 10f;       // Дистанция для призраков (сделал побольше)
+    public float interactDistance = 4f;     // Дистанция для E (кнопок)
+    public float buildDistance = 10f;       // Дистанция для СТРОИТЕЛЬСТВА
     
     public LayerMask interactLayer; // Слой предметов (ловушки, мониторы)
-    
-    // !!! ВАЖНО: Выбери здесь слой "Default" или "Ground" в инспекторе !!!
-    public LayerMask groundLayer;   
-    
-    public float holdTimeRequired = 1.0f; 
+    public LayerMask groundLayer;   // Слой для СТРОИТЕЛЬСТВА (земля/пол)
 
-    [Header("UI")]
-    public Image holdProgressBar; 
-
-    [Header("Hold Settings")]
-    public Transform holdPoint; 
-
-    [Header("Prefabs")]
+    [Header("Prefabs (Real)")]
     public GameObject trapPrefab;
     public GameObject cameraItemPrefab;
+
+    [Header("Prefabs (Ghosts)")]
     public GameObject trapGhostPrefab;
     public GameObject cameraGhostPrefab;
 
-    [Header("References, camera Player")]
+    [Header("References")]
     public Transform cameraPrefab;
     public CctvManager cctvManager;
+    
+    // Ссылка на соседний скрипт, который занимается переноской
+    private PlayerCarrier carrier;
 
-    [Header("Offsets")]
+    [Header("Placement Offsets")]
     public float trapEmbedDepth = 0f;
     public float cameraEmbedDepth = 0f;
     public float trapGhostOffset = 0f;
     public float cameraGhostOffset = 0f;
 
+    // --- ВНУТРЕННИЕ ПЕРЕМЕННЫЕ ---
     private int selectedItemIndex = 0; 
     private GameObject currentGhost;
-    private Trap carriedTrap;        
-    private float currentHoldTimer = 0f;
 
     void Start()
     {
-        if (holdProgressBar) holdProgressBar.fillAmount = 0;
-        if (cameraPrefab == null)
-        {
-            Debug.LogError("No camera prefab PlayerController found!");
-        }
+        // Находим соседний скрипт
+        carrier = GetComponent<PlayerCarrier>();
     }
 
     void Update()
     {
-        var origin = cameraPrefab != null ? cameraPrefab : (Camera.main != null ? Camera.main.transform : transform);
-        
-        // 1. Если несем клетку - выходим, кнопки 1/2 не работают
-        if (carriedTrap != null)
+        // Определяем точку, откуда смотрим
+        Transform origin = cameraPrefab;
+        if (origin == null)
         {
-            HandleCarrying();
-            DestroyGhost(); 
+            if (Camera.main != null) origin = Camera.main.transform;
+            else origin = transform;
+        }
+        
+        Debug.DrawRay(origin.position, origin.forward * interactDistance, Color.red);
+
+        // 1. ЕСЛИ МЫ НЕСЕМ КЛЕТКУ (через Carrier)
+        // Мы выключаем призраков и возможность строить, чтобы не мешать
+        if (carrier.IsCarrying())
+        {
+            DestroyGhost();
             return; 
         }
 
-        // 2. Выбор предмета (ВЕРНУЛ ЛОГИ!)
+        // 2. ВЫБОР ПРЕДМЕТА
         if (Input.GetKeyDown(KeyCode.Alpha1)) 
         {
             Debug.Log($"[INPUT] Нажата 1. Ловушек: {GameManager.instance.trapsCount}");
@@ -75,23 +77,90 @@ public class PlayerInteract : MonoBehaviour
             ChangeItem(1);
         }
 
-        // 3. Призрак и Установка
+        // 3. ПРИЗРАК (Визуализация строительства)
         UpdateGhost(origin);
 
+        // 4. УСТАНОВКА ПРЕДМЕТА (ЛКМ)
         if (Input.GetMouseButtonDown(0))
         {
             TryPlaceItem(origin);
         }
 
-        // 4. Взаимодействие E
+        // 5. ВЗАИМОДЕЙСТВИЕ (E)
         HandleInteraction(origin);
     }
 
-    // --- ЛОГИКА ПРИЗРАКОВ ---
+    // ================== ЛОГИКА ВЗАИМОДЕЙСТВИЯ ==================
+
+    void HandleInteraction(Transform origin)
+    {
+        RaycastHit hit;
+        bool lookingAtPickupable = false;
+
+        // Пускаем луч
+        if (Physics.Raycast(origin.position, origin.forward, out hit, interactDistance, interactLayer))
+        {
+            // --- A. ПРОВЕРКА НА ПОДБОР (Передаем в Carrier) ---
+            
+            // Проверяем, это ловушка?
+            bool isTrap = hit.collider.GetComponentInParent<Trap>() != null || hit.collider.GetComponent<Trap>() != null;
+            // Проверяем, это камера?
+            bool isCamera = hit.collider.GetComponentInChildren<Camera>() != null || hit.collider.name.Contains("Camera");
+
+            if (isTrap || isCamera)
+            {
+                lookingAtPickupable = true;
+                
+                // Если держим E - говорим Carrier'у "Заряжай круг!"
+                if (Input.GetKey(KeyCode.E))
+                {
+                    // Передаем объект, на который смотрим
+                    carrier.ProcessHold(hit.collider.gameObject);
+                }
+                return; // Блокируем остальные действия
+            }
+
+            // --- B. МОМЕНТАЛЬНЫЕ ДЕЙСТВИЯ (КЛИК E) ---
+            if (Input.GetKeyDown(KeyCode.E))
+            {
+                // 1. Монитор
+                MonitorTrigger monitor = hit.collider.GetComponent<MonitorTrigger>();
+                if (monitor != null && CctvManager.instance != null)
+                {
+                    CctvManager.instance.EnterMonitorMode();
+                    return;
+                }
+
+                // 2. Кровать
+                BedTrigger bed = hit.collider.GetComponent<BedTrigger>();
+                if (bed != null && GameManager.instance != null)
+                {
+                    GameManager.instance.SkipCurrentPhase();
+                    return;
+                }
+
+                // 3. Платформа в парке
+                ParkPlatform platform = hit.collider.GetComponent<ParkPlatform>();
+                if (platform != null)
+                {
+                    platform.TryPlaceMonster();
+                    return;
+                }
+            }
+        }
+
+        // Если мы отвели взгляд от предмета или отпустили кнопку
+        if (!lookingAtPickupable)
+        {
+            carrier.ResetHoldTimer();
+        }
+    }
+
+    // ================== ЛОГИКА ПРИЗРАКОВ ==================
 
     void UpdateGhost(Transform origin)
     {
-        // Проверка наличия
+        // 1. Проверяем наличие предметов в инвентаре
         bool hasItem = false;
         if (selectedItemIndex == 0 && GameManager.instance.trapsCount > 0) hasItem = true;
         if (selectedItemIndex == 1 && GameManager.instance.camerasCount > 0) hasItem = true;
@@ -100,11 +169,12 @@ public class PlayerInteract : MonoBehaviour
 
         RaycastHit hit;
         
-        // ИСПРАВЛЕНИЕ: Используем groundLayer для поиска земли
+        // 2. Ищем землю для призрака
         if (Physics.Raycast(origin.position, origin.forward, out hit, buildDistance, groundLayer))
         {
             GameObject neededGhostPrefab = (selectedItemIndex == 0) ? trapGhostPrefab : cameraGhostPrefab;
 
+            // Создаем или заменяем призрака
             if (currentGhost == null) currentGhost = Instantiate(neededGhostPrefab);
             else if (!currentGhost.name.Contains(neededGhostPrefab.name))
             {
@@ -112,6 +182,7 @@ public class PlayerInteract : MonoBehaviour
                 currentGhost = Instantiate(neededGhostPrefab);
             }
 
+            // Позиционирование
             Quaternion rotation = Quaternion.FromToRotation(Vector3.up, hit.normal);
             float ghostHeightAdjust = (selectedItemIndex == 0) ? trapGhostOffset : cameraGhostOffset;
 
@@ -132,19 +203,20 @@ public class PlayerInteract : MonoBehaviour
         }
     }
 
-    // --- ЛОГИКА УСТАНОВКИ ---
+    // ================== ЛОГИКА УСТАНОВКИ ==================
 
     void TryPlaceItem(Transform origin)
     {
         RaycastHit hit;
-        // ИСПРАВЛЕНИЕ: Тоже используем groundLayer
+        // Ищем землю для установки
         if (Physics.Raycast(origin.position, origin.forward, out hit, buildDistance, groundLayer))
         {
             bool canPlace = false;
             GameObject objectToSpawn = null;
             float currentRealDepth = 0f;
 
-            if (selectedItemIndex == 0)
+            // Логика списания ресурсов
+            if (selectedItemIndex == 0) // Ловушка
             {
                 if (GameManager.instance.TryUseTrap())
                 {
@@ -154,7 +226,7 @@ public class PlayerInteract : MonoBehaviour
                 }
                 else Debug.Log("Нет ловушек!");
             }
-            else if (selectedItemIndex == 1)
+            else if (selectedItemIndex == 1) // Камера
             {
                 if (GameManager.instance.TryUseCamera())
                 {
@@ -165,6 +237,7 @@ public class PlayerInteract : MonoBehaviour
                 else Debug.Log("Нет камер!");
             }
 
+            // Спавн объекта
             if (canPlace && objectToSpawn != null)
             {
                 Quaternion rotation = Quaternion.FromToRotation(Vector3.up, hit.normal);
@@ -181,6 +254,8 @@ public class PlayerInteract : MonoBehaviour
         }
     }
 
+    // ================== ВСПОМОГАТЕЛЬНЫЕ ==================
+
     void ChangeItem(int index)
     {
         selectedItemIndex = index;
@@ -194,107 +269,5 @@ public class PlayerInteract : MonoBehaviour
             Destroy(currentGhost);
             currentGhost = null;
         }
-    }
-
-    // --- ВЗАИМОДЕЙСТВИЕ И ПЕРЕНОСКА (Остается как было) ---
-
-    void HandleInteraction(Transform origin)
-    {
-        RaycastHit hit;
-        bool lookingAtTrap = false;
-
-        if (Physics.Raycast(origin.position, origin.forward, out hit, interactDistance, interactLayer))
-        {
-            TrapBox trapbox = hit.collider.GetComponentInParent<TrapBox>();
-            Trap trap = hit.collider.GetComponent<Trap>();
-            if (trapbox != null) trap = trapbox.GetComponentInChildren<Trap>();
-
-            if (trap != null)
-            {
-                lookingAtTrap = true;
-                if (Input.GetKey(KeyCode.E))
-                {
-                    currentHoldTimer += Time.deltaTime;
-                    if (holdProgressBar) holdProgressBar.fillAmount = currentHoldTimer / holdTimeRequired;
-                    if (currentHoldTimer >= holdTimeRequired)
-                    {
-                        PickUpTrap(trap);
-                        ResetHold();
-                    }
-                }
-                else ResetHold();
-                return; 
-            }
-
-            if (Input.GetKeyDown(KeyCode.E))
-            {
-                MonitorTrigger monitor = hit.collider.GetComponent<MonitorTrigger>();
-                if (monitor != null && CctvManager.instance != null) { CctvManager.instance.EnterMonitorMode(); return; }
-
-                BedTrigger bed = hit.collider.GetComponent<BedTrigger>();
-                if (bed != null && GameManager.instance != null) { GameManager.instance.SkipCurrentPhase(); return; }
-
-                ParkPlatform platform = hit.collider.GetComponent<ParkPlatform>();
-                if (platform != null) { platform.TryPlaceMonster(); return; }
-            }
-        }
-
-        if (!lookingAtTrap) ResetHold();
-    }
-
-    void PickUpTrap(Trap trap)
-    {
-        carriedTrap = trap;
-        var rb = trap.GetComponentInParent<Rigidbody>();
-        if (rb) rb.isKinematic = true;
-        Collider[] cols = trap.GetComponentsInChildren<Collider>();
-        foreach (var c in cols) c.enabled = false;
-        
-        Transform targetTransform = trap.trapbox != null ? trap.trapbox.transform : trap.transform;
-        targetTransform.SetParent(holdPoint);
-        targetTransform.DOLocalMove(Vector3.zero, 0.5f);
-        targetTransform.DOLocalRotate(Vector3.zero, 0.5f);
-    }
-
-    void HandleCarrying()
-    {
-        if (holdProgressBar) holdProgressBar.fillAmount = 0; 
-        if (Input.GetKeyDown(KeyCode.E)) TryDropTrap();
-    }
-
-    void TryDropTrap()
-    {
-        RaycastHit hit;
-        // Используем GroundLayer для поиска земли
-        if (Physics.Raycast(holdPoint.position, Vector3.down, out hit, 10f, groundLayer))
-        {
-            DropTrap(hit.point);
-        }
-    }
-
-    void DropTrap(Vector3 floorPos)
-    {
-        Trap trapToDrop = carriedTrap;
-        Transform targetTransform = trapToDrop.trapbox != null ? trapToDrop.trapbox.transform : trapToDrop.transform;
-        targetTransform.SetParent(null);
-        targetTransform.DOMove(floorPos, 0.5f).SetEase(Ease.OutBounce).OnComplete(() =>
-        {
-            if (trapToDrop != null)
-            {
-                Collider[] cols = trapToDrop.GetComponentsInChildren<Collider>();
-                foreach (var c in cols) c.enabled = true;
-                var rb = targetTransform.GetComponent<Rigidbody>();
-                if (rb) rb.isKinematic = false;
-            }
-        });
-        Quaternion targetRot = Quaternion.Euler(0, transform.eulerAngles.y, 0);
-        targetTransform.DORotateQuaternion(targetRot, 0.5f);
-        carriedTrap = null;
-    }
-
-    void ResetHold()
-    {
-        currentHoldTimer = 0f;
-        if (holdProgressBar) holdProgressBar.fillAmount = 0;
     }
 }
