@@ -163,6 +163,7 @@ GameObject:
   m_Component:
   - component: {fileID: 4066678813259684355}
   - component: {fileID: 8632704494360511973}
+  - component: {fileID: 936317038727349052}
   m_Layer: 0
   m_Name: Camera
   m_TagString: Untagged
@@ -207,6 +208,27 @@ MonoBehaviour:
     \u043A\u0430\u043C\u0435\u0440\u044B: \u043D\u0430\u0445\u043E\u0434\u0438\u0442
     \u0434\u043E\u0447\u0435\u0440\u043D\u044E\u044E Camera \u0438 \u0440\u0435\u0433\u0438\u0441\u0442\u0440\u0438\u0440\u0443\u0435\u0442
     \u0435\u0451 \u0432 CctvManager."
+--- !u!65 &936317038727349052
+BoxCollider:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4928821375868304528}
+  m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_LayerOverridePriority: 0
+  m_IsTrigger: 0
+  m_ProvidesContacts: 0
+  m_Enabled: 1
+  serializedVersion: 3
+  m_Size: {x: 0.24132156, y: 3.6009912, z: 0.26319885}
+  m_Center: {x: 0.011156082, y: 1.7914062, z: 0}
 --- !u!1 &5045240542310370112
 GameObject:
   m_ObjectHideFlags: 0
@@ -581,7 +603,6 @@ GameObject:
   - component: {fileID: 1521666587796990033}
   - component: {fileID: 7289146016163290157}
   - component: {fileID: 4970593167760067080}
-  - component: {fileID: 3720819933279427822}
   m_Layer: 0
   m_Name: Shest
   m_TagString: Untagged
@@ -657,26 +678,3 @@ MeshRenderer:
   m_SortingLayer: 0
   m_SortingOrder: 0
   m_AdditionalVertexStreams: {fileID: 0}
---- !u!136 &3720819933279427822
-CapsuleCollider:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 7990354171675188856}
-  m_Material: {fileID: 0}
-  m_IncludeLayers:
-    serializedVersion: 2
-    m_Bits: 0
-  m_ExcludeLayers:
-    serializedVersion: 2
-    m_Bits: 0
-  m_LayerOverridePriority: 0
-  m_IsTrigger: 0
-  m_ProvidesContacts: 0
-  m_Enabled: 1
-  serializedVersion: 2
-  m_Radius: 0.5000001
-  m_Height: 2
-  m_Direction: 1
-  m_Center: {x: 0.000000059604645, y: 0, z: -0.00000008940697}

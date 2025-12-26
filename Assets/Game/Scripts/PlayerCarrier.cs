@@ -52,6 +52,7 @@ using DG.Tweening;
         // Вызывается из PlayerInteract каждый кадр, пока мы смотрим на объект и держим E
         public void ProcessHold(GameObject targetObj)
         {
+            print(targetObj.name);
              if (IsCarrying()) return; // Уже заняты руки
     
             // Увеличиваем таймер
@@ -64,6 +65,7 @@ using DG.Tweening;
             // Если удержали нужное время
             if (currentHoldTimer >= holdTimeRequired)
             {
+                print("Удержание");
                 PerformPickup(targetObj);
                 ResetHoldTimer();
             }

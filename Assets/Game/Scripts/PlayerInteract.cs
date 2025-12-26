@@ -5,11 +5,12 @@ using UnityEngine;
 public class PlayerInteract : MonoBehaviour
 {
     [Header("Description")]
-    [TextArea(2, 5)] public string description = "Интеракция: Установка (ЛКМ), Призраки, Взаимодействие (E). Переноску (Hold E) делегирует в PlayerCarrier.";
+    [TextArea(2, 5)] public string description = "Интеракция: Установка (ЛКМ), Призраки с автоотключением, Взаимодействие (E).";
 
     [Header("Settings")]
     public float interactDistance = 4f;     // Дистанция для E (кнопок)
     public float buildDistance = 10f;       // Дистанция для СТРОИТЕЛЬСТВА
+    public float ghostTimeout = 5.0f;       // Время до исчезновения призрака (если не смотреть на землю)
     
     public LayerMask interactLayer; // Слой предметов (ловушки, мониторы)
     public LayerMask groundLayer;   // Слой для СТРОИТЕЛЬСТВА (земля/пол)
@@ -26,7 +27,6 @@ public class PlayerInteract : MonoBehaviour
     public Transform cameraPrefab;
     public CctvManager cctvManager;
     
-    // Ссылка на соседний скрипт, который занимается переноской
     private PlayerCarrier carrier;
 
     [Header("Placement Offsets")]
@@ -36,18 +36,17 @@ public class PlayerInteract : MonoBehaviour
     public float cameraGhostOffset = 0f;
 
     // --- ВНУТРЕННИЕ ПЕРЕМЕННЫЕ ---
-    private int selectedItemIndex = 0; 
+    private int selectedItemIndex = -1; // -1 значит "Ничего не выбрано"
     private GameObject currentGhost;
+    private float ghostTimer = 0f; // Текущий таймер жизни призрака
 
     void Start()
     {
-        // Находим соседний скрипт
         carrier = GetComponent<PlayerCarrier>();
     }
 
     void Update()
     {
-        // Определяем точку, откуда смотрим
         Transform origin = cameraPrefab;
         if (origin == null)
         {
@@ -57,11 +56,10 @@ public class PlayerInteract : MonoBehaviour
         
         Debug.DrawRay(origin.position, origin.forward * interactDistance, Color.red);
 
-        // 1. ЕСЛИ МЫ НЕСЕМ КЛЕТКУ (через Carrier)
-        // Мы выключаем призраков и возможность строить, чтобы не мешать
+        // 1. ЕСЛИ МЫ НЕСЕМ КЛЕТКУ
         if (carrier.IsCarrying())
         {
-            DestroyGhost();
+            DisableBuildMode(); // Выключаем режим стройки при переноске
             return; 
         }
 
@@ -77,11 +75,12 @@ public class PlayerInteract : MonoBehaviour
             ChangeItem(1);
         }
 
-        // 3. ПРИЗРАК (Визуализация строительства)
-        UpdateGhost(origin);
+        // 3. ПРИЗРАК И ТАЙМЕР
+        UpdateGhostLogic(origin);
 
         // 4. УСТАНОВКА ПРЕДМЕТА (ЛКМ)
-        if (Input.GetMouseButtonDown(0))
+        // Разрешаем только если режим стройки активен (не -1) и призрак виден
+        if (selectedItemIndex != -1 && Input.GetMouseButtonDown(0))
         {
             TryPlaceItem(origin);
         }
@@ -90,91 +89,39 @@ public class PlayerInteract : MonoBehaviour
         HandleInteraction(origin);
     }
 
-    // ================== ЛОГИКА ВЗАИМОДЕЙСТВИЯ ==================
+    // ================== ЛОГИКА ПРИЗРАКОВ И ТАЙМЕРА ==================
 
-    void HandleInteraction(Transform origin)
+    void UpdateGhostLogic(Transform origin)
     {
-        RaycastHit hit;
-        bool lookingAtPickupable = false;
-
-        // Пускаем луч
-        if (Physics.Raycast(origin.position, origin.forward, out hit, interactDistance, interactLayer))
+        // Если ничего не выбрано - выходим
+        if (selectedItemIndex == -1) 
         {
-            // --- A. ПРОВЕРКА НА ПОДБОР (Передаем в Carrier) ---
-            
-            // Проверяем, это ловушка?
-            bool isTrap = hit.collider.GetComponentInParent<Trap>() != null || hit.collider.GetComponent<Trap>() != null;
-            // Проверяем, это камера?
-            bool isCamera = hit.collider.GetComponentInChildren<Camera>() != null || hit.collider.name.Contains("Camera");
-
-            if (isTrap || isCamera)
-            {
-                lookingAtPickupable = true;
-                
-                // Если держим E - говорим Carrier'у "Заряжай круг!"
-                if (Input.GetKey(KeyCode.E))
-                {
-                    // Передаем объект, на который смотрим
-                    carrier.ProcessHold(hit.collider.gameObject);
-                }
-                return; // Блокируем остальные действия
-            }
-
-            // --- B. МОМЕНТАЛЬНЫЕ ДЕЙСТВИЯ (КЛИК E) ---
-            if (Input.GetKeyDown(KeyCode.E))
-            {
-                // 1. Монитор
-                MonitorTrigger monitor = hit.collider.GetComponent<MonitorTrigger>();
-                if (monitor != null && CctvManager.instance != null)
-                {
-                    CctvManager.instance.EnterMonitorMode();
-                    return;
-                }
-
-                // 2. Кровать
-                BedTrigger bed = hit.collider.GetComponent<BedTrigger>();
-                if (bed != null && GameManager.instance != null)
-                {
-                    GameManager.instance.SkipCurrentPhase();
-                    return;
-                }
-
-                // 3. Платформа в парке
-                ParkPlatform platform = hit.collider.GetComponent<ParkPlatform>();
-                if (platform != null)
-                {
-                    platform.TryPlaceMonster();
-                    return;
-                }
-            }
+            DestroyGhost();
+            return;
         }
 
-        // Если мы отвели взгляд от предмета или отпустили кнопку
-        if (!lookingAtPickupable)
-        {
-            carrier.ResetHoldTimer();
-        }
-    }
-
-    // ================== ЛОГИКА ПРИЗРАКОВ ==================
-
-    void UpdateGhost(Transform origin)
-    {
-        // 1. Проверяем наличие предметов в инвентаре
+        // 1. Проверяем наличие предметов
         bool hasItem = false;
         if (selectedItemIndex == 0 && GameManager.instance.trapsCount > 0) hasItem = true;
         if (selectedItemIndex == 1 && GameManager.instance.camerasCount > 0) hasItem = true;
 
-        if (!hasItem) { DestroyGhost(); return; }
+        if (!hasItem) 
+        { 
+            DisableBuildMode(); // Кончились предметы - выключаем режим
+            return; 
+        }
 
         RaycastHit hit;
         
-        // 2. Ищем землю для призрака
+        // 2. Ищем землю
         if (Physics.Raycast(origin.position, origin.forward, out hit, buildDistance, groundLayer))
         {
+            // --- МЫ СМОТРИМ НА ЗЕМЛЮ ---
+            ghostTimer = ghostTimeout; // Сбрасываем таймер на максимум (5 сек)
+
+            // Логика создания/перемещения призрака
             GameObject neededGhostPrefab = (selectedItemIndex == 0) ? trapGhostPrefab : cameraGhostPrefab;
 
-            // Создаем или заменяем призрака
             if (currentGhost == null) currentGhost = Instantiate(neededGhostPrefab);
             else if (!currentGhost.name.Contains(neededGhostPrefab.name))
             {
@@ -182,11 +129,10 @@ public class PlayerInteract : MonoBehaviour
                 currentGhost = Instantiate(neededGhostPrefab);
             }
 
-            // Позиционирование
             Quaternion rotation = Quaternion.FromToRotation(Vector3.up, hit.normal);
             float ghostHeightAdjust = (selectedItemIndex == 0) ? trapGhostOffset : cameraGhostOffset;
 
-            if (selectedItemIndex == 1) // Поворот камеры к игроку
+            if (selectedItemIndex == 1) // Поворот камеры
             {
                 Vector3 lookPos = transform.position - hit.point;
                 lookPos.y = 0;
@@ -199,7 +145,38 @@ public class PlayerInteract : MonoBehaviour
         }
         else
         {
-            DestroyGhost();
+            // --- МЫ СМОТРИМ В НЕБО ---
+            DestroyGhost(); // Прячем визуал
+
+            // Уменьшаем таймер
+            ghostTimer -= Time.deltaTime;
+            if (ghostTimer <= 0)
+            {
+                DisableBuildMode(); // Время вышло - отключаем режим
+                Debug.Log("Режим строительства отключен из-за бездействия.");
+            }
+        }
+    }
+
+    void ChangeItem(int index)
+    {
+        selectedItemIndex = index;
+        ghostTimer = ghostTimeout; // При смене предмета таймер обновляется
+        DestroyGhost();
+    }
+
+    void DisableBuildMode()
+    {
+        selectedItemIndex = -1;
+        DestroyGhost();
+    }
+
+    void DestroyGhost()
+    {
+        if (currentGhost != null)
+        {
+            Destroy(currentGhost);
+            currentGhost = null;
         }
     }
 
@@ -207,16 +184,17 @@ public class PlayerInteract : MonoBehaviour
 
     void TryPlaceItem(Transform origin)
     {
+        // Если призрака нет (значит мы смотрим не туда), ставить нельзя
+        if (currentGhost == null) return;
+
         RaycastHit hit;
-        // Ищем землю для установки
         if (Physics.Raycast(origin.position, origin.forward, out hit, buildDistance, groundLayer))
         {
             bool canPlace = false;
             GameObject objectToSpawn = null;
             float currentRealDepth = 0f;
 
-            // Логика списания ресурсов
-            if (selectedItemIndex == 0) // Ловушка
+            if (selectedItemIndex == 0)
             {
                 if (GameManager.instance.TryUseTrap())
                 {
@@ -224,9 +202,8 @@ public class PlayerInteract : MonoBehaviour
                     objectToSpawn = trapPrefab;
                     currentRealDepth = trapEmbedDepth;
                 }
-                else Debug.Log("Нет ловушек!");
             }
-            else if (selectedItemIndex == 1) // Камера
+            else if (selectedItemIndex == 1)
             {
                 if (GameManager.instance.TryUseCamera())
                 {
@@ -234,10 +211,8 @@ public class PlayerInteract : MonoBehaviour
                     objectToSpawn = cameraItemPrefab;
                     currentRealDepth = cameraEmbedDepth;
                 }
-                else Debug.Log("Нет камер!");
             }
 
-            // Спавн объекта
             if (canPlace && objectToSpawn != null)
             {
                 Quaternion rotation = Quaternion.FromToRotation(Vector3.up, hit.normal);
@@ -250,24 +225,45 @@ public class PlayerInteract : MonoBehaviour
 
                 Vector3 position = hit.point - hit.normal * currentRealDepth;
                 Instantiate(objectToSpawn, position, rotation);
+                
+                // После установки таймер обновляем, чтобы можно было ставить дальше
+                ghostTimer = ghostTimeout; 
             }
         }
     }
 
-    // ================== ВСПОМОГАТЕЛЬНЫЕ ==================
+    // ================== ЛОГИКА ВЗАИМОДЕЙСТВИЯ (Без изменений) ==================
 
-    void ChangeItem(int index)
+    void HandleInteraction(Transform origin)
     {
-        selectedItemIndex = index;
-        DestroyGhost();
-    }
+        RaycastHit hit;
+        bool lookingAtPickupable = false;
 
-    void DestroyGhost()
-    {
-        if (currentGhost != null)
+        if (Physics.Raycast(origin.position, origin.forward, out hit, interactDistance, interactLayer))
         {
-            Destroy(currentGhost);
-            currentGhost = null;
+            bool isTrap = hit.collider.GetComponentInChildren<Trap>(true) != null;
+            bool isCamera = hit.collider.GetComponentInChildren<Camera>(true) != null;
+
+            if (isTrap || isCamera)
+            {
+                lookingAtPickupable = true;
+                if (Input.GetKey(KeyCode.E)) carrier.ProcessHold(hit.collider.gameObject);
+                return; 
+            }
+
+            if (Input.GetKeyDown(KeyCode.E))
+            {
+                MonitorTrigger monitor = hit.collider.GetComponent<MonitorTrigger>();
+                if (monitor != null && CctvManager.instance != null) { CctvManager.instance.EnterMonitorMode(); return; }
+
+                BedTrigger bed = hit.collider.GetComponent<BedTrigger>();
+                if (bed != null && GameManager.instance != null) { GameManager.instance.SkipCurrentPhase(); return; }
+
+                ParkPlatform platform = hit.collider.GetComponent<ParkPlatform>();
+                if (platform != null) { platform.TryPlaceMonster(); return; }
+            }
         }
+
+        if (!lookingAtPickupable) carrier.ResetHoldTimer();
     }
 }
