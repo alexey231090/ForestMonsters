@@ -1,4 +1,5 @@
 using UnityEngine;
+using System.Collections;
 using System.Collections.Generic;
 using TMPro;
 
@@ -21,10 +22,11 @@ public class CctvManager : MonoBehaviour
     private int currentCamIndex = 0;
 
     // Состояния
-    private bool isMonitorActive = false;
+    public bool isMonitorActive = false;
     private bool isWatchingCameras = false;
     private bool isWatchingMap = false;
     private float lastExitTime = -1f;
+    private float lastEnterTime = -1f;
 
     void Awake()
     {
@@ -47,6 +49,12 @@ public class CctvManager : MonoBehaviour
 
     void Update()
     {
+
+        if (Input.GetKeyDown(KeyCode.H))
+        {
+            print(Cursor.visible);
+            monitorMenuUI.SetActive(true);
+        }
         if (isMonitorActive)
         {
             // Обновляем баланс в меню
@@ -63,7 +71,7 @@ public class CctvManager : MonoBehaviour
             }
 
             // Выход (E или ESC)
-            if (Input.GetKeyDown(KeyCode.E) || Input.GetKeyDown(KeyCode.Escape))
+            if ((Input.GetKeyDown(KeyCode.E) || Input.GetKeyDown(KeyCode.Escape)) && (lastEnterTime < 0f || Time.time - lastEnterTime >= 0.1f))
             {
                 if (isWatchingCameras || isWatchingMap)
                 {
@@ -79,9 +87,21 @@ public class CctvManager : MonoBehaviour
 
     public void EnterMonitorMode()
     {
+        print("enter monitor mode");
+        if (isMonitorActive) return; // Уже в режиме, не перезапускать
         if (lastExitTime > 0f && Time.time - lastExitTime < 0.2f) return;
 
+        // Начинаем корутину для установки режима на следующем кадре
+        StartCoroutine(ActivateMonitorMode());
+    }
+
+    private IEnumerator ActivateMonitorMode()
+    {
+        // Ждём следующий кадр
+        yield return null;
+
         isMonitorActive = true;
+        print("isMonitorActive" + isMonitorActive);
         isWatchingCameras = false;
         isWatchingMap = false;
 
@@ -90,6 +110,7 @@ public class CctvManager : MonoBehaviour
         Cursor.lockState = CursorLockMode.None;
         Cursor.visible = true;
 
+
         // Показываем меню, скрываем остальное
         if (monitorMenuUI) monitorMenuUI.SetActive(true);
         if (cctvViewUI) cctvViewUI.SetActive(false);
@@ -97,6 +118,8 @@ public class CctvManager : MonoBehaviour
 
         // Камеры выключены
         if (mapCamera) mapCamera.enabled = false;
+
+        lastEnterTime = Time.time;
     }
 
     // --- КНОПКИ ---
@@ -128,7 +151,6 @@ public class CctvManager : MonoBehaviour
         }
 
         isWatchingCameras = true;
-
         if (monitorMenuUI) monitorMenuUI.SetActive(false);
         if (cctvViewUI) cctvViewUI.SetActive(true);
 
@@ -181,6 +203,7 @@ public class CctvManager : MonoBehaviour
 
     public void ExitMonitorMode()
     {
+        print("exit monitor mode");
         isMonitorActive = false;
         isWatchingCameras = false;
         isWatchingMap = false;

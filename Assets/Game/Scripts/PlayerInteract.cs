@@ -254,7 +254,11 @@ public class PlayerInteract : MonoBehaviour
             if (Input.GetKeyDown(KeyCode.E))
             {
                 MonitorTrigger monitor = hit.collider.GetComponent<MonitorTrigger>();
-                if (monitor != null && CctvManager.instance != null) { CctvManager.instance.EnterMonitorMode(); return; }
+                if (monitor != null && CctvManager.instance != null && !CctvManager.instance.isMonitorActive)
+                {
+                    print("monitor");
+                    CctvManager.instance.EnterMonitorMode(); return;
+                }
 
                 BedTrigger bed = hit.collider.GetComponent<BedTrigger>();
                 if (bed != null && GameManager.instance != null) { GameManager.instance.SkipCurrentPhase(); return; }
