@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ui:UXML xmlns:ui="UnityEngine.UIElements" xmlns:uie="UnityEditor.UIElements" editor-extension-mode="False">
+    <ui:Style src="MonitorStyles.uss" />
+
+    <!-- Рабочий стол -->
+    <ui:VisualElement name="Desktop" class="desktop-bg">
+        
+        <!-- Гаджет с деньгами -->
+        <ui:VisualElement name="Gadget" class="gadget-panel">
+            <ui:Label text="БАЛАНС ПАРКА:" class="gadget-title" />
+            
+            <!-- Сюда скрипт пишет деньги -->
+            <ui:Label text="$ 0" name="MoneyText" class="gadget-money" />
+            
+            <!-- Сюда скрипт пишет: "Traps: 5 | Cams: 2" -->
+            <ui:Label text="Инфо: Загрузка..." name="InfoText" class="gadget-info" />
+        </ui:VisualElement>
+
+        <!-- Сетка иконок -->
+        <ui:VisualElement name="IconsContainer" class="icon-grid">
+            
+            <!-- Кнопки -->
+            <ui:Button name="BtnCameras" class="desktop-icon">
+                <ui:VisualElement class="icon-img cam-color" />
+                <ui:Label text="Система Камер" class="icon-text" />
+            </ui:Button>
+
+            <ui:Button name="BtnBuyTrap" class="desktop-icon">
+                <ui:VisualElement class="icon-img trap-color" />
+                <ui:Label text="Купить Ловушку ($20)" class="icon-text" />
+            </ui:Button>
+
+            <ui:Button name="BtnBuyCam" class="desktop-icon">
+                <ui:VisualElement class="icon-img shop-color" />
+                <ui:Label text="Купить Камеру ($15)" class="icon-text" />
+            </ui:Button>
+
+            <ui:Button name="BtnMap" class="desktop-icon">
+                <ui:VisualElement class="icon-img map-color" />
+                <ui:Label text="Карта GPS" class="icon-text" />
+            </ui:Button>
+
+            <ui:Button name="BtnExit" class="desktop-icon">
+                <ui:VisualElement class="icon-img" style="background-color: #d00;" />
+                <ui:Label text="Выход" class="icon-text" />
+            </ui:Button>
+
+        </ui:VisualElement>
+
+        <!-- Панель задач -->
+        <ui:VisualElement class="taskbar">
+            <!-- Кнопка Пуск -->
+            <ui:VisualElement class="start-btn">
+                <ui:Label text="Пуск" class="start-text" />
+            </ui:VisualElement>
+        </ui:VisualElement>
+
+    </ui:VisualElement>
+</ui:UXML>

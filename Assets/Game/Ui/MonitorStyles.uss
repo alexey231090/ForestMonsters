@@ -1,0 +1,143 @@
+/* MonitorStyles.uss */
+
+/* --- ОБОИ (РАБОЧИЙ СТОЛ) --- */
+.desktop-bg {
+    flex-grow: 1;
+    /* Убрали градиент, поставили красивый синий Win7 */
+    background-color: rgb(46, 123, 192);
+    justify-content: space-between;
+}
+
+/* --- СЕТКА ИКОНОК --- */
+.icon-grid {
+    flex-direction: column;
+    flex-wrap: wrap;
+    align-items: flex-start;
+    padding: 20px;
+    height: 80%;
+}
+
+/* --- ИКОНКА --- */
+.desktop-icon {
+    width: 110px;
+    height: 110px;
+    background-color: rgba(0, 0, 0, 0);
+    border-width: 1px;
+    border-color: rgba(0, 0, 0, 0);
+    border-radius: 5px;
+    margin-bottom: 15px;
+    margin-right: 15px;
+    justify-content: flex-start;
+    align-items: center;
+    padding-top: 5px;
+    transition-duration: 0.1s;
+}
+
+.desktop-icon:hover {
+    background-color: rgba(255, 255, 255, 0.2);
+    border-color: rgba(255, 255, 255, 0.5);
+}
+
+.desktop-icon:active {
+    background-color: rgba(255, 255, 255, 0.3);
+}
+
+/* Картинка внутри иконки */
+.icon-img {
+    width: 48px;
+    height: 48px;
+    margin-bottom: 5px;
+    background-color: white;
+    border-radius: 5px;
+}
+
+/* Цвета заглушек */
+.cam-color { background-color: #333; }
+.trap-color { background-color: #d9534f; }
+.map-color { background-color: #5cb85c; }
+.shop-color { background-color: #f0ad4e; }
+
+/* Текст иконки */
+.icon-text {
+    color: white;
+    font-size: 13px;
+    -unity-font-style: bold;
+    text-shadow: 1px 1px 2px black;
+    white-space: normal;
+    text-align: center;
+}
+
+/* --- ГАДЖЕТ БАЛАНСА --- */
+.gadget-panel {
+    position: absolute;
+    top: 20px;
+    right: 20px;
+    width: 220px;
+    background-color: rgba(0, 0, 0, 0.5);
+    border-radius: 10px;
+    padding: 15px;
+    border-color: rgba(255, 255, 255, 0.2);
+    border-width: 1px;
+}
+
+.gadget-title {
+    color: #ddd;
+    font-size: 12px;
+}
+
+.gadget-money {
+    color: #88ff88;
+    font-size: 26px;
+    -unity-font-style: bold;
+    margin-bottom: 5px;
+}
+
+.gadget-info {
+    color: white;
+    font-size: 14px;
+    white-space: normal;
+}
+
+/* --- ПАНЕЛЬ ЗАДАЧ --- */
+.taskbar {
+    height: 40px;
+    width: 100%;
+    /* Полупрозрачный черный (эффект стекла Aero) */
+    background-color: rgba(10, 20, 30, 0.85);
+    border-top-width: 1px;
+    border-top-color: rgba(255, 255, 255, 0.3);
+    flex-direction: row;
+    align-items: center;
+    padding-left: 5px;
+}
+
+/* --- КНОПКА ПУСК (ПРЯМОУГОЛЬНАЯ) --- */
+.start-btn {
+    width: 80px;
+    height: 34px;
+    /* Используем сплошной цвет вместо градиента, чтобы не было ошибки */
+    background-color: rgb(30, 80, 160);
+
+    border-radius: 4px;
+    border-width: 1px;
+    /* Светлая рамка сверху, темная снизу для объема */
+    border-color: rgba(255,255,255,0.5);
+    border-bottom-color: rgba(0,0,0,0.5);
+    border-right-color: rgba(0,0,0,0.5);
+
+    justify-content: center;
+    align-items: center;
+    margin-left: 5px;
+}
+
+/* Эффект наведения на Пуск */
+.start-btn:hover {
+    background-color: rgb(50, 100, 200);
+}
+
+.start-text {
+    color: white;
+    -unity-font-style: bold;
+    font-size: 14px;
+    text-shadow: 0px 0px 2px black;
+}

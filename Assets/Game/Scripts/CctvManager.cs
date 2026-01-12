@@ -1,7 +1,6 @@
 using UnityEngine;
-using System.Collections;
 using System.Collections.Generic;
-using TMPro;
+using UnityEngine.UIElements;
 
 public class CctvManager : MonoBehaviour
 {
@@ -9,28 +8,63 @@ public class CctvManager : MonoBehaviour
 
     [Header("Main References")]
     public Camera playerCamera;
-    public Camera mapCamera; // <--- НОВОЕ: Ссылка на камеру карты
     public MonoBehaviour playerController;
-
-    [Header("UI References")]
-    public GameObject monitorMenuUI; // Главное меню
-    public GameObject cctvViewUI;    // Просмотр камер (CAM 1...)
-    public GameObject mapUI;         // Панель карты (только кнопка НАЗАД)
-    public TMP_Text balanceText;
+    
+    [Header("UI Toolkit")]
+    public UIDocument monitorUIDoc; 
+    
+    [Header("Old UI")]
+    public GameObject cctvViewUI;   
+    
+    [Header("Map")]
+    public Camera mapCamera;        
 
     private List<Camera> securityCameras = new List<Camera>();
     private int currentCamIndex = 0;
-
-    // Состояния
-    public bool isMonitorActive = false;
-    private bool isWatchingCameras = false;
-    private bool isWatchingMap = false;
+    
+    public bool isMonitorActive = false; 
+    
+    private bool isWatchingCameras = false; 
+    private bool isWatchingMap = false; 
+    
+    // --- ИСПРАВЛЕНИЕ: Таймеры для защиты от двойного нажатия ---
     private float lastExitTime = -1f;
-    private float lastEnterTime = -1f;
+    private float lastEnterTime = -1f; 
+    // -----------------------------------------------------------
+
+    private VisualElement root;
+    private Label moneyText;
+    private Label infoText;
 
     void Awake()
     {
         instance = this;
+    }
+
+    void Start()
+    {
+        if (monitorUIDoc != null)
+        {
+            root = monitorUIDoc.rootVisualElement;
+            monitorUIDoc.gameObject.SetActive(false); 
+
+            var btnCameras = root.Q<Button>("BtnCameras");
+            var btnTrap = root.Q<Button>("BtnBuyTrap");
+            var btnCam = root.Q<Button>("BtnBuyCam");
+            var btnMap = root.Q<Button>("BtnMap");
+            var btnExit = root.Q<Button>("BtnExit");
+
+            moneyText = root.Q<Label>("MoneyText");
+            infoText = root.Q<Label>("InfoText");
+
+            if(btnCameras != null) btnCameras.clicked += OnCamerasButtonClicked;
+            if(btnTrap != null)    btnTrap.clicked += OnBuyTrapClicked;
+            if(btnCam != null)     btnCam.clicked += OnBuyCameraClicked;
+            if(btnMap != null)     btnMap.clicked += OnMapButtonClicked;
+            if(btnExit != null)    btnExit.clicked += OnExitButtonClicked;
+        }
+
+        if (mapCamera) mapCamera.enabled = false;
     }
 
     public void RegisterCamera(Camera newCam)
@@ -41,187 +75,111 @@ public class CctvManager : MonoBehaviour
         securityCameras.Add(newCam);
     }
 
-    void Start()
-    {
-        // На старте выключаем карту
-        if (mapCamera) mapCamera.enabled = false;
-    }
-
     void Update()
     {
-
-        if (Input.GetKeyDown(KeyCode.H))
-        {
-            print(Cursor.visible);
-            monitorMenuUI.SetActive(true);
-        }
         if (isMonitorActive)
         {
-            // Обновляем баланс в меню
-            if (!isWatchingCameras && !isWatchingMap && balanceText != null && GameManager.instance != null)
+            if (!isWatchingCameras && !isWatchingMap && moneyText != null && GameManager.instance != null)
             {
-                balanceText.text = $"Баланс: ${GameManager.instance.money}\nЛовушек: {GameManager.instance.trapsCount}\nКамер: {GameManager.instance.camerasCount}";
+                moneyText.text = $"$ {GameManager.instance.money}";
+                if (infoText != null)
+                    infoText.text = $"Traps: {GameManager.instance.trapsCount} | Cams: {GameManager.instance.camerasCount}";
             }
 
-            // Управление камерами (A/D)
             if (isWatchingCameras)
             {
                 if (Input.GetKeyDown(KeyCode.D)) NextCamera();
                 if (Input.GetKeyDown(KeyCode.A)) PrevCamera();
             }
 
-            // Выход (E или ESC)
-            if ((Input.GetKeyDown(KeyCode.E) || Input.GetKeyDown(KeyCode.Escape)) && (lastEnterTime < 0f || Time.time - lastEnterTime >= 0.1f))
+            // --- ИСПРАВЛЕНИЕ: Проверяем, прошло ли время после входа ---
+            if (Time.time - lastEnterTime > 0.2f) // Ждем 0.2 сек перед тем как разрешить выход
             {
-                if (isWatchingCameras || isWatchingMap)
+                if (Input.GetKeyDown(KeyCode.E) || Input.GetKeyDown(KeyCode.Escape))
                 {
-                    ReturnToMenu();
-                }
-                else
-                {
-                    ExitMonitorMode();
+                    if (isWatchingCameras || isWatchingMap) ReturnToMenu();
+                    else ExitMonitorMode();
                 }
             }
+            // -----------------------------------------------------------
         }
     }
 
     public void EnterMonitorMode()
     {
-        print("enter monitor mode");
-        if (isMonitorActive) return; // Уже в режиме, не перезапускать
-        if (lastExitTime > 0f && Time.time - lastExitTime < 0.2f) return;
+        // Защита от слишком частого входа/выхода
+        if (Time.time - lastExitTime < 0.2f) return;
 
-        // Начинаем корутину для установки режима на следующем кадре
-        StartCoroutine(ActivateMonitorMode());
-    }
-
-    private IEnumerator ActivateMonitorMode()
-    {
-        // Ждём следующий кадр
-        yield return null;
+        // --- ИСПРАВЛЕНИЕ: Запоминаем время входа ---
+        lastEnterTime = Time.time;
+        // -------------------------------------------
 
         isMonitorActive = true;
-        print("isMonitorActive" + isMonitorActive);
         isWatchingCameras = false;
         isWatchingMap = false;
 
         if (playerController) playerController.enabled = false;
+        
+        UnityEngine.Cursor.lockState = CursorLockMode.None;
+        UnityEngine.Cursor.visible = true;
 
-        Cursor.lockState = CursorLockMode.None;
-        Cursor.visible = true;
-
-
-        // Показываем меню, скрываем остальное
-        if (monitorMenuUI) monitorMenuUI.SetActive(true);
+        if (monitorUIDoc) monitorUIDoc.gameObject.SetActive(true);
         if (cctvViewUI) cctvViewUI.SetActive(false);
-        if (mapUI) mapUI.SetActive(false);
-
-        // Камеры выключены
         if (mapCamera) mapCamera.enabled = false;
-
-        lastEnterTime = Time.time;
     }
 
-    // --- КНОПКИ ---
+    // ... (Остальной код кнопок и переключений без изменений) ...
 
-    public void OnMapButtonClicked()
+    void OnCamerasButtonClicked()
     {
-        isWatchingMap = true;
-
-        // 1. UI
-        if (monitorMenuUI) monitorMenuUI.SetActive(false);
-        if (mapUI) mapUI.SetActive(true); // Включаем кнопку "НАЗАД"
-
-        // 2. Камеры
-        if (playerCamera) playerCamera.enabled = false; // Выкл игрока
-        if (mapCamera) mapCamera.enabled = true; // ВКЛ КАРТУ
-    }
-
-    public void OnBackFromMapClicked()
-    {
-        ReturnToMenu();
-    }
-
-    public void OnCamerasButtonClicked()
-    {
-        if (securityCameras.Count == 0)
-        {
-            Debug.Log("Нет камер!");
-            return;
-        }
-
+        if (securityCameras.Count == 0) { Debug.Log("Нет камер!"); return; }
         isWatchingCameras = true;
-        if (monitorMenuUI) monitorMenuUI.SetActive(false);
-        if (cctvViewUI) cctvViewUI.SetActive(true);
-
-        if (playerCamera) playerCamera.enabled = false;
-
-        Cursor.lockState = CursorLockMode.Locked;
-        Cursor.visible = false;
-
+        SwitchMode(false, true, false); 
         currentCamIndex = 0;
         ActivateCamera(currentCamIndex);
     }
 
-    public void OnBuyTrapClicked()
+    void OnMapButtonClicked()
     {
-        if (GameManager.instance != null) GameManager.instance.BuyTrap();
+        isWatchingMap = true;
+        SwitchMode(false, false, true); 
     }
 
-    public void OnBuyCameraClicked()
-    {
-        if (GameManager.instance != null) GameManager.instance.BuyCamera();
-    }
+    void OnBuyTrapClicked() { if (GameManager.instance != null) GameManager.instance.BuyTrap(); }
+    void OnBuyCameraClicked() { if (GameManager.instance != null) GameManager.instance.BuyCamera(); }
+    void OnExitButtonClicked() { ExitMonitorMode(); }
 
-    public void OnExitButtonClicked()
+    void SwitchMode(bool menu, bool cams, bool map)
     {
-        ExitMonitorMode();
-    }
+        if (monitorUIDoc) monitorUIDoc.gameObject.SetActive(menu);
+        if (playerCamera) playerCamera.enabled = menu; 
+        if (cctvViewUI) cctvViewUI.SetActive(cams);
+        if (!cams) foreach (var c in securityCameras) if(c) c.enabled = false;
+        if (mapCamera) mapCamera.enabled = map;
 
-    // --- СЛУЖЕБНЫЕ --
+        if (menu) { UnityEngine.Cursor.lockState = CursorLockMode.None; UnityEngine.Cursor.visible = true; }
+        else { UnityEngine.Cursor.lockState = CursorLockMode.Locked; UnityEngine.Cursor.visible = false; }
+    }
 
     void ReturnToMenu()
     {
         isWatchingCameras = false;
         isWatchingMap = false;
-
-        // Выключаем камеры и UI карты/камер
-        foreach (Camera cam in securityCameras) if (cam) cam.enabled = false;
-        if (mapCamera) mapCamera.enabled = false; // ВЫКЛ КАРТУ
-
-        if (cctvViewUI) cctvViewUI.SetActive(false);
-        if (mapUI) mapUI.SetActive(false);
-
-        // Включаем меню
-        if (monitorMenuUI) monitorMenuUI.SetActive(true);
-
-        // Включаем игрока (визуально), курсор
-        if (playerCamera) playerCamera.enabled = true;
-        Cursor.lockState = CursorLockMode.None;
-        Cursor.visible = true;
+        SwitchMode(true, false, false);
     }
 
     public void ExitMonitorMode()
     {
-        print("exit monitor mode");
         isMonitorActive = false;
-        isWatchingCameras = false;
-        isWatchingMap = false;
-
-        if (monitorMenuUI) monitorMenuUI.SetActive(false);
-        if (cctvViewUI) cctvViewUI.SetActive(false);
-        if (mapUI) mapUI.SetActive(false);
-
-        foreach (Camera cam in securityCameras) if (cam) cam.enabled = false;
-        if (mapCamera) mapCamera.enabled = false;
+        SwitchMode(false, false, false);
 
         if (playerCamera) playerCamera.enabled = true;
         if (playerController) playerController.enabled = true;
-
-        Cursor.lockState = CursorLockMode.Locked;
-        Cursor.visible = false;
-
-        lastExitTime = Time.time;
+        
+        UnityEngine.Cursor.lockState = CursorLockMode.Locked;
+        UnityEngine.Cursor.visible = false;
+        
+        lastExitTime = Time.time; // Запоминаем время выхода
     }
 
     void ActivateCamera(int index)
