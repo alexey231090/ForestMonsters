@@ -1,40 +1,35 @@
 using UnityEngine;
 using System.Collections.Generic;
-using UnityEngine.UIElements;
 
 public class CctvManager : MonoBehaviour
 {
     public static CctvManager instance;
-
+//23
     [Header("Main References")]
     public Camera playerCamera;
     public MonoBehaviour playerController;
-    
-    [Header("UI Toolkit")]
-    public UIDocument monitorUIDoc; 
-    
-    [Header("Old UI")]
-    public GameObject cctvViewUI;   
-    
-    [Header("Map")]
-    public Camera mapCamera;        
 
-    private List<Camera> securityCameras = new List<Camera>();
-    private int currentCamIndex = 0;
-    
-    public bool isMonitorActive = false; 
-    
-    private bool isWatchingCameras = false; 
-    private bool isWatchingMap = false; 
-    
+    [Header("Old UI")]
+    public GameObject cctvViewUI;
+
+    [Header("Map")]
+    public Camera mapCamera;
+
+    [Header("UI Handler")]
+    public MonitorUIHandler uiHandler;
+
+    public List<Camera> securityCameras = new List<Camera>();
+    public int currentCamIndex = 0;
+
+    public bool isMonitorActive = false;
+
+    public bool isWatchingCameras = false;
+    public bool isWatchingMap = false;
+
     // --- ИСПРАВЛЕНИЕ: Таймеры для защиты от двойного нажатия ---
     private float lastExitTime = -1f;
-    private float lastEnterTime = -1f; 
+    private float lastEnterTime = -1f;
     // -----------------------------------------------------------
-
-    private VisualElement root;
-    private Label moneyText;
-    private Label infoText;
 
     void Awake()
     {
@@ -43,27 +38,6 @@ public class CctvManager : MonoBehaviour
 
     void Start()
     {
-        if (monitorUIDoc != null)
-        {
-            root = monitorUIDoc.rootVisualElement;
-            monitorUIDoc.gameObject.SetActive(false); 
-
-            var btnCameras = root.Q<Button>("BtnCameras");
-            var btnTrap = root.Q<Button>("BtnBuyTrap");
-            var btnCam = root.Q<Button>("BtnBuyCam");
-            var btnMap = root.Q<Button>("BtnMap");
-            var btnExit = root.Q<Button>("BtnExit");
-
-            moneyText = root.Q<Label>("MoneyText");
-            infoText = root.Q<Label>("InfoText");
-
-            if(btnCameras != null) btnCameras.clicked += OnCamerasButtonClicked;
-            if(btnTrap != null)    btnTrap.clicked += OnBuyTrapClicked;
-            if(btnCam != null)     btnCam.clicked += OnBuyCameraClicked;
-            if(btnMap != null)     btnMap.clicked += OnMapButtonClicked;
-            if(btnExit != null)    btnExit.clicked += OnExitButtonClicked;
-        }
-
         if (mapCamera) mapCamera.enabled = false;
     }
 
@@ -79,13 +53,6 @@ public class CctvManager : MonoBehaviour
     {
         if (isMonitorActive)
         {
-            if (!isWatchingCameras && !isWatchingMap && moneyText != null && GameManager.instance != null)
-            {
-                moneyText.text = $"$ {GameManager.instance.money}";
-                if (infoText != null)
-                    infoText.text = $"Traps: {GameManager.instance.trapsCount} | Cams: {GameManager.instance.camerasCount}";
-            }
-
             if (isWatchingCameras)
             {
                 if (Input.GetKeyDown(KeyCode.D)) NextCamera();
@@ -119,40 +86,22 @@ public class CctvManager : MonoBehaviour
         isWatchingMap = false;
 
         if (playerController) playerController.enabled = false;
-        
+
         UnityEngine.Cursor.lockState = CursorLockMode.None;
         UnityEngine.Cursor.visible = true;
 
-        if (monitorUIDoc) monitorUIDoc.gameObject.SetActive(true);
         if (cctvViewUI) cctvViewUI.SetActive(false);
         if (mapCamera) mapCamera.enabled = false;
+        if (uiHandler != null) uiHandler.ShowUI();
     }
 
-    // ... (Остальной код кнопок и переключений без изменений) ...
 
-    void OnCamerasButtonClicked()
+
+    public void SwitchMode(bool menu, bool cams, bool map)
     {
-        if (securityCameras.Count == 0) { Debug.Log("Нет камер!"); return; }
-        isWatchingCameras = true;
-        SwitchMode(false, true, false); 
-        currentCamIndex = 0;
-        ActivateCamera(currentCamIndex);
-    }
-
-    void OnMapButtonClicked()
-    {
-        isWatchingMap = true;
-        SwitchMode(false, false, true); 
-    }
-
-    void OnBuyTrapClicked() { if (GameManager.instance != null) GameManager.instance.BuyTrap(); }
-    void OnBuyCameraClicked() { if (GameManager.instance != null) GameManager.instance.BuyCamera(); }
-    void OnExitButtonClicked() { ExitMonitorMode(); }
-
-    void SwitchMode(bool menu, bool cams, bool map)
-    {
-        if (monitorUIDoc) monitorUIDoc.gameObject.SetActive(menu);
-        if (playerCamera) playerCamera.enabled = menu; 
+        if (menu && uiHandler != null) uiHandler.ShowUI();
+        else if (uiHandler != null) uiHandler.HideUI();
+        if (playerCamera) playerCamera.enabled = menu;
         if (cctvViewUI) cctvViewUI.SetActive(cams);
         if (!cams) foreach (var c in securityCameras) if(c) c.enabled = false;
         if (mapCamera) mapCamera.enabled = map;
@@ -182,7 +131,7 @@ public class CctvManager : MonoBehaviour
         lastExitTime = Time.time; // Запоминаем время выхода
     }
 
-    void ActivateCamera(int index)
+   public void ActivateCamera(int index)
     {
         for (int i = 0; i < securityCameras.Count; i++)
         {

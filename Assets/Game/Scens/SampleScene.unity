@@ -13399,10 +13399,14 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   playerCamera: {fileID: 2082357096}
   playerController: {fileID: 2001431994}
-  monitorUIDoc: {fileID: 2056337882}
   cctvViewUI: {fileID: 1135306013}
   mapCamera: {fileID: 1410075122}
-  isMonitorActive: 1
+  uiHandler: {fileID: 2056337884}
+  securityCameras: []
+  currentCamIndex: 0
+  isMonitorActive: 0
+  isWatchingCameras: 0
+  isWatchingMap: 0
 --- !u!4 &899139568 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: 7533795812152726194, guid: 1a6d89347d5a6b24f8189f69acebbd1b,
@@ -34022,6 +34026,7 @@ GameObject:
   m_Component:
   - component: {fileID: 2056337883}
   - component: {fileID: 2056337882}
+  - component: {fileID: 2056337884}
   m_Layer: 0
   m_Name: MonitorUI_Toolkit
   m_TagString: Untagged
@@ -34036,7 +34041,7 @@ MonoBehaviour:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 2056337881}
-  m_Enabled: 1
+  m_Enabled: 0
   m_EditorHideFlags: 0
   m_Script: {fileID: 19102, guid: 0000000000000000e000000000000000, type: 0}
   m_Name: 
@@ -34064,6 +34069,19 @@ Transform:
   m_Children: []
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &2056337884
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2056337881}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 2851f2457ba83514ba438056a513a2eb, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  monitorUIDoc: {fileID: 2056337882}
 --- !u!4 &2057196257 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: 7993310380055280047, guid: 79d610b2c71e176489bb46121e530ee8,

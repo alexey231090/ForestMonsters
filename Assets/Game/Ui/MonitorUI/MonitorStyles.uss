@@ -1,0 +1,156 @@
+.desktop-bg {
+    flex-grow: 1;
+    background-color: rgb(26, 26, 36);
+    justify-content: space-between;
+}
+
+.icon-grid {
+    flex-direction: column;
+    flex-wrap: wrap;
+    align-items: flex-start;
+    padding: 20px;
+    height: 80%;
+}
+
+.desktop-icon {
+    width: 100px;
+    height: 100px;
+    background-color: rgba(255, 255, 255, 0.05);
+    border-width: 1px;
+    border-color: rgba(255, 255, 255, 0.1);
+    border-radius: 8px;
+    margin-bottom: 15px;
+    margin-right: 15px;
+    justify-content: center;
+    align-items: center;
+    padding: 10px;
+    transition-duration: 0.1s;
+}
+
+.desktop-icon:hover {
+    background-color: rgba(0, 255, 200, 0.15);
+    border-color: rgba(0, 255, 200, 0.5);
+    scale: 1.05;
+}
+
+.desktop-icon:active {
+    background-color: rgba(0, 255, 200, 0.3);
+}
+
+.icon-img {
+    width: 40px;
+    height: 40px;
+    margin-bottom: 8px;
+    border-radius: 4px;
+    background-color: rgba(0, 0, 0, 0);
+}
+
+.cam-color {
+    background-color: rgb(0, 210, 255);
+    border-radius: 50%;
+}
+
+.trap-color {
+    background-color: rgb(255, 77, 77);
+    border-radius: 20%;
+}
+
+.map-color {
+    background-color: rgb(77, 255, 136);
+    border-radius: 4px;
+}
+
+.shop-color {
+    background-color: rgb(255, 170, 0);
+    border-radius: 4px;
+}
+
+.icon-text {
+    color: rgb(238, 238, 238);
+    font-size: 11px;
+    -unity-font-style: bold;
+    white-space: normal;
+    text-align: center;
+    opacity: 0.9;
+}
+
+.gadget-panel {
+    position: absolute;
+    top: 20px;
+    right: 20px;
+    width: 240px;
+    background-color: rgba(20, 25, 35, 0.9);
+    border-radius: 12px;
+    padding: 15px;
+    border-color: rgba(0, 255, 200, 0.3);
+    border-width: 1px;
+    border-left-width: 4px;
+}
+
+.gadget-title {
+    color: rgb(136, 153, 170);
+    font-size: 10px;
+    margin-bottom: 2px;
+    letter-spacing: 1px;
+}
+
+.gadget-money {
+    color: rgb(0, 255, 170);
+    font-size: 32px;
+    -unity-font-style: bold;
+    margin-bottom: 10px;
+    text-shadow: 0 0 5px rgba(0, 255, 170, 0.5);
+}
+
+.gadget-info {
+    color: rgb(204, 204, 204);
+    font-size: 12px;
+    white-space: normal;
+    border-top-width: 1px;
+    border-top-color: rgba(255, 255, 255, 0.1);
+    padding-top: 8px;
+}
+
+.taskbar {
+    height: 48px;
+    width: 100%;
+    background-color: rgb(17, 17, 22);
+    border-top-width: 2px;
+    border-top-color: rgb(51, 51, 64);
+    flex-direction: row;
+    align-items: center;
+    padding-left: 10px;
+    padding-right: 10px;
+}
+
+.start-btn {
+    width: 40px;
+    height: 40px;
+    background-color: red;
+    border-radius: 5px;
+    border-width: 2px;
+    border-color: rgba(255, 255, 255, 0.2);
+    justify-content: center;
+    align-items: center;
+    margin-left: 5px;
+    transition-duration: 0.2s;
+}
+
+.start-btn:hover {
+    background-color: rgba(0, 255, 200, 0.2);
+    border-color: rgba(0, 255, 200, 0.8);
+    scale: 1.1;
+}
+
+.start-text {
+    color: white;
+    -unity-font-style: bold;
+    font-size: 11px;
+}
+
+.start-btn-icon {
+    width: 20px;
+    height: 20px;
+    background-color: rgb(0, 255, 170);
+    border-radius: 2px;
+}
