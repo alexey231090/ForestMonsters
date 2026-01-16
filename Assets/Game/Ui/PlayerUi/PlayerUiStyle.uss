@@ -1,0 +1,109 @@
+/* Контейнер инвентаря: нижняя панель как в Minecraft */
+.inventory-container {
+    position: absolute;
+    bottom: 20px;
+    left: 50%;
+    translate: -50% 0;
+    flex-direction: row;
+    gap: 12px;
+}
+
+/* Базовый стиль слота */
+.inventory-slot {
+    width: 80px;
+    height: 80px;
+    margin: 0;
+    background-color: rgba(0, 0, 0, 0.6);
+    border-radius: 10px;
+    border-width: 2px;
+    border-color: rgba(255, 255, 255, 0.2);
+    
+    /* Для позиционирования детей */
+    align-items: center;
+    justify-content: center;
+
+    position: relative;
+    opacity: 0.9;
+    overflow: visible;
+}
+
+/* Состояние: ВЫБРАН (подсветка) */
+.inventory-slot.selected {
+    background-color: rgba(0, 255, 120, 0.08);
+    border-color: rgba(0, 255, 120, 0.9);
+    opacity: 1;
+}
+
+/* Номер слота (1, 2) */
+.slot-number {
+    position: absolute;
+    top: 2px;
+    left: 5px;
+    font-size: 14px;
+    color: rgba(255, 255, 255, 0.5);
+    -unity-font-style: bold;
+}
+
+/* Иконки (пока квадратики) */
+.slot-icon {
+    width: 40px;
+    height: 40px;
+    border-radius: 4px;
+    margin-bottom: 5px;
+}
+
+.trap-icon {
+    background-color: #ff5555;
+}
+
+.camera-icon {
+    background-color: #55aaff;
+}
+
+/* Подпись */
+.slot-label {
+    font-size: 10px;
+    color: white;
+}
+
+/* ======================= FUSE OVERLAY ======================= */
+.fuse-overlay {
+    position: absolute;
+    left: 0;
+    right: 0;
+    top: 0;
+    bottom: 0;
+    pointer-events: none;
+}
+
+.fuse-top,
+.fuse-bottom {
+    position: absolute;
+    height: 6px;
+    background-color: rgba(0, 255, 120, 0.7);
+    border-radius: 3px;
+}
+.fuse-top {
+    top: -3px;
+    left: 0;
+}
+.fuse-bottom {
+    bottom: -3px;
+    right: 0; /* чтобы укорачивалась справа налево */
+}
+
+.fuse-right,
+.fuse-left {
+    position: absolute;
+    width: 6px;
+    background-color: rgba(0, 255, 120, 0.7);
+    border-radius: 3px;
+}
+.fuse-right {
+    right: -3px;
+    top: 0;
+}
+.fuse-left {
+    left: -3px;
+    bottom: 0; /* чтобы укорачивалась снизу вверх */
+}

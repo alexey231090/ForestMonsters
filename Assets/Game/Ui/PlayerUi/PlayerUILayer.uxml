@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ui:UXML xmlns:ui="UnityEngine.UIElements" xmlns:uie="UnityEditor.UIElements" editor-extension-mode="False">
+    <ui:Style src="PlayerUiStyle.uss" />
+
+    <ui:VisualElement name="InventoryContainer" class="inventory-container">
+        <!-- Слот 1: Ловушка -->
+        <ui:VisualElement name="SlotTrap" class="inventory-slot">
+            <ui:Label text="1" class="slot-number" />
+            <ui:VisualElement class="slot-icon trap-icon" />
+            <ui:Label text="TRAP" class="slot-label" />
+            <!-- Fuse overlay -->
+            <ui:VisualElement name="FuseTrap" class="fuse-overlay">
+                <ui:VisualElement name="FuseTrapTop" class="fuse-top" />
+                <ui:VisualElement name="FuseTrapRight" class="fuse-right" />
+                <ui:VisualElement name="FuseTrapBottom" class="fuse-bottom" />
+                <ui:VisualElement name="FuseTrapLeft" class="fuse-left" />
+            </ui:VisualElement>
+        </ui:VisualElement>
+
+        <!-- Слот 2: Камера -->
+        <ui:VisualElement name="SlotCamera" class="inventory-slot">
+            <ui:Label text="2" class="slot-number" />
+            <ui:VisualElement class="slot-icon camera-icon" />
+            <ui:Label text="CAM" class="slot-label" />
+            <!-- Fuse overlay -->
+            <ui:VisualElement name="FuseCam" class="fuse-overlay">
+                <ui:VisualElement name="FuseCamTop" class="fuse-top" />
+                <ui:VisualElement name="FuseCamRight" class="fuse-right" />
+                <ui:VisualElement name="FuseCamBottom" class="fuse-bottom" />
+                <ui:VisualElement name="FuseCamLeft" class="fuse-left" />
+            </ui:VisualElement>
+        </ui:VisualElement>
+
+    </ui:VisualElement>
+</ui:UXML>

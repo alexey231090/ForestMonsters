@@ -26,6 +26,7 @@ public class PlayerInteract : MonoBehaviour
     [Header("References")]
     public Transform cameraPrefab;
     public CctvManager cctvManager;
+    public PlayerUIHandler playerUI;
     
     private PlayerCarrier carrier;
 
@@ -39,10 +40,12 @@ public class PlayerInteract : MonoBehaviour
     private int selectedItemIndex = -1; // -1 значит "Ничего не выбрано"
     private GameObject currentGhost;
     private float ghostTimer = 0f; // Текущий таймер жизни призрака
+    private bool wasLookingAtGround = false;
 
     void Start()
     {
         carrier = GetComponent<PlayerCarrier>();
+        if (playerUI == null) playerUI = FindObjectOfType<PlayerUIHandler>();
     }
 
     void Update()
@@ -112,12 +115,20 @@ public class PlayerInteract : MonoBehaviour
         }
 
         RaycastHit hit;
+        bool isLooking = Physics.Raycast(origin.position, origin.forward, out hit, buildDistance, groundLayer);
         
         // 2. Ищем землю
-        if (Physics.Raycast(origin.position, origin.forward, out hit, buildDistance, groundLayer))
+        if (isLooking)
         {
             // --- МЫ СМОТРИМ НА ЗЕМЛЮ ---
             ghostTimer = ghostTimeout; // Сбрасываем таймер на максимум (5 сек)
+
+            // UI Logic: Вернули взгляд на землю — фитиль полный
+            if (playerUI)
+            {
+                playerUI.SetFuseActive(selectedItemIndex, true);
+                playerUI.SetFuseProgress(selectedItemIndex, 1f);
+            }
 
             // Логика создания/перемещения призрака
             GameObject neededGhostPrefab = (selectedItemIndex == 0) ? trapGhostPrefab : cameraGhostPrefab;
@@ -148,6 +159,14 @@ public class PlayerInteract : MonoBehaviour
             // --- МЫ СМОТРИМ В НЕБО ---
             DestroyGhost(); // Прячем визуал
 
+            // UI Logic: Отвели взгляд — фитиль укорачивается по таймеру
+            if (playerUI)
+            {
+                float p = Mathf.Clamp01(ghostTimer / ghostTimeout);
+                playerUI.SetFuseActive(selectedItemIndex, true);
+                playerUI.SetFuseProgress(selectedItemIndex, p);
+            }
+
             // Уменьшаем таймер
             ghostTimer -= Time.deltaTime;
             if (ghostTimer <= 0)
@@ -156,6 +175,8 @@ public class PlayerInteract : MonoBehaviour
                 Debug.Log("Режим строительства отключен из-за бездействия.");
             }
         }
+
+        wasLookingAtGround = isLooking;
     }
 
     void ChangeItem(int index)
@@ -163,12 +184,25 @@ public class PlayerInteract : MonoBehaviour
         selectedItemIndex = index;
         ghostTimer = ghostTimeout; // При смене предмета таймер обновляется
         DestroyGhost();
+
+        if (playerUI)
+        {
+            playerUI.SelectSlot(index);
+            playerUI.SetFuseActive(index, true);
+            playerUI.SetFuseProgress(index, 1f);
+        }
+        wasLookingAtGround = true;
     }
 
     void DisableBuildMode()
     {
         selectedItemIndex = -1;
         DestroyGhost();
+        if (playerUI)
+        {
+            playerUI.SelectSlot(-1);
+            playerUI.SetFuseActive(-1, false);
+        }
     }
 
     void DestroyGhost()
