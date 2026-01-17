@@ -107,14 +107,14 @@ public class GameManager : MonoBehaviour
         {
             money -= cameraPrice;
             camerasCount++;
-            Debug.Log("������� ������!");
+            Debug.Log("Buy camera");
             return true;
         }
-        Debug.Log("�� ������� ����� �� ������!");
+        Debug.Log("No money");
         return false;
     }
 
-    // ������ ��� ������������� ��� �������������
+    
     public bool TryUseTrap()
     {
         if (trapsCount > 0)
@@ -135,7 +135,7 @@ public class GameManager : MonoBehaviour
         return false;
     }
 
-    // --- ��������� ����� ---
+    
     public void AddCreature()
     {
         capturedCreatures++;
