@@ -19,7 +19,7 @@ public class PlayerUIHandler : MonoBehaviour
         if (playerUIDoc == null) playerUIDoc = GetComponent<UIDocument>();
         if (playerUIDoc == null)
         {
-            var docs = Object.FindObjectsOfType<UIDocument>();
+            var docs = Object.FindObjectsByType<UIDocument>(FindObjectsSortMode.None);
             foreach (var d in docs)
             {
                 var test = d.rootVisualElement.Q<VisualElement>("InventoryContainer");

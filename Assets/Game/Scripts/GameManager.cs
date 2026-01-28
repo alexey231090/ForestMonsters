@@ -16,25 +16,26 @@ public class GameManager : MonoBehaviour
     public float trapPrice = 20f;
     public float cameraPrice = 15f;
 
-    // ������ �������� �������� � �����
+    //   
     public List<ParkPlatform> activePlatforms = new List<ParkPlatform>();
 
     [Header("Spawners")]
     public VisitorSpawner visitorSpawner; // Spawner for visitor creatures
-    public EnemySpawner enemySpawner;     // ������ �� ������� ������ (�����)
+    public EnemySpawner enemySpawner;     //     ()
 
     [Header("Time Settings")]
     public float dayDurationMinutes = 1f;
     public float nightDurationMinutes = 1f;
 
-    [Header("Lighting")]
-    public Light sunLight;
-    public Color dayFog = new Color(0.5f, 0.6f, 0.7f);
-    public Color nightFog = new Color(0.02f, 0.02f, 0.05f);
+    [Header("Lighting Controller")]
+    public SunMovementController sunController;
 
     [Header("State (Read Only)")]
     public bool isNight = false;
     public float currentPhaseTimer = 0f;
+    
+    private float phaseChangeProtectionTimer = 0f;
+    private const float PHASE_CHANGE_PROTECTION_DURATION = 0.5f; // 0.5 seconds protection
 
     void Awake()
     {
@@ -43,50 +44,75 @@ public class GameManager : MonoBehaviour
 
     void Start()
     {
-        StartDay();
-        if (enemySpawner == null)
+        if (sunController == null)
         {
-            Debug.Log("��� enimySpavner.cs � GameManager");
+            sunController = Object.FindAnyObjectByType<SunMovementController>();
+        }
+        StartDay();
+        if (enemySpawner == null) 
+        {
+            Debug.Log(" enimySpavner.cs  GameManager");
         }
     }
 
     void Update()
     {
-        // ��� �� �������� �������
+            
         if (Input.GetKeyDown(KeyCode.I))
         {
-            Debug.Log($"$$$ ������: {money} | �������: {trapsCount} | �����: {camerasCount}");
+            Debug.Log($"$$$ : {money} | : {trapsCount} | : {camerasCount}");
+        }
+
+        // Синхронизируем переменную isNight с реальным положением солнца
+        // Защита от смены фазы сразу после вызова SkipCurrentPhase
+        if (sunController != null && phaseChangeProtectionTimer <= 0)
+        {
+            // Определяем текущую фазу на основе ротации солнца
+            bool currentlyDay = sunController.IsCurrentlyDay();
+            // Обновляем isNight (противоположно isDay)
+            bool oldIsNight = isNight;
+            isNight = !currentlyDay;
+            
+            if (oldIsNight != isNight)
+            {
+                // Фаза изменилась, вызываем соответствующий метод
+                if (isNight)
+                {
+                    StartNight();
+                }
+                else
+                {
+                    StartDay();
+                }
+            }
+        }
+        else if (phaseChangeProtectionTimer > 0)
+        {
+            phaseChangeProtectionTimer -= Time.deltaTime;
         }
 
         currentPhaseTimer += Time.deltaTime;
+ 
+        
+        float durationSec = (!isNight) ? dayDurationMinutes * 60f : nightDurationMinutes * 60f;
 
-        if (!isNight) // ����
+        if (sunController && sunController.sunLight && currentPhaseTimer <= durationSec)
         {
-            float dayDurationSec = dayDurationMinutes * 60f;
-            if (sunLight)
-            {
-                float progress = currentPhaseTimer / dayDurationSec;
-                float angle = Mathf.Lerp(0f, 180f, progress);
-                sunLight.transform.rotation = Quaternion.Euler(angle, 0, 0);
-                sunLight.intensity = 1f;
-            }
-            if (currentPhaseTimer >= dayDurationSec) StartNight();
+            float progress = currentPhaseTimer / durationSec;
+
+
+            sunController.sunLight.intensity = (!isNight) ? 1f : 0.1f;
         }
-        else // ����
+         
+        
+        if (currentPhaseTimer >= durationSec)
         {
-            float nightDurationSec = nightDurationMinutes * 60f;
-            if (sunLight)
-            {
-                float progress = currentPhaseTimer / nightDurationSec;
-                float angle = Mathf.Lerp(180f, 360f, progress);
-                sunLight.transform.rotation = Quaternion.Euler(angle, 0, 0);
-                sunLight.intensity = 0.1f;
-            }
-            if (currentPhaseTimer >= nightDurationSec) StartDay();
+            if (isNight) StartDay();
+            else StartNight();
         }
     }
 
-    // --- ������� � �������� ---
+    // ---    ---
 
     public bool BuyTrap()
     {
@@ -94,10 +120,10 @@ public class GameManager : MonoBehaviour
         {
             money -= trapPrice;
             trapsCount++;
-            Debug.Log("������� �������!");
+            Debug.Log(" !");
             return true;
         }
-        Debug.Log("�� ������� ����� �� �������!");
+        Debug.Log("  !");
         return false;
     }
 
@@ -136,10 +162,11 @@ public class GameManager : MonoBehaviour
     }
 
     
+    
     public void AddCreature()
     {
         capturedCreatures++;
-        Debug.Log($"[���������] ��� ������! � �����: {capturedCreatures}");
+        Debug.Log($"[]  !  : {capturedCreatures}");
     }
 
     public bool TryRemoveCreature()
@@ -155,41 +182,110 @@ public class GameManager : MonoBehaviour
     public void AddMoney(float amount)
     {
         money += amount;
-        Debug.Log($"+++ �������: +{amount}. �����: {money}");
+        Debug.Log($"+++ : +{amount}. : {money}");
     }
 
-    // --- ����� ��� ---
+    // ---   ---
     public void StartDay()
     {
+        Debug.Log($"StartDay called. Previous isNight: {isNight}");
         isNight = false;
-        currentPhaseTimer = 0f;
-        RenderSettings.fogColor = dayFog;
+        // Не сбрасываем таймер, чтобы не нарушать естественную смену дня/ночи
+        // currentPhaseTimer = 0f;
+        if (sunController)
+        {
+            RenderSettings.fogColor = sunController.dayFog;
+            sunController.SetDayPhase(true); // isDay = true (день)
+            // Убедимся, что солнце находится в правильной стартовой позиции
+            sunController.transform.rotation = Quaternion.Euler(sunController.dayStartRotation);
+        }
         RenderSettings.ambientIntensity = 1f;
 
-        // ���������� � ������� ��������
+        //
         if (enemySpawner != null) enemySpawner.ClearEnemies();
         if (visitorSpawner != null) visitorSpawner.StartNewDay();
 
-        Debug.Log(">>> ���� (���� ������)");
+        Debug.Log(">>> DAY STARTED (natural)");
+        
+        // Активируем защиту от немедленной смены фазы
+        phaseChangeProtectionTimer = PHASE_CHANGE_PROTECTION_DURATION;
     }
 
     public void StartNight()
     {
+        Debug.Log($"StartNight called. Previous isNight: {isNight}");
         isNight = true;
-        currentPhaseTimer = 0f;
-        RenderSettings.fogColor = nightFog;
+        // Не сбрасываем таймер, чтобы не нарушать естественную смену дня/ночи
+        // currentPhaseTimer = 0f;
+        if (sunController)
+        {
+            RenderSettings.fogColor = sunController.nightFog;
+            sunController.SetDayPhase(false); // isDay = false (ночь)
+            // Убедимся, что солнце находится в правильной стартовой позиции
+            sunController.transform.rotation = Quaternion.Euler(sunController.nightEndRotation);
+        }
         RenderSettings.ambientIntensity = 0.2f;
 
-        // ���������� � ������� ��������
+        // Останавливаем дневных спавнеров и запускаем ночных
         if (visitorSpawner != null) visitorSpawner.StopSpawning();
         if (enemySpawner != null) enemySpawner.SpawnEnemies();
 
-        Debug.Log(">>> ���� (����� ��������)");
+        Debug.Log(">>> NIGHT STARTED (natural)");
+        
+        // Активируем защиту от немедленной смены фазы
+        phaseChangeProtectionTimer = PHASE_CHANGE_PROTECTION_DURATION;
+    }
+
+    // Метод для телепортации солнца в заданную фазу
+    public void TeleportSunToPhase(bool toDayPhase)
+    {
+        if (sunController != null)
+        {
+            sunController.SetDayPhase(toDayPhase);
+            if (toDayPhase)
+            {
+                sunController.transform.rotation = Quaternion.Euler(sunController.dayStartRotation);
+            }
+            else
+            {
+                sunController.transform.rotation = Quaternion.Euler(sunController.nightEndRotation);
+            }
+        }
     }
 
     public void SkipCurrentPhase()
     {
-        if (isNight) StartDay();
-        else StartNight();
+        Debug.Log($"SkipCurrentPhase called. Current isNight: {isNight}");
+        
+        if (isNight)
+        {
+            // Если сейчас ночь, переходим к дню
+            StartDay();
+        }
+        else
+        {
+            // Если сейчас день, переходим к ночи
+            StartNight();
+        }
+        
+        // Активируем защиту от немедленной смены фазы
+        phaseChangeProtectionTimer = PHASE_CHANGE_PROTECTION_DURATION;
+        
+        Debug.Log($"SkipCurrentPhase finished. New isNight: {isNight}");
+    }
+
+    public void SkipToNight()
+    {
+        if (sunController == null)
+        {
+            sunController = Object.FindAnyObjectByType<SunMovementController>();
+        }
+        if (sunController != null)
+        {
+            sunController.InstantTransitionToNight();
+        }
+        StartNight();
     }
 }
+
+

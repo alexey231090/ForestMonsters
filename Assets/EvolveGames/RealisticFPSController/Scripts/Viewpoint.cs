@@ -17,9 +17,10 @@ namespace EvolveGames
         float Distance;
         Text ImageText;
         Image ImageUI;
+        //
         void Start()
         {
-            ImageUI = Instantiate(ImagePrefab, FindObjectOfType<Canvas>().transform).GetComponent<Image>();
+            ImageUI = Instantiate(ImagePrefab, FindFirstObjectByType<Canvas>().transform).GetComponent<Image>();
             ImageText = ImageUI.GetComponentInChildren<Text>();
             ImageText.text = PointText;
         }

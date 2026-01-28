@@ -45,7 +45,7 @@ public class PlayerInteract : MonoBehaviour
     void Start()
     {
         carrier = GetComponent<PlayerCarrier>();
-        if (playerUI == null) playerUI = FindObjectOfType<PlayerUIHandler>();
+        if (playerUI == null) playerUI = Object.FindFirstObjectByType<PlayerUIHandler>();
     }
 
     void Update()
