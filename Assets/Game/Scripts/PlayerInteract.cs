@@ -22,6 +22,9 @@ public class PlayerInteract : MonoBehaviour
     [Header("Prefabs (Ghosts)")]
     public GameObject trapGhostPrefab;
     public GameObject cameraGhostPrefab;
+    
+    [Header("VFX")]
+    public GameObject dustEffectPrefab;
 
     [Header("References")]
     public Transform cameraPrefab;
@@ -35,6 +38,10 @@ public class PlayerInteract : MonoBehaviour
     public float cameraEmbedDepth = 0f;
     public float trapGhostOffset = 0f;
     public float cameraGhostOffset = 0f;
+
+    [Header("VFX Offsets")]
+    public float trapDustOffset = 0.1f;
+    public float cameraDustOffset = 0.1f;
 
     // --- ВНУТРЕННИЕ ПЕРЕМЕННЫЕ ---
     private int selectedItemIndex = -1; // -1 значит "Ничего не выбрано"
@@ -259,6 +266,13 @@ public class PlayerInteract : MonoBehaviour
 
                 Vector3 position = hit.point - hit.normal * currentRealDepth;
                 Instantiate(objectToSpawn, position, rotation);
+
+                if (dustEffectPrefab != null)
+                {
+                    float dustOffset = (selectedItemIndex == 0) ? trapDustOffset : cameraDustOffset;
+                    Vector3 dustPos = hit.point + (hit.normal * dustOffset);
+                    Instantiate(dustEffectPrefab, dustPos, Quaternion.LookRotation(hit.normal));
+                }
                 
                 // После установки таймер обновляем, чтобы можно было ставить дальше
                 ghostTimer = ghostTimeout; 
