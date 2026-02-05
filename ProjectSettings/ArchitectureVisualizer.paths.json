@@ -1,0 +1,40 @@
+{
+    "items": [
+        {
+            "pathName": "Солнце",
+            "description": "",
+            "steps": [
+                {
+                    "scriptName": "SunMovementController",
+                    "variableName": "isDay",
+                    "variableNames": [
+                        "isDay",
+                        "currentXRotation",
+                        "nightFog"
+                    ],
+                    "comment": "Initial step",
+                    "trackedInstances": [],
+                    "isMonoBehaviourTracked": true,
+                    "hostScriptName": "",
+                    "instanceFieldName": ""
+                },
+                {
+                    "scriptName": "GameManager",
+                    "variableName": "isNight",
+                    "variableNames": [
+                        "isNight",
+                        "phaseChangeProtectionTimer"
+                    ],
+                    "comment": "Переход в manager",
+                    "trackedInstances": [],
+                    "isMonoBehaviourTracked": true,
+                    "hostScriptName": "",
+                    "instanceFieldName": ""
+                }
+            ],
+            "isTracking": true,
+            "lastUpdateTime": "",
+            "isExpanded": true
+        }
+    ]
+}

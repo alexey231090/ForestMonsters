@@ -10,7 +10,6 @@ GameObject:
   m_Component:
   - component: {fileID: 3565630233191965521}
   - component: {fileID: 5592776442141254717}
-  - component: {fileID: 3408601198341917655}
   m_Layer: 0
   m_Name: colider
   m_TagString: Untagged
@@ -40,28 +39,6 @@ MeshFilter:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1165466020737649591}
-  m_Mesh: {fileID: -7315010151172655210, guid: d6ac3bd58e0de464491477976f08bb1d, type: 3}
---- !u!64 &3408601198341917655
-MeshCollider:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1165466020737649591}
-  m_Material: {fileID: 0}
-  m_IncludeLayers:
-    serializedVersion: 2
-    m_Bits: 0
-  m_ExcludeLayers:
-    serializedVersion: 2
-    m_Bits: 0
-  m_LayerOverridePriority: 0
-  m_IsTrigger: 0
-  m_ProvidesContacts: 0
-  m_Enabled: 0
-  serializedVersion: 5
-  m_Convex: 0
-  m_CookingOptions: 30
   m_Mesh: {fileID: -7315010151172655210, guid: d6ac3bd58e0de464491477976f08bb1d, type: 3}
 --- !u!1 &2772926986121743355
 GameObject:
@@ -152,7 +129,7 @@ Transform:
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 1.3774858, y: 0.9311745, z: 1.3774858}
+  m_LocalScale: {x: 1.7670383, y: 3.446163, z: 1.7670383}
   m_ConstrainProportionsScale: 0
   m_Children:
   - {fileID: 7704972503444380575}
@@ -256,6 +233,11 @@ PrefabInstance:
         type: 3}
       propertyPath: m_StaticEditorFlags
       value: 2147483647
+      objectReference: {fileID: 0}
+    - target: {fileID: 3814269204527957938, guid: 0e0bd262338b48445be6b19ea8d32cf3,
+        type: 3}
+      propertyPath: m_LocalPosition.y
+      value: 0.023
       objectReference: {fileID: 0}
     - target: {fileID: 8354505986981210943, guid: 0e0bd262338b48445be6b19ea8d32cf3,
         type: 3}

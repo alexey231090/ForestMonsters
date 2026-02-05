@@ -23,25 +23,26 @@
   - `capturedCreatures` - количество пойманных существ
   - `trapsCount`, `camerasCount` - инвентарь предметов
   - `pricePerMeme` - цена за просмотр одного "мема" (существа на платформе)
+  - `trapPrice`, `cameraPrice` - цены на предметы
 
 - **Управление днями/ночью:**
   - `isNight` - текущая фаза (день/ночь)
   - `dayDurationMinutes`, `nightDurationMinutes` - длительность фаз
   - `currentPhaseTimer` - таймер текущей фазы
   - `StartDay()`, `StartNight()` - переключение фаз
-  - Управляет освещением (`sunLight`) и туманом
+  - Управляет освещением и туманом через `SunMovementController`
   - `SkipCurrentPhase()` - мгновенная смена фазы через взаимодействие с кроватью
-  - `phaseChangeProtectionTimer` - таймер защиты от "дребезга" фазы
 
 - **Методы покупки/использования:**
   - `BuyTrap()`, `BuyCamera()` - покупка предметов
   - `TryUseTrap()`, `TryUseCamera()` - использование предметов из инвентаря
   - `AddCreature()`, `TryRemoveCreature()` - управление пойманными существами
+  - `AddMoney(float amount)` - добавление денег
 
 **Важные связи:**
 - Связан с `VisitorSpawner` и `EnemySpawner` для управления спавном
 - Хранит список `activePlatforms` (платформы с размещенными существами)
-- Связан с `SunMovementController` для определения текущей фазы по ротации солнца
+- Связан с `SunMovementController` для управления визуалами и положением солнца
 
 ---
 
@@ -263,27 +264,26 @@
 ---
 ### 12. **SunMovementController.cs** - Контроллер движения солнца
 
-**Назначение:** Управление вращением солнца и определение текущей фазы (день/ночь) на основе ротации.
+**Назначение:** Управление вращением солнца и визуальными эффектами (освещение, туман) на основе прогресса фазы.
 
 **Ключевые компоненты:**
 - **Параметры вращения:**
-  - `dayRotationSpeedX/Y/Z` - скорости вращения солнца днём
-  - `nightRotationSpeedX/Y/Z` - скорости вращения солнца ночью
-  - `dayStartRotation`, `nightEndRotation` - целевые позиции для дня и ночи
+  - `sunDirectionY` - поворот солнца по горизонту (ось Y), позволяет настроить, с какой стороны будет восходить солнце
+  - `sunTrajectoryTilt` - наклон траектории солнца (ось Z), позволяет сделать путь солнца под углом, а не вертикальным
 
-- **Состояние фазы:**
-  - `isDay` - текущая фаза (день/ночь)
-  - `IsCurrentlyDay()` - определение фазы на основе текущей ротации солнца
-    - Если X-ротация > -12, то день; иначе ночь
-  - `SetDayPhase(bool)` - установка фазы и обновление `isDay`
+- **Визуальные параметры:**
+  - `sunLight` - ссылка на компонент света солнца
+  - `dayFog`, `nightFog` - цвета тумана для дня и ночи
+  - `dayIntensity`, `nightIntensity` - интенсивность освещения для дня и ночи
 
 - **Методы управления:**
-  - `InstantTransitionToNight()` - мгновенный переход к ночной позиции
-  - `TeleportToPhase(bool)` - телепортация к определенной фазе (день/ночь)
+  - `UpdateSunPosition(float progress, bool isNight)` - обновление позиции солнца на основе прогресса фазы (0.0-1.0) и флага фазы
+  - `SetVisualsForDay()` - установка визуальных параметров для дня
+  - `SetVisualsForNight()` - установка визуальных параметров для ночи
 
 **Интеграция:**
-- Используется `GameManager` для определения текущей фазы по ротации
-- Связан с освещением (`sunLight`) и настройками тумана
+- Используется `GameManager` для обновления позиции солнца каждый кадр
+- Связан с системой освещения и туманом Unity
 
 
 ---
@@ -292,21 +292,25 @@
 ### **Цикл день/ночь:**
 ```
 GameManager.Update()
-  → Проверка таймера фазы ИЛИ определение фазы по ротации солнца
+  → HandleTimeCycle()
+    → Расчет прогресса фазы на основе таймера и длительности фазы
+    → Вызов sunController.UpdateSunPosition(progress, isNight)
+    → Проверка окончания фазы и вызов SkipCurrentPhase() при необходимости
   → StartDay() / StartNight()
     → Установка isNight = false/true
-    → Настройка освещения и тумана
+    → Сброс таймера фазы
+    → Вызов sunController.SetVisualsForDay/Night()
     → VisitorSpawner.StartNewDay() / StopSpawning()
     → EnemySpawner.ClearEnemies() / SpawnEnemies()
 ```
 
-### **Определение фазы по ротации солнца:**
+### **Управление солнцем:**
 ```
-GameManager.Update()
-  → sunController.IsCurrentlyDay()
-    → Проверка X-ротации солнца (угол > -12 = день, иначе ночь)
-  → Сравнение с текущим isNight
-  → Если изменилось - вызов StartNight() или StartDay()
+GameManager.HandleTimeCycle()
+  → Расчет прогресса фазы (0.0-1.0)
+  → Вызов sunController.UpdateSunPosition(progress, isNight)
+    → Рассчет угла X в зависимости от фазы (день: 0-180°, ночь: 180-360°)
+    → Применение вращения с учетом sunDirectionY и sunTrajectoryTilt
 ```
 
 ### **Взаимодействие с кроватью (E):**
@@ -382,7 +386,7 @@ Input 1/2 → PlayerInteract.ChangeItem()
 
 | Класс | Назначение | Ключевые методы |
 |-------|-----------|----------------|
-| `GameManager` | Глобальное состояние, экономика | `BuyTrap()`, `StartDay()`, `StartNight()` |
+| `GameManager` | Глобальное состояние, экономика | `BuyTrap()`, `StartDay()`, `StartNight()`, `AddMoney()` |
 | `EnemyAi` | Поведение врагов | `MoveToTarget()`, `UpdatePatrol()`, `StunByTrap()` |
 | `PlayerInteract` | Действия игрока | `UpdateGhostLogic()`, `TryPlaceItem()`, `HandleInteraction()` |
 | `PlayerCarrier` | Переноска объектов | `ProcessHold()`, `PerformPickup()`, `TryDrop()` |
@@ -418,8 +422,8 @@ Input 1/2 → PlayerInteract.ChangeItem()
    - Спавн монстров происходит как при взаимодействии с кроватью (E), так и при естественной смене фазы
    - В `StartNight()` вызывается `enemySpawner.SpawnEnemies()` для спавна монстров
    - В `StartDay()` вызывается `enemySpawner.ClearEnemies()` для удаления монстров
-   - Фаза дня/ночи определяется по ротации солнца (X-угол): если X > -12, то день; иначе ночь
-   - Используется защита от "дребезга" фазы после взаимодействия с кроватью через `phaseChangeProtectionTimer`
+   - Фаза дня/ночи теперь управляется через таймер в GameManager, а не через ротацию солнца
+   - Солнце теперь вращается плавно от 0° до 360° в зависимости от прогресса фазы
 
 
 ---
@@ -439,6 +443,6 @@ Input 1/2 → PlayerInteract.ChangeItem()
 
 ---
 
-**Версия документа:** 1.1  
-**Последнее обновление:** При создании документации  
+**Версия документа:** 1.2
+**Последнее обновление:** 04.02.2026
 **Автор:** AI Assistant для проекта ForestMonsters

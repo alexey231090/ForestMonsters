@@ -5,8 +5,8 @@ public class EnemySpawner : MonoBehaviour
 {
     [Header("Enemies Settings")]
     public GameObject enemyPrefab;
-    public Transform[] spawnPoints; // Все возможные точки на карте
-    public int enemiesPerNight = 3; // Сколько хотим заспавнить
+    public Transform[] spawnPoints; // Spawn points for enemies
+    public int enemiesPerNight = 3; // Maximum number of enemies to spawn
 
     private List<GameObject> activeEnemies = new List<GameObject>();
 
@@ -14,35 +14,35 @@ public class EnemySpawner : MonoBehaviour
     {
         if (spawnPoints == null || spawnPoints.Length == 0)
         {
-            Debug.LogWarning("Нет точек спавна!");
+            Debug.LogWarning("No spawn points available!");
             return;
         }
 
         ClearEnemies();
 
-        // 1. Создаем временный список доступных точек
+        // 1. Create a list of available spawn points
         List<Transform> availablePoints = new List<Transform>(spawnPoints);
 
-        // 2. Решаем, сколько врагов спавнить (не больше, чем есть точек)
+        // 2. Determine how many enemies to spawn (minimum of requested and available points)
         int countToSpawn = Mathf.Min(enemiesPerNight, availablePoints.Count);
 
         for (int i = 0; i < countToSpawn; i++)
         {
-            // 3. Выбираем случайную точку
+            // 3. Select a random spawn point
             int randomIndex = Random.Range(0, availablePoints.Count);
             Transform selectedPoint = availablePoints[randomIndex];
 
-            // 4. Удаляем точку из списка, чтобы не повторилась
+            // 4. Remove the selected point from available points
             availablePoints.RemoveAt(randomIndex);
 
-            // 5. Спавним врага
+            // 5. Instantiate the enemy
             GameObject newEnemy = Instantiate(enemyPrefab, selectedPoint.position, Quaternion.identity);
 
-            // --- НОВОЕ: Выводим в консоль имя точки ---
-            Debug.Log($"[SPAWN] Враг #{i + 1} появился на точке: {selectedPoint.name}");
+            // --- Log: Spawn information ---
+            Debug.Log($"[SPAWN] Enemy #{i + 1} spawned at point: {selectedPoint.name}");
             // ------------------------------------------
 
-            // Настраиваем AI
+            // Setup AI
             var ai = newEnemy.GetComponent<EnemyAi>();
             if (ai != null)
             {
@@ -54,7 +54,7 @@ public class EnemySpawner : MonoBehaviour
             activeEnemies.Add(newEnemy);
         }
 
-        Debug.Log($"Всего заспавнено: {activeEnemies.Count} врагов.");
+        Debug.Log($"Total enemies spawned: {activeEnemies.Count} enemies.");
     }
 
     public void ClearEnemies()

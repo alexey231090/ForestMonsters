@@ -2,67 +2,63 @@ using UnityEngine;
 
 public class SunMovementController : MonoBehaviour
 {
-    [Header("Day Rotation Settings")]
-    public float dayRotationSpeedX = 0f;
-    public float dayRotationSpeedY = 0f;
-    public float dayRotationSpeedZ = 0f;
+    [Header("Rotation Settings")]
+    [Tooltip("Поворот солнца по горизонту (Ось Y). Меняй это, чтобы солнце вставало с другой стороны.")]
+    [Range(0f, 360f)]
+    public float sunDirectionY = 45f;
 
-    [Header("Night Rotation Settings")]
-    public float nightRotationSpeedX = 0f;
-    public float nightRotationSpeedY = 0f;
-    public float nightRotationSpeedZ = 0f;
+    [Tooltip("Наклон траектории солнца (Ось Z). Позволяет сделать путь солнца не вертикальным, а под наклоном.")]
+    [Range(-90f, 90f)]
+    public float sunTrajectoryTilt = 0f;
 
-    [Header("Rotation Targets")]
-    public Vector3 dayStartRotation = new Vector3(45f, 0f, 0f);
-    public Vector3 nightEndRotation = new Vector3(-45f, 0f, 0f);
-
-    [Header("References")]
-    public bool isDay = true;
-
-    [Header("Lighting")]
+    [Header("Visuals")]
     public Light sunLight;
     public Color dayFog = new Color(0.5f, 0.6f, 0.7f);
     public Color nightFog = new Color(0.02f, 0.02f, 0.05f);
 
-    private void Start()
-    {
-        // Initialize sun rotation based on current phase
-        transform.rotation = Quaternion.Euler(isDay ? dayStartRotation : nightEndRotation);
-    }
+    [Header("Intensity")]
+    public float dayIntensity = 1f;
+    public float nightIntensity = 0.1f; // Лунный свет
 
-    private void Update()
+    // Вызывается каждый кадр из GameManager
+    public void UpdateSunPosition(float progress, bool isNight)
     {
-        // Determine rotation speeds based on day/night phase
-        float rotationSpeedX = isDay ? dayRotationSpeedX : nightRotationSpeedX;
-        float rotationSpeedY = isDay ? dayRotationSpeedY : nightRotationSpeedY;
-        float rotationSpeedZ = isDay ? dayRotationSpeedZ : nightRotationSpeedZ;
+        float xAngle;
 
-        // Apply rotation around each axis
-        transform.Rotate(rotationSpeedX * Time.deltaTime, rotationSpeedY * Time.deltaTime, rotationSpeedZ * Time.deltaTime);
-    }
+        if (!isNight)
+        {
+            // ДЕНЬ: Солнце идет от 0 до 180 градусов
+            xAngle = Mathf.Lerp(0f, 180f, progress);
+        }
+        else
+        {
+            // НОЧЬ: Солнце идет от 180 до 360 градусов
+            xAngle = Mathf.Lerp(180f, 360f, progress);
+        }
 
-    // Method to switch between day and night phases
-    public void SetDayPhase(bool dayPhase)
-    {
-        isDay = dayPhase;
-    }
-
-    // Method to determine current phase based on sun's X rotation
-    public bool IsCurrentlyDay()
-    {
-        float currentXRotation = transform.rotation.eulerAngles.x;
-        // Normalize angle to -180 to 180 range
-        if (currentXRotation > 180)
-            currentXRotation -= 360;
+        // Применяем вращение:
+        // 1. Вращение по времени суток (X)
+        // 2. Наклон траектории (Z) - то, что просили добавить
+        // 3. Поворот по сторонам света (Y)
         
-        // If X rotation is less than -12, it's night; otherwise it's day
-        return currentXRotation > -12;
+        Quaternion rotX = Quaternion.Euler(xAngle, 0f, 0f);
+        Quaternion rotTilt = Quaternion.Euler(0f, 0f, sunTrajectoryTilt);
+        Quaternion rotY = Quaternion.Euler(0f, sunDirectionY, 0f);
+
+        transform.rotation = rotY * rotTilt * rotX;
     }
 
-    // Public method to instantly transition to night
-    public void InstantTransitionToNight()
+    public void SetVisualsForDay()
     {
-        isDay = false;
-        transform.rotation = Quaternion.Euler(nightEndRotation);
+        RenderSettings.fogColor = dayFog;
+        RenderSettings.ambientIntensity = dayIntensity;
+        if (sunLight) sunLight.intensity = dayIntensity;
+    }
+
+    public void SetVisualsForNight()
+    {
+        RenderSettings.fogColor = nightFog;
+        RenderSettings.ambientIntensity = nightIntensity;
+        if (sunLight) sunLight.intensity = nightIntensity;
     }
 }

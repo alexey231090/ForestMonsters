@@ -1,0 +1,66 @@
+.controls-container {
+    position: absolute;
+    bottom: 50px;
+    right: 50px;
+    width: 160px;
+    height: 120px;
+    align-items: center;
+    justify-content: center;
+}
+
+.wasd-row {
+    flex-direction: row;
+    justify-content: center;
+}
+
+.control-btn {
+    width: 45px;
+    height: 45px;
+    margin: 3px;
+    background-color: rgba(0, 0, 0, 0.6);
+    border-width: 2px;
+    border-color: rgba(255, 255, 255, 0.8);
+    border-radius: 8px;
+    color: #ffffff;
+    -unity-font-style: bold;
+    font-size: 20px;
+    align-items: center;
+    justify-content: center;
+}
+
+.control-btn:hover {
+    background-color: rgba(255, 255, 255, 0.2);
+    border-color: #ffffff;
+}
+
+.control-btn:active {
+    background-color: rgba(255, 255, 255, 0.5);
+    color: #000000;
+}
+
+.exit-btn {
+    position: absolute;
+    top: 30px;
+    right: 30px;
+    background-color: rgba(180, 40, 40, 0.9);
+    color: white;
+    font-size: 18px;
+    -unity-font-style: bold;
+    padding-top: 10px;
+    padding-bottom: 10px;
+    padding-left: 20px;
+    padding-right: 20px;
+    border-radius: 8px;
+    border-width: 2px;
+    border-color: rgba(255, 100, 100, 0.5);
+}
+
+.exit-btn:hover {
+    background-color: rgba(220, 50, 50, 1);
+    scale: 1.05;
+}
+
+.exit-btn:active {
+    background-color: rgba(100, 20, 20, 1);
+    scale: 0.95;
+}

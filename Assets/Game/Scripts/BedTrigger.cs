@@ -11,6 +11,6 @@ public class BedTrigger : MonoBehaviour
     // Update is called once per frame
     void Update()
     {
-        
+        //
     }
 }

@@ -275,7 +275,7 @@ public class PlayerInteract : MonoBehaviour
                 }
                 
                 // После установки таймер обновляем, чтобы можно было ставить дальше
-                ghostTimer = ghostTimeout; 
+                ghostTimer = ghostTimeout;
             }
         }
     }

@@ -1,0 +1,20 @@
+<ui:UXML xmlns:ui="UnityEngine.UIElements" xmlns:uie="UnityEditor.UIElements" editor-extension-mode="False">
+    <ui:Style src="MapUI.uss" />
+    <ui:VisualElement style="flex-grow: 1; justify-content: flex-end;">
+        <ui:Button name="BtnExit" text="EXIT MAP (E)" class="exit-btn" />
+        
+        <ui:VisualElement class="controls-container">
+            <!-- W Button -->
+            <ui:VisualElement class="wasd-row">
+                <ui:Button name="BtnW" text="W" class="control-btn" />
+            </ui:VisualElement>
+            
+            <!-- ASD Buttons -->
+            <ui:VisualElement class="wasd-row">
+                <ui:Button name="BtnA" text="A" class="control-btn" />
+                <ui:Button name="BtnS" text="S" class="control-btn" />
+                <ui:Button name="BtnD" text="D" class="control-btn" />
+            </ui:VisualElement>
+        </ui:VisualElement>
+    </ui:VisualElement>
+</ui:UXML>

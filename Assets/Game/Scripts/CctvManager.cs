@@ -14,9 +14,11 @@ public class CctvManager : MonoBehaviour
 
     [Header("Map")]
     public Camera mapCamera;
+    public MapUIHandler mapUIHandler; // NEW: Ссылка на наш новый UI
 
     [Header("UI Handler")]
-    public MonitorUIHandler uiHandler;
+    public MonitorUIHandler uiHandler; // UI Монитора (меню выбора)
+    public PlayerUIHandler playerHUD;  // UI Игрока (инвентарь)
 
     public List<Camera> securityCameras = new List<Camera>();
     public int currentCamIndex = 0;
@@ -39,6 +41,10 @@ public class CctvManager : MonoBehaviour
     void Start()
     {
         if (mapCamera) mapCamera.enabled = false;
+        if (mapUIHandler) mapUIHandler.HideUI(); 
+        
+        // Пытаемся найти HUD если не назначен
+        if (playerHUD == null) playerHUD = FindFirstObjectByType<PlayerUIHandler>();
     }
 
     public void RegisterCamera(Camera newCam)
@@ -92,6 +98,10 @@ public class CctvManager : MonoBehaviour
 
         if (cctvViewUI) cctvViewUI.SetActive(false);
         if (mapCamera) mapCamera.enabled = false;
+        
+        // Скрываем HUD игрока
+        if (playerHUD != null && playerHUD.playerUIDoc != null) playerHUD.playerUIDoc.enabled = false;
+
         if (uiHandler != null) uiHandler.ShowUI();
     }
 
@@ -101,6 +111,11 @@ public class CctvManager : MonoBehaviour
     {
         if (menu && uiHandler != null) uiHandler.ShowUI();
         else if (uiHandler != null) uiHandler.HideUI();
+        
+        // Управление Map UI
+        if (map && mapUIHandler != null) mapUIHandler.ShowUI();
+        else if (mapUIHandler != null) mapUIHandler.HideUI();
+
         if (playerCamera) playerCamera.enabled = menu;
         if (cctvViewUI) cctvViewUI.SetActive(cams);
         if (!cams) foreach (var c in securityCameras) if(c) c.enabled = false;
@@ -108,9 +123,12 @@ public class CctvManager : MonoBehaviour
 
         if (menu) { UnityEngine.Cursor.lockState = CursorLockMode.None; UnityEngine.Cursor.visible = true; }
         else { UnityEngine.Cursor.lockState = CursorLockMode.Locked; UnityEngine.Cursor.visible = false; }
+        
+        // Если мы в режиме карты, курсор нужен для кнопок
+        if (map) { UnityEngine.Cursor.lockState = CursorLockMode.None; UnityEngine.Cursor.visible = true; }
     }
 
-    void ReturnToMenu()
+    public void ReturnToMenu()
     {
         isWatchingCameras = false;
         isWatchingMap = false;
@@ -125,6 +143,9 @@ public class CctvManager : MonoBehaviour
         if (playerCamera) playerCamera.enabled = true;
         if (playerController) playerController.enabled = true;
         
+        // Восстанавливаем HUD игрока
+        if (playerHUD != null && playerHUD.playerUIDoc != null) playerHUD.playerUIDoc.enabled = true;
+
         UnityEngine.Cursor.lockState = CursorLockMode.Locked;
         UnityEngine.Cursor.visible = false;
         

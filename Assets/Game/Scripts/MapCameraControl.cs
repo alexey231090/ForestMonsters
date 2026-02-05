@@ -3,38 +3,71 @@ using UnityEngine;
 public class MapCameraControl : MonoBehaviour
 {
     [Header("Settings")]
-    public float panSpeed = 20f;       // Скорость перемещения
-    public float zoomSpeed = 50f;      // Скорость зума
-    public float minZoom = 10f;        // Максимальное приближение
-    public float maxZoom = 100f;       // Максимальное отдаление
+    public float panSpeed = 20f;       // РЎРєРѕСЂРѕСЃС‚СЊ РїРµСЂРµРјРµС‰РµРЅРёСЏ
+    public float zoomSpeed = 50f;      // РЎРєРѕСЂРѕСЃС‚СЊ Р·СѓРјР°
+    public float minZoom = 10f;        // РњР°РєСЃРёРјР°Р»СЊРЅРѕРµ РїСЂРёР±Р»РёР¶РµРЅРёРµ
+    public float maxZoom = 100f;       // РњР°РєСЃРёРјР°Р»СЊРЅРѕРµ РѕС‚РґР°Р»РµРЅРёРµ
 
-    // Границы карты (чтобы камера не улетала в пустоту)
-    public Vector2 mapLimit = new Vector2(100f, 100f);
+    // Р“СЂР°РЅРёС†С‹ РєР°СЂС‚С‹ (РѕС‚РЅРѕСЃРёС‚РµР»СЊРЅРѕ РЅР°С‡Р°Р»СЊРЅРѕР№ РїРѕР·РёС†РёРё РєР°РјРµСЂС‹)
+    [Header("Map Limits")]
+    [Tooltip("РћРіСЂР°РЅРёС‡РµРЅРёРµ РїРѕ РѕСЃРё X (РІР»РµРІРѕ/РІРїСЂР°РІРѕ РѕС‚ СЃС‚Р°СЂС‚Р°)")]
+    public float limitX = 100f;
+    [Tooltip("РћРіСЂР°РЅРёС‡РµРЅРёРµ РїРѕ РѕСЃРё Z (РІРІРµСЂС…/РІРЅРёР· РѕС‚ СЃС‚Р°СЂС‚Р°)")]
+    public float limitZ = 100f;
 
     private Camera cam;
+    private Vector3 initialPosition;
 
     void Start()
     {
         cam = GetComponent<Camera>();
+        initialPosition = transform.position; // Р—Р°РїРѕРјРёРЅР°РµРј С‚РѕС‡РєСѓ СЃС‚Р°СЂС‚Р°
+    }
+
+    private Vector2 externalInput;
+
+    /// <summary>
+    /// РЈСЃС‚Р°РЅРѕРІРєР° РІРІРѕРґР° РѕС‚ UI РєРЅРѕРїРѕРє (РІС‹Р·С‹РІР°РµС‚СЃСЏ РёР· MapUIHandler)
+    /// </summary>
+    public void SetExternalInput(Vector2 input)
+    {
+        externalInput = input;
     }
 
     void Update()
     {
-        // Работаем только если камера включена
+        // Р Р°Р±РѕС‚Р°РµРј С‚РѕР»СЊРєРѕ РµСЃР»Рё РєР°РјРµСЂР° РІРєР»СЋС‡РµРЅР°       
         if (!cam.enabled) return;
 
-        // 1. ПЕРЕМЕЩЕНИЕ (Мышкой с зажатой ЛКМ или ПКМ)
-        // Можно и WASD, но у нас руки на мышке
+        float h = 0f;
+        float v = 0f;
+
+        // 1. РџР•Р Р•РњР•Р©Р•РќРР•
+
+        // Рђ) РњС‹С€РєРѕР№ (Drag)
         if (Input.GetMouseButton(0))
         {
-            float h = -Input.GetAxis("Mouse X") * panSpeed * Time.deltaTime; // Минус для инверсии (тянем карту)
-            float v = -Input.GetAxis("Mouse Y") * panSpeed * Time.deltaTime;
-
-            // Двигаем камеру. Так как она повернута вниз, двигаем по осям X и Y локально
-            transform.Translate(h, v, 0);
+            h += -Input.GetAxis("Mouse X"); // РРЅРІРµСЂСЃРёСЏ РґР»СЏ РґСЂР°РіР°
+            v += -Input.GetAxis("Mouse Y");
         }
 
-        // 2. ЗУМ (Колесико)
+        // Р‘) РљР»Р°РІРёР°С‚СѓСЂР° (WASD / РЎС‚СЂРµР»РєРё)
+        h += Input.GetAxis("Horizontal");
+        v += Input.GetAxis("Vertical");
+
+        // Р’) UI РљРЅРѕРїРєРё (РёР· MapUIHandler)
+        h += externalInput.x;
+        v += externalInput.y;
+
+        // РџСЂРёРјРµРЅСЏРµРј РїРµСЂРµРјРµС‰РµРЅРёРµ
+        if (h != 0 || v != 0)
+        {
+             // Р”РІРёРіР°РµРј РїРѕ X Рё Y Р»РѕРєР°Р»СЊРЅРѕ (РєР°РјРµСЂР° СЃРјРѕС‚СЂРёС‚ РІРЅРёР·, С‚Р°Рє С‡С‚Рѕ СЌС‚Рѕ СЂР°Р±РѕС‚Р°РµС‚ РєР°Рє РЅР°РґРѕ)
+             Vector3 move = new Vector3(h, v, 0) * panSpeed * Time.deltaTime;
+             transform.Translate(move);
+        }
+
+        // 2. Р—РЈРњ (РљРѕР»РµСЃРёРєРѕ)
         float scroll = Input.GetAxis("Mouse ScrollWheel");
         if (scroll != 0)
         {
@@ -42,11 +75,19 @@ public class MapCameraControl : MonoBehaviour
             cam.orthographicSize = Mathf.Clamp(cam.orthographicSize, minZoom, maxZoom);
         }
 
-        // 3. ОГРАНИЧЕНИЕ ГРАНИЦ (Чтобы не улететь)
+        // 3. РћР“Р РђРќРР§Р•РќРР• Р“Р РђРќРР¦ (РћС‚РЅРѕСЃРёС‚РµР»СЊРЅРѕ СЃС‚Р°СЂС‚Р°)
         Vector3 pos = transform.position;
-        pos.x = Mathf.Clamp(pos.x, -mapLimit.x, mapLimit.x);
-        pos.z = Mathf.Clamp(pos.z, -mapLimit.y, mapLimit.y);
-        // Y не трогаем, это высота
+        
+        // РЎС‡РёС‚Р°РµРј РіСЂР°РЅРёС†С‹ РѕС‚ РЅР°С‡Р°Р»СЊРЅРѕР№ С‚РѕС‡РєРё
+        float minX = initialPosition.x - limitX;
+        float maxX = initialPosition.x + limitX;
+        float minZ = initialPosition.z - limitZ;
+        float maxZ = initialPosition.z + limitZ;
+
+        pos.x = Mathf.Clamp(pos.x, minX, maxX);
+        pos.z = Mathf.Clamp(pos.z, minZ, maxZ);
+        
+        // Y РЅРµ С‚СЂРѕРіР°РµРј, СЌС‚Рѕ РІС‹СЃРѕС‚Р°
         transform.position = pos;
     }
 }
