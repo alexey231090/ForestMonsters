@@ -100,7 +100,8 @@ public class CctvManager : MonoBehaviour
         if (mapCamera) mapCamera.enabled = false;
         
         // Скрываем HUD игрока
-        if (playerHUD != null && playerHUD.playerUIDoc != null) playerHUD.playerUIDoc.enabled = false;
+        // Скрываем HUD игрока
+        if (playerHUD != null) playerHUD.Hide();
 
         if (uiHandler != null) uiHandler.ShowUI();
     }
@@ -144,7 +145,8 @@ public class CctvManager : MonoBehaviour
         if (playerController) playerController.enabled = true;
         
         // Восстанавливаем HUD игрока
-        if (playerHUD != null && playerHUD.playerUIDoc != null) playerHUD.playerUIDoc.enabled = true;
+        // Восстанавливаем HUD игрока
+        if (playerHUD != null) playerHUD.Show();
 
         UnityEngine.Cursor.lockState = CursorLockMode.Locked;
         UnityEngine.Cursor.visible = false;

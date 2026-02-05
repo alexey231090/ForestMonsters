@@ -165,6 +165,7 @@
 1. **Режим монитора** (`isMonitorActive`):
    - Отключает управление игроком (`playerController.enabled = false`)
    - Показывает UI через `MonitorUIHandler`
+   - Скрывает HUD игрока через `playerHUD.Hide()`
    - Управление: E/Escape - выход
 
 2. **Просмотр камер** (`isWatchingCameras`):
@@ -195,6 +196,8 @@
 - Фитиль состоит из 4 частей: `Top`, `Right`, `Bottom`, `Left` (анимируются по периметру)
 
 **Методы:**
+- `Show()` / `Hide()` - правильное включение/выключение HUD с перепривязкой элементов
+- `BindUI()` - выполняется при каждом включении для обновления ссылок `VisualElement` (защита от багов UI Toolkit)
 - `SelectSlot(int)` - выбор слота (0=ловушка, 1=камера, -1=ничего)
 - `SetFuseActive(int, bool)` - показ/скрытие фитиля
 - `SetFuseProgress(int, float)` - установка прогресса фитиля (0..1)
@@ -285,6 +288,56 @@
 - Используется `GameManager` для обновления позиции солнца каждый кадр
 - Связан с системой освещения и туманом Unity
 
+---
+### 13. **MapUIHandler.cs** - Обработчик UI для режима карты
+
+**Назначение:** Управление интерфейсом карты с кнопками WASD для перемещения камеры.
+
+**Ключевые компоненты:**
+- **Зависимости:**
+  - `mapUIDoc` - ссылка на документ UI Toolkit для интерфейса карты
+  - `mapCameraControl` - ссылка на контроллер камеры карты для передачи ввода
+
+- **Настройки (UI Customization):**
+  - `controlsScale` - масштаб кнопок WASD в UI
+  - `bottomOffset`, `rightOffset` - положение контейнера кнопок на экране
+
+- **Методы управления:**
+  - `ShowUI()` - отображение интерфейса карты
+  - `HideUI()` - скрытие интерфейса карты и сброс ввода
+  - `BindUI(VisualElement root)` - привязка элементов и кэширование кнопок
+  - `UpdateButtonHighlight(Button, bool)` - принудительная подсветка кнопок через класс `.control-btn--active`
+
+**Интеграция:**
+- Использует UI Toolkit для построения интерфейса
+- Взаимодействует с `CctvManager` для выхода из режима карты
+- Связан с `MapCameraControl` для передачи ввода от кнопок
+
+---
+### 14. **MapCameraControl.cs** - Контроллер камеры для режима карты
+
+**Назначение:** Управление ортографической камерой в режиме карты с возможностью перемещения и масштабирования.
+
+**Ключевые компоненты:**
+- **Параметры управления:**
+  - `panSpeed` - скорость перемещения камеры
+  - `zoomSpeed` - скорость масштабирования
+  - `minZoom`, `maxZoom` - минимальное и максимальное значения масштаба
+
+- **Визуал (Map Visuals):**
+  - `OnPreCull()` - временно отключает тени (`shadowDistance = 0`), туман и выставляет `ambientLight = mapAmbientColor` для этой камеры
+  - `OnPostRender()` - восстанавливает настройки графики сцены
+  - `sunLight` - ссылка на Directional Light для изменения интенсивности
+  - `mapSunIntensity` - яркость солнца специально для режима карты
+
+- **Методы управления:**
+  - `SetExternalInput(Vector2 input)` - установка ввода от UI кнопок (WASD)
+  - `Start()` - инициализация начальной позиции камеры
+
+**Интеграция:**
+- Поддерживает управление мышью (перетаскивание), клавиатурой (WASD/стрелки) и UI кнопками
+- Использует колесико мыши для масштабирования
+- Ограничивает перемещение камеры в заданных границах
 
 ---
 ## 🔄 Потоки данных и взаимодействия
@@ -391,9 +444,9 @@ Input 1/2 → PlayerInteract.ChangeItem()
 | `PlayerInteract` | Действия игрока | `UpdateGhostLogic()`, `TryPlaceItem()`, `HandleInteraction()` |
 | `PlayerCarrier` | Переноска объектов | `ProcessHold()`, `PerformPickup()`, `TryDrop()` |
 | `Trap` | Ловушка | `OnTriggerEnter()`, `HasCatch()` |
-| `CctvManager` | Система мониторинга | `EnterMonitorMode()`, `ActivateCamera()`, `ExitMonitorMode()` |
-| `EnemySpawner` | Создание врагов | `SpawnEnemies()`, `ClearEnemies()` |
-| `VisitorSpawner` | Виртуальные посетители | `StartNewDay()`, `StopSpawning()` |
+| `PlayerUIHandler` | UI инвентаря | `Show()`, `Hide()`, `SelectSlot()`, `SetFuseProgress()` |
+| `MapUIHandler` | UI карты (WASD) | `ShowUI()`, `HideUI()`, `ApplyStyles()` |
+| `MapCameraControl` | Камера карты | `SetExternalInput()`, `OnPreCull()` |
 | `ParkPlatform` | Платформа размещения | `TryPlaceMonster()` |
 | `CameraSensor` | Детектор врагов | `OnTriggerEnter()` |
 
@@ -425,6 +478,14 @@ Input 1/2 → PlayerInteract.ChangeItem()
    - Фаза дня/ночи теперь управляется через таймер в GameManager, а не через ротацию солнца
    - Солнце теперь вращается плавно от 0° до 360° в зависимости от прогресса фазы
 
+6. **Особенности рендеринга карты:**
+   - `MapCameraControl` использует `OnPreCull`/`OnPostRender` для создания "светлой" карты без теней.
+   - Это меняет глобальные настройки `QualitySettings` и `RenderSettings` только на один кадр.
+
+7. **Жизненный цикл UI Toolkit:**
+   - При выключении `UIDocument.enabled = false` элементы могут терять актуальность.
+   - Всегда используйте методы `Show()` (или `BindUI()`) для обновления ссылок на `VisualElement` после повторного включения.
+
 
 ---
 
@@ -443,6 +504,6 @@ Input 1/2 → PlayerInteract.ChangeItem()
 
 ---
 
-**Версия документа:** 1.2
-**Последнее обновление:** 04.02.2026
+**Версия документа:** 1.3
+**Последнее обновление:** 05.02.2026
 **Автор:** AI Assistant для проекта ForestMonsters

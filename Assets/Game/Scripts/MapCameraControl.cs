@@ -15,6 +15,11 @@ public class MapCameraControl : MonoBehaviour
     [Tooltip("Ограничение по оси Z (вверх/вниз от старта)")]
     public float limitZ = 100f;
 
+    [Header("Map Visuals")]
+    public Light sunLight;                 // Ссылка на основное солнце (Directional Light)
+    public float mapSunIntensity = 1.0f;   // Яркость солнца именно для карты
+    public Color mapAmbientColor = Color.white; // Цвет окружающего света для карты
+
     private Camera cam;
     private Vector3 initialPosition;
 
@@ -89,5 +94,49 @@ public class MapCameraControl : MonoBehaviour
         
         // Y не трогаем, это высота
         transform.position = pos;
+    }
+    // --- ВИЗУАЛ КАРТЫ (Светло и без теней) ---
+    private float savedShadowDistance;
+    private Color savedAmbientLight;
+    private bool savedFog;
+    private float savedSunIntensity;
+
+    // Вызывается ПЕРЕД тем как эта камера начнет рисовать
+    void OnPreCull()
+    {
+        // 1. Сохраняем текущие настройки сцены
+        savedShadowDistance = QualitySettings.shadowDistance;
+        savedAmbientLight = RenderSettings.ambientLight;
+        savedFog = RenderSettings.fog;
+        
+        if (sunLight != null)
+        {
+            savedSunIntensity = sunLight.intensity;
+            // 1.1 Ставим яркость для карты
+            sunLight.intensity = mapSunIntensity;
+        }
+
+        // 2. Вырубаем тени (ставим дистанцию в 0)
+        QualitySettings.shadowDistance = 0f;
+
+        // 3. Делаем светло (как днем, без тонировки)
+        RenderSettings.ambientLight = mapAmbientColor;
+        
+        // 4. Вырубаем туман (чтобы карта была чистой)
+        RenderSettings.fog = false;
+    }
+
+    // Вызывается ПОСЛЕ того как эта камера закончила рисовать
+    void OnPostRender()
+    {
+        // 5. Возвращаем всё как было, чтобы основной вид из глаз не сломался
+        QualitySettings.shadowDistance = savedShadowDistance;
+        RenderSettings.ambientLight = savedAmbientLight;
+        RenderSettings.fog = savedFog;
+
+        if (sunLight != null)
+        {
+            sunLight.intensity = savedSunIntensity;
+        }
     }
 }

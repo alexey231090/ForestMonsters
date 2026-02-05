@@ -14,6 +14,15 @@ public class PlayerUIHandler : MonoBehaviour
     private VisualElement fuseTrapTop, fuseTrapRight, fuseTrapBottom, fuseTrapLeft;
     private VisualElement fuseCamTop, fuseCamRight, fuseCamBottom, fuseCamLeft;
 
+    void OnEnable()
+    {
+        // Если уже есть ссылка, пробуем привязать
+        if (playerUIDoc != null)
+        {
+            BindUI();
+        }
+    }
+
     void Start()
     {
         if (playerUIDoc == null) playerUIDoc = GetComponent<UIDocument>();
@@ -26,8 +35,36 @@ public class PlayerUIHandler : MonoBehaviour
                 if (test != null) { playerUIDoc = d; break; }
             }
         }
+        
+        BindUI();
+    }
+
+    /// <summary>
+    /// Показывает HUD и обновляет ссылки на элементы
+    /// </summary>
+    public void Show()
+    {
+        if (playerUIDoc != null)
+        {
+            playerUIDoc.enabled = true;
+            BindUI();
+        }
+    }
+
+    /// <summary>
+    /// Скрывает HUD
+    /// </summary>
+    public void Hide()
+    {
+        if (playerUIDoc != null) playerUIDoc.enabled = false;
+    }
+
+    private void BindUI()
+    {
         if (playerUIDoc == null) return;
         var root = playerUIDoc.rootVisualElement;
+        if (root == null) return;
+
         slotTrap = root.Q<VisualElement>("SlotTrap");
         slotCamera = root.Q<VisualElement>("SlotCamera");
         fuseTrap = root.Q<VisualElement>("FuseTrap");
@@ -40,6 +77,7 @@ public class PlayerUIHandler : MonoBehaviour
         fuseCamRight = root.Q<VisualElement>("FuseCamRight");
         fuseCamBottom = root.Q<VisualElement>("FuseCamBottom");
         fuseCamLeft = root.Q<VisualElement>("FuseCamLeft");
+        
         HideAllFuses();
     }
 
