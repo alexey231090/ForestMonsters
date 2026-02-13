@@ -1,39 +1,28 @@
 using UnityEngine;
+using System.Collections;
 
 public class ParkPlatform : MonoBehaviour
 {
-    [Header("Visuals")]
-    public GameObject monsterModel; // Ссылка на модельку монстра, которая будет включаться
-
     [Header("Settings")]
-    public bool isOccupied = false; // Занята ли платформа
-    public int incomePerVisitor = 5; // Сколько денег приносит (ценность)
+    public GameObject monsterModel;
+    public bool isOccupied = false;
 
     void Start()
     {
-        // При старте игры прячем монстра, так как платформа пустая
-        if (monsterModel != null)
-        {
-            monsterModel.SetActive(false);
-        }
-        isOccupied = false;
+        if (monsterModel != null) monsterModel.SetActive(isOccupied);
     }
 
-    // Этот метод вызовет PlayerInteract, когда нажмем E
     public void TryPlaceMonster()
     {
-        // 1. Проверяем, не занято ли уже
         if (isOccupied)
         {
-            Debug.Log("Здесь уже сидит монстр!");
+            Debug.Log("Р­С‚Р° РїР»Р°С‚С„РѕСЂРјР° СѓР¶Рµ Р·Р°РЅСЏС‚Р°!");
             return;
         }
 
-        // 2. Проверяем, есть ли монстры в инвентаре (через GameManager)
-        // GameManager сам уменьшит счетчик capturedCreatures внутри метода TryRemoveCreature
+        // 2. РџСЂРѕРІРµСЂСЏРµРј, РµСЃС‚СЊ Р»Рё РјРѕРЅСЃС‚СЂС‹ РІ РёРЅРІРµРЅС‚Р°СЂРµ (С‡РµСЂРµР· GameManager)
         if (GameManager.instance != null && GameManager.instance.TryRemoveCreature())
         {
-            // Успех! Ставим монстра
             isOccupied = true;
 
             if (monsterModel != null)
@@ -41,14 +30,27 @@ public class ParkPlatform : MonoBehaviour
                 monsterModel.SetActive(true);
             }
 
-            // Добавляем эту платформу в список активных, чтобы посетители её видели
+            // Р”РѕР±Р°РІР»СЏРµРј СЌС‚Сѓ РїР»Р°С‚С„РѕСЂРјСѓ РІ СЃРїРёСЃРѕРє Р°РєС‚РёРІРЅС‹С…, С‡С‚РѕР±С‹ РїРѕСЃРµС‚РёС‚РµР»Рё РµС‘ РІРёРґРµР»Рё
             GameManager.instance.activePlatforms.Add(this);
 
-            Debug.Log("Монстр размещен на платформе!");
+            Debug.Log("РњРѕРЅСЃС‚СЂ СЂР°Р·РјРµС‰РµРЅ РЅР° РїР»Р°С‚С„РѕСЂРјРµ!");
         }
         else
         {
-            Debug.Log("У вас в мешке нет монстров! Поймайте их ночью.");
+            Debug.Log("РЈ РІР°СЃ РІ РјРµС€РєРµ РЅРµС‚ РјРѕРЅСЃС‚СЂРѕРІ! РџРѕР№РјР°Р№С‚Рµ РёС… РЅРѕС‡СЊСЋ.");
+        }
+    }
+
+    public void PlaceMonsterDirectly()
+    {
+        if (isOccupied) return;
+
+        isOccupied = true;
+        if (monsterModel != null) monsterModel.SetActive(true);
+        
+        if (GameManager.instance != null)
+        {
+            GameManager.instance.activePlatforms.Add(this);
         }
     }
 }

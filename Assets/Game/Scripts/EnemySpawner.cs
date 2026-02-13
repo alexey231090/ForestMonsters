@@ -7,8 +7,17 @@ public class EnemySpawner : MonoBehaviour
     public GameObject enemyPrefab;
     public Transform[] spawnPoints; // Spawn points for enemies
     public int enemiesPerNight = 3; // Maximum number of enemies to spawn
+    public float spawnRadius = 2.0f; // Радиус случайного смещения от точки спавна
 
-    private List<GameObject> activeEnemies = new List<GameObject>();
+    // Класс для связи врага с его точкой спавна
+    private class ActiveEnemyInfo
+    {
+        public GameObject enemy;
+        public Transform originalPoint;
+    }
+
+    private List<ActiveEnemyInfo> activeEnemiesInfo = new List<ActiveEnemyInfo>();
+    private List<Transform> fixedSpawnPoints = new List<Transform>();
 
     public void SpawnEnemies()
     {
@@ -20,29 +29,39 @@ public class EnemySpawner : MonoBehaviour
 
         ClearEnemies();
 
-        // 1. Create a list of available spawn points
-        List<Transform> availablePoints = new List<Transform>(spawnPoints);
-
-        // 2. Determine how many enemies to spawn (minimum of requested and available points)
-        int countToSpawn = Mathf.Min(enemiesPerNight, availablePoints.Count);
-
-        for (int i = 0; i < countToSpawn; i++)
+        // 1. Если точек меньше чем нужно (кто-то был пойман), добираем новые рандомные точки
+        if (fixedSpawnPoints.Count < enemiesPerNight)
         {
-            // 3. Select a random spawn point
-            int randomIndex = Random.Range(0, availablePoints.Count);
-            Transform selectedPoint = availablePoints[randomIndex];
+            int pointsNeeded = enemiesPerNight - fixedSpawnPoints.Count;
+            
+            // Создаем список только из тех точек, которые СЕЙЧАС не используются
+            List<Transform> availablePool = new List<Transform>(spawnPoints);
+            foreach (var p in fixedSpawnPoints) availablePool.Remove(p);
 
-            // 4. Remove the selected point from available points
-            availablePoints.RemoveAt(randomIndex);
+            int actualToTake = Mathf.Min(pointsNeeded, availablePool.Count);
+            for (int i = 0; i < actualToTake; i++)
+            {
+                int randomIndex = Random.Range(0, availablePool.Count);
+                fixedSpawnPoints.Add(availablePool[randomIndex]);
+                availablePool.RemoveAt(randomIndex);
+            }
+            
+            Debug.Log($"[SPAWNER] Re-randomized {actualToTake} points. Total fixed points: {fixedSpawnPoints.Count}");
+        }
 
-            // 5. Instantiate the enemy
-            GameObject newEnemy = Instantiate(enemyPrefab, selectedPoint.position, Quaternion.identity);
+        // 2. Спавним врагов на всех закрепленных точках
+        for (int i = 0; i < fixedSpawnPoints.Count; i++)
+        {
+            Transform selectedPoint = fixedSpawnPoints[i];
 
-            // --- Log: Spawn information ---
-            Debug.Log($"[SPAWN] Enemy #{i + 1} spawned at point: {selectedPoint.name}");
-            // ------------------------------------------
+            // Вычисляем случайное положение на окружности
+            Vector2 randomDir = Random.insideUnitCircle.normalized;
+            Vector3 offset = new Vector3(randomDir.x, 0, randomDir.y) * spawnRadius;
+            Vector3 spawnPos = selectedPoint.position + offset;
 
-            // Setup AI
+            GameObject newEnemy = Instantiate(enemyPrefab, spawnPos, Quaternion.identity);
+
+            // Настройка AI
             var ai = newEnemy.GetComponent<EnemyAi>();
             if (ai != null)
             {
@@ -51,18 +70,40 @@ public class EnemySpawner : MonoBehaviour
                 ai.StartPatrolWithDetection();
             }
 
-            activeEnemies.Add(newEnemy);
+            // Запоминаем инфо о враге и его точке
+            activeEnemiesInfo.Add(new ActiveEnemyInfo { enemy = newEnemy, originalPoint = selectedPoint });
         }
 
-        Debug.Log($"Total enemies spawned: {activeEnemies.Count} enemies.");
+        Debug.Log($"Total enemies spawned: {activeEnemiesInfo.Count} enemies.");
     }
 
     public void ClearEnemies()
     {
-        foreach (var enemy in activeEnemies)
+        List<ActiveEnemyInfo> nextNightEnemies = new List<ActiveEnemyInfo>();
+
+        foreach (var info in activeEnemiesInfo)
         {
-            if (enemy != null) Destroy(enemy);
+            if (info.enemy == null) continue;
+
+            var ai = info.enemy.GetComponent<EnemyAi>();
+            
+            // Если враг НЕ пойман
+            if (ai != null && !ai.IsCaught)
+            {
+                // Удаляем его из мира (утром)
+                Destroy(info.enemy);
+                // Точка остается в fixedSpawnPoints (мы ничего не удаляем из него здесь)
+            }
+            else
+            {
+                // Враг пойман! Оставляем его в мире (он в ловушке)
+                // Но его точка должна быть ПЕРЕРАСПРЕДЕЛЕНА на следующую ночь.
+                fixedSpawnPoints.Remove(info.originalPoint);
+                Debug.Log($"[SPAWNER] Enemy caught! Point '{info.originalPoint.name}' released for re-randomization.");
+            }
         }
-        activeEnemies.Clear();
+
+        // Очищаем список заспавненных для новой итерации
+        activeEnemiesInfo.Clear();
     }
 }

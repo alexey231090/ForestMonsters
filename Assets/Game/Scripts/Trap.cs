@@ -40,6 +40,7 @@ public class Trap : MonoBehaviour
             var enemyAI = other.GetComponent<EnemyAi>();
             if (enemyAI != null)
             {
+                enemyAI.IsCaught = true;
                 enemyAI.enabled = false; // Выключаем мозг
                 var agent = other.GetComponent<NavMeshAgent>();
                 if (agent != null) agent.enabled = false;
@@ -62,6 +63,24 @@ public class Trap : MonoBehaviour
 
                 caughtEnemy = other.gameObject;
                 isUsed = true;
+            }
+        }
+        else if (other.CompareTag("ParkTrigger"))
+        {
+            if (HasCatch())
+            {
+                if (ParkManager.instance != null && ParkManager.instance.TryDeliverMonster())
+                {
+                    Debug.Log("[TRAP] Monster delivered! Returning trap to inventory.");
+                    
+                    if (GameManager.instance != null)
+                    {
+                        GameManager.instance.trapsCount++;
+                    }
+                    
+                    // Удаляем всего родителя (TrapBox), так как Trap висит на нем
+                    Destroy(transform.parent.gameObject);
+                }
             }
         }
     }

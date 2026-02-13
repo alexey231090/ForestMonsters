@@ -39,6 +39,8 @@ public class EnemyAi : MonoBehaviour
 	private float patrolWaitTimer; // таймер ожидания на точке
 	private bool isWaitingAtPoint; // ждём ли на точке
 
+	public bool IsCaught { get; set; } // Флаг: пойман ли враг в ловушку
+
 	void Awake()
 	{
 		agent = GetComponent<UnityEngine.AI.NavMeshAgent>();
