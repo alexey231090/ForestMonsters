@@ -2,27 +2,79 @@ using UnityEngine;
 
 public class SunMovementController : MonoBehaviour
 {
-    [Header("Rotation Settings")]
-    [Tooltip("Поворот солнца по горизонту (Ось Y). Меняй это, чтобы солнце вставало с другой стороны.")]
-    [Range(0f, 360f)]
-    public float sunDirectionY = 45f;
+    [Header("Events")]
+    [SerializeField] private GameEvent call_onDayStarted;
+    [SerializeField] private GameEvent call_onNightStarted;
 
-    [Tooltip("Наклон траектории солнца (Ось Z). Позволяет сделать путь солнца не вертикальным, а под наклоном.")]
-    [Range(-90f, 90f)]
-    public float sunTrajectoryTilt = 0f;
+    [Header("Settings")]
+    [SerializeField] private SunSettings settings;
 
-    [Header("Visuals")]
+    [Header("State (Read Only)")]
+    public bool isNight = false;
+    [SerializeField] private float currentPhaseTimer = 0f;
+
+    [Header("Visuals (Reference)")]
     public Light sunLight;
-    public Color dayFog = new Color(0.5f, 0.6f, 0.7f);
-    public Color nightFog = new Color(0.02f, 0.02f, 0.05f);
 
-    [Header("Intensity")]
-    public float dayIntensity = 1f;
-    public float nightIntensity = 0.1f; // Лунный свет
-
-    // Вызывается каждый кадр из GameManager
-    public void UpdateSunPosition(float progress, bool isNight)
+    private void Start()
     {
+        // Инициализируем визуализацию при старте
+        if (isNight) SetVisualsForNight();
+        else SetVisualsForDay();
+    }
+
+    private void Update()
+    {
+        HandleTimeCycle();
+    }
+
+    private void HandleTimeCycle()
+    {
+        if (settings == null) return;
+        currentPhaseTimer += Time.deltaTime;
+
+        float currentDuration = isNight ? settings.nightDurationMinutes : settings.dayDurationMinutes;
+        float durationInSeconds = currentDuration * 60f;
+
+        // Рассчитываем прогресс от 0.0 до 1.0 (0% -> 100% фазы)
+        float progress = Mathf.Clamp01(currentPhaseTimer / durationInSeconds);
+
+        // Обновляем визуальное положение солнца
+        UpdateSunPosition(progress, isNight);
+
+        // Если время вышло — меняем фазу
+        if (currentPhaseTimer >= durationInSeconds)
+        {
+            TogglePhase();
+        }
+    }
+
+    public void TogglePhase()
+    {
+        if (isNight) StartDay();
+        else StartNight();
+    }
+
+    private void StartDay()
+    {
+        isNight = false;
+        currentPhaseTimer = 0f;
+        SetVisualsForDay();
+        Debug.Log(">>> SunMovement: НАСТУПИЛ ДЕНЬ");
+    }
+
+    private void StartNight()
+    {
+        isNight = true;
+        currentPhaseTimer = 0f;
+        SetVisualsForNight();
+        Debug.Log(">>> SunMovement: НАСТУПИЛА НОЧЬ");
+    }
+
+    // Раньше вызывался из GameManager, теперь внутренний
+    private void UpdateSunPosition(float progress, bool isNight)
+    {
+        if (settings == null) return;
         float xAngle;
 
         if (!isNight)
@@ -36,29 +88,30 @@ public class SunMovementController : MonoBehaviour
             xAngle = Mathf.Lerp(180f, 360f, progress);
         }
 
-        // Применяем вращение:
-        // 1. Вращение по времени суток (X)
-        // 2. Наклон траектории (Z) - то, что просили добавить
-        // 3. Поворот по сторонам света (Y)
-        
         Quaternion rotX = Quaternion.Euler(xAngle, 0f, 0f);
-        Quaternion rotTilt = Quaternion.Euler(0f, 0f, sunTrajectoryTilt);
-        Quaternion rotY = Quaternion.Euler(0f, sunDirectionY, 0f);
+        Quaternion rotTilt = Quaternion.Euler(0f, 0f, settings.sunTrajectoryTilt);
+        Quaternion rotY = Quaternion.Euler(0f, settings.sunDirectionY, 0f);
 
         transform.rotation = rotY * rotTilt * rotX;
     }
 
     public void SetVisualsForDay()
     {
-        RenderSettings.fogColor = dayFog;
-        RenderSettings.ambientIntensity = dayIntensity;
-        if (sunLight) sunLight.intensity = dayIntensity;
+        if (settings == null) return;
+        RenderSettings.fogColor = settings.dayFog;
+        RenderSettings.ambientIntensity = settings.dayIntensity;
+        if (sunLight) sunLight.intensity = settings.dayIntensity;
+
+        if (call_onDayStarted != null) call_onDayStarted.Raise();
     }
 
     public void SetVisualsForNight()
     {
-        RenderSettings.fogColor = nightFog;
-        RenderSettings.ambientIntensity = nightIntensity;
-        if (sunLight) sunLight.intensity = nightIntensity;
+        if (settings == null) return;
+        RenderSettings.fogColor = settings.nightFog;
+        RenderSettings.ambientIntensity = settings.nightIntensity;
+        if (sunLight) sunLight.intensity = settings.nightIntensity;
+
+        if (call_onNightStarted != null) call_onNightStarted.Raise();
     }
 }

@@ -53354,11 +53354,9 @@ MonoBehaviour:
   activePlatforms: []
   visitorSpawner: {fileID: 808212902}
   enemySpawner: {fileID: 1126713714}
-  sunController: {fileID: 2121212130}
-  dayDurationMinutes: 1
-  nightDurationMinutes: 1
+  GET_onDayStarted: {fileID: 11400000, guid: f05acc9eb9a2774458968d41efa65e1e, type: 2}
+  GET_onNightStarted: {fileID: 11400000, guid: 66cc00283a2f8d346b6a60d9c5bd8688, type: 2}
   isNight: 1
-  currentPhaseTimer: 0
 --- !u!23 &1890172339
 MeshRenderer:
   m_ObjectHideFlags: 0
@@ -59441,13 +59439,13 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 8df7f5ec20d5cbc46931e2a5c87512d0, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  sunDirectionY: 342
-  sunTrajectoryTilt: 44
+  call_onDayStarted: {fileID: 11400000, guid: f05acc9eb9a2774458968d41efa65e1e, type: 2}
+  call_onNightStarted: {fileID: 11400000, guid: 66cc00283a2f8d346b6a60d9c5bd8688,
+    type: 2}
+  settings: {fileID: 11400000, guid: e75812706c2d018439bf02fe0a64e948, type: 2}
+  isNight: 0
+  currentPhaseTimer: 0
   sunLight: {fileID: 2121212128}
-  dayFog: {r: 0.5, g: 0.6, b: 0.7, a: 1}
-  nightFog: {r: 0.02, g: 0.02, b: 0.05, a: 1}
-  dayIntensity: 1
-  nightIntensity: 0.1
 --- !u!114 &2121212131
 MonoBehaviour:
   m_ObjectHideFlags: 0

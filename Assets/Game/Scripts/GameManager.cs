@@ -1,7 +1,7 @@
 ﻿using UnityEngine;
 using System.Collections.Generic;
 
-public class GameManager : MonoBehaviour
+public class GameManager : SignalBinder
 {
     public static GameManager instance;
 
@@ -23,30 +23,25 @@ public class GameManager : MonoBehaviour
     public VisitorSpawner visitorSpawner;
     public EnemySpawner enemySpawner;
 
-    [Header("--- Time & Lighting ---")]
-    public SunMovementController sunController; // Ссылка на контроллер солнца
-    [Tooltip("Длительность дня в минутах")]
-    public float dayDurationMinutes = 1f;
-    [Tooltip("Длительность ночи в минутах")]
-    public float nightDurationMinutes = 1f;
+    [Header("--- Event Listeners (Inputs) ---")]
+    [SerializeField] private GameEvent GET_onDayStarted;
+    [SerializeField] private GameEvent GET_onNightStarted;
 
     [Header("--- State (Read Only) ---")]
     public bool isNight = false;
-    [SerializeField] private float currentPhaseTimer = 0f;
 
     void Awake()
     {
         instance = this;
+
+        // Подписываем логику на события времени
+        Bind(GET_onDayStarted, OnDayStarted);
+        Bind(GET_onNightStarted, OnNightStarted);
     }
 
-    void Start()
-    {
-        // Автопоиск солнца, если забыл привязать
-        if (sunController == null)
-            sunController = Object.FindAnyObjectByType<SunMovementController>();
-
-        StartDay();
-    }
+    // Наследуемся от SignalBinder, поэтому переопределяем методы, если нужно,
+    // но в SignalBinder OnEnable/OnDisable делают основную работу.
+    // Если здесь будут свои OnEnable/OnDisable, нужно не забывать base.OnEnable().
 
     void Update()
     {
@@ -55,66 +50,36 @@ public class GameManager : MonoBehaviour
         {
             Debug.Log($"$$$ Баланс: {money} | Ловушек: {trapsCount} | Камер: {camerasCount}");
         }
-
-        // --- ЛОГИКА ВРЕМЕНИ ---
-        HandleTimeCycle();
     }
 
-    void HandleTimeCycle()
-    {
-        currentPhaseTimer += Time.deltaTime;
+    // --- ОБРАБОТЧИКИ СОБЫТИЙ ВРЕМЕНИ (через SignalBinder) ---
 
-        float currentDuration = isNight ? nightDurationMinutes : dayDurationMinutes;
-        float durationInSeconds = currentDuration * 60f;
-
-        // Рассчитываем прогресс от 0.0 до 1.0 (0% -> 100% фазы)
-        float progress = Mathf.Clamp01(currentPhaseTimer / durationInSeconds);
-
-        // Обновляем визуальное положение солнца через контроллер
-        if (sunController != null)
-        {
-            sunController.UpdateSunPosition(progress, isNight);
-        }
-
-        // Если время вышло — меняем фазу
-        if (currentPhaseTimer >= durationInSeconds)
-        {
-            SkipCurrentPhase();
-        }
-    }
-
-    // --- СМЕНА ФАЗ ---
-
-    public void StartDay()
+    private void OnDayStarted()
     {
         isNight = false;
-        currentPhaseTimer = 0f;
-
-        if (sunController) sunController.SetVisualsForDay();
-
+        
         if (enemySpawner != null) enemySpawner.ClearEnemies();
         if (visitorSpawner != null) visitorSpawner.StartNewDay();
 
-        Debug.Log(">>> НАСТУПИЛ ДЕНЬ");
+        Debug.Log(">>> GameManager: Реагирую на НАЧАЛО ДНЯ");
     }
 
-    public void StartNight()
+    private void OnNightStarted()
     {
         isNight = true;
-        currentPhaseTimer = 0f;
-
-        if (sunController) sunController.SetVisualsForNight();
 
         if (visitorSpawner != null) visitorSpawner.StopSpawning();
         if (enemySpawner != null) enemySpawner.SpawnEnemies();
 
-        Debug.Log(">>> НАСТУПИЛА НОЧЬ");
+        Debug.Log(">>> GameManager: Реагирую на НАЧАЛО НОЧИ");
     }
 
+    // Чит или кнопка пропуска — теперь должна идти через SunMovementController,
+    // либо GameManager может найти его и вызвать TogglePhase.
     public void SkipCurrentPhase()
     {
-        if (isNight) StartDay();
-        else StartNight();
+        var sun = Object.FindAnyObjectByType<SunMovementController>();
+        if (sun != null) sun.TogglePhase();
     }
 
     // --- ЭКОНОМИКА И ИНВЕНТАРЬ ---
