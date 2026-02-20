@@ -9,7 +9,10 @@ public class GameEventEditor : Editor
 {
     private List<GameObject> _prefabListeners = new List<GameObject>();
     private List<GameEventListener> _sceneListeners = new List<GameEventListener>();
-    private List<MonoBehaviour> _sceneSignalBinders = new List<MonoBehaviour>();
+    
+    // Separated by purpose
+    private List<MonoBehaviour> _sceneSubscribers = new List<MonoBehaviour>(); // Listeners (GET_)
+    private List<MonoBehaviour> _sceneInvokers = new List<MonoBehaviour>();    // Callers (call_)
 
     // Styles
     private GUIStyle _boxStyle;
@@ -92,20 +95,29 @@ public class GameEventEditor : Editor
 
         EditorGUILayout.Space(10);
 
-        // ─── Variant A: SignalBinder on scene (Recommended) ───
-        EditorGUILayout.LabelField($"🧠 Signal Binders (Scene): {_sceneSignalBinders.Count}", EditorStyles.boldLabel);
-        if (_sceneSignalBinders.Count > 0)
+        // ─── Subscribers (Listeners) ───
+        EditorGUILayout.LabelField($"📥 SUBSCRIBERS (Listen for this): {_sceneSubscribers.Count}", EditorStyles.boldLabel);
+        if (_sceneSubscribers.Count > 0)
         {
-            foreach (var smart in _sceneSignalBinders)
+            foreach (var smart in _sceneSubscribers)
             {
-                if (smart != null)
-                    DrawSmartListenerCard(smart);
+                if (smart != null) DrawSmartListenerCard(smart, true);
             }
         }
-        else
+        else EditorGUILayout.HelpBox("No scripts are listening for this event.", MessageType.None);
+
+        EditorGUILayout.Space(5);
+
+        // ─── Invokers (Raisers) ───
+        EditorGUILayout.LabelField($"📤 INVOKERS (Raise this): {_sceneInvokers.Count}", EditorStyles.boldLabel);
+        if (_sceneInvokers.Count > 0)
         {
-            EditorGUILayout.HelpBox("No SignalBinder subscribers in current scene.", MessageType.Info);
+            foreach (var smart in _sceneInvokers)
+            {
+                if (smart != null) DrawSmartListenerCard(smart, false);
+            }
         }
+        else EditorGUILayout.HelpBox("No scripts are raising this event.", MessageType.None);
 
         if (GUILayout.Button("🔄 Refresh Scene References"))
         {
@@ -145,8 +157,8 @@ public class GameEventEditor : Editor
         EditorGUILayout.EndVertical();
     }
 
-    // ───────── Variant A: SignalBinder card on scene ─────────
-    private void DrawSmartListenerCard(MonoBehaviour smart)
+    // ───────── SignalBinder card on scene ─────────
+    private void DrawSmartListenerCard(MonoBehaviour smart, bool showBindings)
     {
         EditorGUILayout.BeginVertical(_boxStyle);
 
@@ -156,24 +168,27 @@ public class GameEventEditor : Editor
         string label = $"  🧠 <b>{smart.gameObject.name}</b>  <color=#4EC9B0>{typeName}</color>.<color=#DCDCAA>OnSignalReceived</color>()";
         EditorGUILayout.LabelField(label, _signalStyle);
 
-        // Try to show bound methods via reflection of _eventMap dictionary
-        var fieldInfo = typeof(SignalBinder).GetField("_eventMap", BindingFlags.NonPublic | BindingFlags.Instance);
-        if (fieldInfo != null)
+        if (showBindings)
         {
-            var eventMap = fieldInfo.GetValue(smart) as System.Collections.IDictionary;
-            if (eventMap != null)
+            // Try to show bound methods via reflection of _eventMap dictionary
+            var fieldInfo = typeof(SignalBinder).GetField("_eventMap", BindingFlags.NonPublic | BindingFlags.Instance);
+            if (fieldInfo != null)
             {
-                GameEvent targetEvent = (GameEvent)target;
-                foreach (System.Collections.DictionaryEntry entry in eventMap)
+                var eventMap = fieldInfo.GetValue(smart) as System.Collections.IDictionary;
+                if (eventMap != null)
                 {
-                    GameEvent ev = entry.Key as GameEvent;
-                    if (ev == targetEvent)
+                    GameEvent targetEvent = (GameEvent)target;
+                    foreach (System.Collections.DictionaryEntry entry in eventMap)
                     {
-                        var action = entry.Value as System.Action;
-                        if (action != null)
+                        GameEvent ev = entry.Key as GameEvent;
+                        if (ev == targetEvent)
                         {
-                            string methodLabel = $"    → <color=#DCDCAA>{action.Method.Name}</color>()";
-                            EditorGUILayout.LabelField(methodLabel, _signalStyle);
+                            var action = entry.Value as System.Action;
+                            if (action != null)
+                            {
+                                string methodLabel = $"    → <color=#DCDCAA>{action.Method.Name}</color>()";
+                                EditorGUILayout.LabelField(methodLabel, _signalStyle);
+                            }
                         }
                     }
                 }
@@ -242,7 +257,8 @@ public class GameEventEditor : Editor
     private void FindSceneReferences()
     {
         _sceneListeners.Clear();
-        _sceneSignalBinders.Clear();
+        _sceneSubscribers.Clear();
+        _sceneInvokers.Clear();
 
         GameEvent targetEvent = (GameEvent)target;
 
@@ -250,28 +266,47 @@ public class GameEventEditor : Editor
         GameEventListener[] allListeners = FindObjectsByType<GameEventListener>(FindObjectsInactive.Include, FindObjectsSortMode.None);
         foreach (var listener in allListeners)
         {
-            if (listener.Event == targetEvent)
+            if (listener != null && listener.Event == targetEvent)
                 _sceneListeners.Add(listener);
         }
 
-        // Variant A — find all SignalBinders
-        SignalBinder[] allSmarts = FindObjectsByType<SignalBinder>(FindObjectsInactive.Include, FindObjectsSortMode.None);
-        foreach (var smart in allSmarts)
+        // Variant A — find all MonoBehaviours to check their fields
+        // Using MonoBehaviour instead of SignalBinder to find ANY script that references the event
+        MonoBehaviour[] allScripts = FindObjectsByType<MonoBehaviour>(FindObjectsInactive.Include, FindObjectsSortMode.None);
+        foreach (var script in allScripts)
         {
-            // Search for public GameEvent fields via reflection
-            var fields = smart.GetType().GetFields(BindingFlags.Public | BindingFlags.Instance);
-            foreach (var field in fields)
+            if (script == null || script is GameEventListener) continue;
+            
+            System.Type type = script.GetType();
+            bool isSubscriber = false;
+            bool isInvoker = false;
+
+            while (type != null && type != typeof(MonoBehaviour))
             {
-                if (field.FieldType == typeof(GameEvent))
+                var fields = type.GetFields(BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance | BindingFlags.DeclaredOnly);
+                foreach (var field in fields)
                 {
-                    GameEvent ev = field.GetValue(smart) as GameEvent;
-                    if (ev == targetEvent)
+                    if (field.FieldType == typeof(GameEvent))
                     {
-                        _sceneSignalBinders.Add(smart);
-                        break; // Don't add the same SignalBinder twice
+                        GameEvent ev = field.GetValue(script) as GameEvent;
+                        if (ev == targetEvent)
+                        {
+                            // Categorize by field name convention
+                            string fieldName = field.Name.ToLower();
+                            if (fieldName.StartsWith("get_"))
+                                isSubscriber = true;
+                            else if (fieldName.StartsWith("call_") || fieldName.Contains("event") || fieldName.Contains("raise"))
+                                isInvoker = true;
+                            else
+                                isInvoker = true; // Default to invoker if unsure
+                        }
                     }
                 }
+                type = type.BaseType;
             }
+
+            if (isSubscriber) _sceneSubscribers.Add(script);
+            if (isInvoker) _sceneInvokers.Add(script);
         }
     }
 
