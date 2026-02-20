@@ -91,7 +91,7 @@ public class GameEventEditor : Editor
         EditorGUILayout.LabelField("📊 DEPENDENCIES INFO", EditorStyles.boldLabel);
 
         // ─── Variant B: GameEventListener on scene ───
-        EditorGUILayout.LabelField($"🎬 GameEventListeners (Scene): {_sceneListeners.Count}", EditorStyles.boldLabel);
+        EditorGUILayout.LabelField($"🎬 <color=#2196F3>EVENT LISTENERS</color> (Variant B): {_sceneListeners.Count}", _headerStyle);
         if (_sceneListeners.Count > 0)
         {
             foreach (var listener in _sceneListeners)
@@ -102,7 +102,7 @@ public class GameEventEditor : Editor
         }
         else
         {
-            EditorGUILayout.HelpBox("No GameEventListeners in current scene.", MessageType.Info);
+            EditorGUILayout.HelpBox("No GameEventListeners in current scene.", MessageType.None);
         }
 
         EditorGUILayout.Space(10);
@@ -158,13 +158,16 @@ public class GameEventEditor : Editor
         }
     }
 
-    // ───────── Variant B: Listener card on scene ─────────
     private void DrawListenerCard(GameEventListener listener)
     {
         EditorGUILayout.BeginVertical(_boxStyle);
 
         EditorGUILayout.ObjectField(listener.gameObject, typeof(GameObject), true);
-        DrawUnityEventMethods(listener.Response, "  → ");
+        
+        string label = $"  🔵 <b>{listener.gameObject.name}</b>  <color=#4EC9B0>GameEventListener</color>.<color=#DCDCAA>Response</color>()";
+        EditorGUILayout.LabelField(label, _signalStyle);
+        
+        DrawUnityEventMethods(listener.Response, "    → ");
 
         EditorGUILayout.EndVertical();
     }
@@ -180,7 +183,7 @@ public class GameEventEditor : Editor
         string label = $"  🧠 <b>{smart.gameObject.name}</b>  <color=#4EC9B0>{typeName}</color>.<color=#DCDCAA>OnSignalReceived</color>()";
         EditorGUILayout.LabelField(label, _signalStyle);
 
-        if (showBindings)
+        if (showBindings && smart is SignalBinder)
         {
             // Try to show bound methods via reflection of _eventMap dictionary
             var fieldInfo = typeof(SignalBinder).GetField("_eventMap", BindingFlags.NonPublic | BindingFlags.Instance);
@@ -303,14 +306,46 @@ public class GameEventEditor : Editor
                         GameEvent ev = field.GetValue(script) as GameEvent;
                         if (ev == targetEvent)
                         {
-                            // Categorize by field name convention
+                            isSubscriber = true; // By default, found reference is at least an invoker
+
+                            // 1. ПРОВЕРЯЕМ АТРИБУТЫ [Listen] (Самый точный поиск)
+                            var methodWithListen = type.GetMethods(BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance);
+                            foreach(var m in methodWithListen)
+                            {
+                                var listens = m.GetCustomAttributes<ListenAttribute>();
+                                foreach(var l in listens)
+                                {
+                                    if (l.EventFieldName == field.Name)
+                                    {
+                                        isSubscriber = true;
+                                        break;
+                                    }
+                                }
+                            }
+
+                            // 2. Ищем явные префиксы подписчиков
                             string fieldName = field.Name.ToLower();
-                            if (fieldName.StartsWith("get_"))
+                            bool inheritSignalBinder = script is SignalBinder;
+
+                            if (fieldName.StartsWith("get_") || fieldName.StartsWith("sub_") || fieldName.StartsWith("ev_"))
+                            {
                                 isSubscriber = true;
-                            else if (fieldName.StartsWith("call_") || fieldName.Contains("event") || fieldName.Contains("raise"))
+                            }
+                            // 2. Ищем явные префиксы вызывальщиков
+                            else if (fieldName.StartsWith("call_") || fieldName.Contains("raise") || fieldName.Contains("invoke"))
+                            {
                                 isInvoker = true;
+                            }
+                            // 3. Если это наш SignalBinder, то по умолчанию это подписчик
+                            else if (inheritSignalBinder)
+                            {
+                                isSubscriber = true;
+                            }
+                            // 4. По умолчанию для обычных скриптов - вызывальщик
                             else
-                                isInvoker = true; // Default to invoker if unsure
+                            {
+                                isInvoker = true; 
+                            }
                         }
                     }
                 }

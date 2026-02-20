@@ -32,6 +32,18 @@ public class SOValidatorWindow : EditorWindow
     private bool _filterVariables = true;
     private bool _filterSettings = true;
 
+    // --- Настройки путей ---
+    private const string PrefKeyAutoMode = "SOValidator_AutoMode";
+    private const string PrefKeyEventsPath = "SOValidator_EventsPath";
+    private const string PrefKeyVariablesPath = "SOValidator_VariablesPath";
+    private const string PrefKeySettingsPath = "SOValidator_SettingsPath";
+
+    private bool _autoMode = true;
+    private string _eventsPath = "";
+    private string _variablesPath = "";
+    private string _settingsPath = "";
+    private bool _showConfig = false;
+
     [MenuItem("Tools/SO Validator & Explorer")]
     public static void ShowWindow()
     {
@@ -46,8 +58,24 @@ public class SOValidatorWindow : EditorWindow
 
     private void OnEnable()
     {
-        // При открытии сразу ищем настройки
+        LoadPrefs();
         RefreshSettingsList();
+    }
+
+    private void LoadPrefs()
+    {
+        _autoMode = EditorPrefs.GetBool(PrefKeyAutoMode, true);
+        _eventsPath = EditorPrefs.GetString(PrefKeyEventsPath, "Assets");
+        _variablesPath = EditorPrefs.GetString(PrefKeyVariablesPath, "Assets");
+        _settingsPath = EditorPrefs.GetString(PrefKeySettingsPath, "Assets");
+    }
+
+    private void SavePrefs()
+    {
+        EditorPrefs.SetBool(PrefKeyAutoMode, _autoMode);
+        EditorPrefs.SetString(PrefKeyEventsPath, _eventsPath);
+        EditorPrefs.SetString(PrefKeyVariablesPath, _variablesPath);
+        EditorPrefs.SetString(PrefKeySettingsPath, _settingsPath);
     }
 
     private void OnGUI()
@@ -164,6 +192,8 @@ public class SOValidatorWindow : EditorWindow
 
     private void DrawSettingsExplorer()
     {
+        DrawConfigurationPanel();
+
         // Панель фильтров
         EditorGUILayout.BeginHorizontal(EditorStyles.helpBox);
         
@@ -187,12 +217,13 @@ public class SOValidatorWindow : EditorWindow
         
         var filteredList = _foundSettings.Where(so => {
             if (so == null) return false;
-            string typeName = so.GetType().Name;
+            Type type = so.GetType();
+            string path = AssetDatabase.GetAssetPath(so);
             
             bool passType = false;
-            if (_filterEvents && typeName.Contains("Event")) passType = true;
-            if (_filterVariables && typeName.Contains("Variable")) passType = true;
-            if (_filterSettings && typeName.Contains("Settings")) passType = true;
+            if (_filterEvents && IsEvent(type, path)) passType = true;
+            if (_filterVariables && IsVariable(type, path)) passType = true;
+            if (_filterSettings && IsSettings(type, path)) passType = true;
 
             if (!passType) return false;
 
@@ -216,7 +247,8 @@ public class SOValidatorWindow : EditorWindow
                 EditorGUILayout.BeginHorizontal(isSelected ? "selectionRect" : GUIStyle.none);
                 
                 // Иконка типа
-                string color = GetColorForType(so.GetType());
+                string assetPath = AssetDatabase.GetAssetPath(so);
+                string color = GetColorForType(so.GetType(), assetPath);
                 EditorGUILayout.LabelField(" ● ", new GUIStyle(EditorStyles.label) { normal = { textColor = HexToColor(color) } }, GUILayout.Width(20));
                 
                 if (GUILayout.Button($"{so.name}", style))
@@ -238,6 +270,51 @@ public class SOValidatorWindow : EditorWindow
         EditorGUILayout.EndScrollView();
     }
 
+    private void DrawConfigurationPanel()
+    {
+        EditorGUILayout.BeginVertical(EditorStyles.helpBox);
+        _showConfig = EditorGUILayout.Foldout(_showConfig, "⚙️ Конфигурация путей", true, new GUIStyle(EditorStyles.foldout) { fontStyle = FontStyle.Bold });
+        if (_showConfig)
+        {
+            EditorGUI.BeginChangeCheck();
+            
+            _autoMode = EditorGUILayout.ToggleLeft("Автоматический режим (Умный поиск)", _autoMode);
+            
+            if (!_autoMode)
+            {
+                EditorGUILayout.Space(5);
+                DrawPathSelector("Папка Событий:", ref _eventsPath);
+                DrawPathSelector("Папка Переменных:", ref _variablesPath);
+                DrawPathSelector("Папка Настроек:", ref _settingsPath);
+            }
+
+            if (EditorGUI.EndChangeCheck())
+            {
+                SavePrefs();
+                RefreshSettingsList();
+            }
+        }
+        EditorGUILayout.EndVertical();
+        EditorGUILayout.Space(5);
+    }
+
+    private void DrawPathSelector(string label, ref string path)
+    {
+        EditorGUILayout.BeginHorizontal();
+        EditorGUILayout.LabelField(label, GUILayout.Width(130));
+        EditorGUILayout.LabelField(string.IsNullOrEmpty(path) ? "Не выбрана" : path, EditorStyles.wordWrappedLabel);
+        if (GUILayout.Button("Выбрать", GUILayout.Width(70)))
+        {
+            string absPath = EditorUtility.OpenFolderPanel("Выберите папку", Application.dataPath, "");
+            if (!string.IsNullOrEmpty(absPath) && absPath.StartsWith(Application.dataPath))
+            {
+                path = "Assets" + absPath.Substring(Application.dataPath.Length);
+                GUI.FocusControl(null);
+            }
+        }
+        EditorGUILayout.EndHorizontal();
+    }
+
     private void RefreshSettingsList()
     {
         _foundSettings.Clear();
@@ -254,8 +331,8 @@ public class SOValidatorWindow : EditorWindow
             ScriptableObject so = AssetDatabase.LoadAssetAtPath<ScriptableObject>(path);
             if (so == null) continue;
 
-            // Добавляем только те, что действительно являются нашими типами
-            if (GetColorForType(so.GetType()) != "#ffffff")
+            // Добавляем только те, что действительно являются нашими типами (по любому из признаков)
+            if (GetColorForType(so.GetType(), path) != "#ffffff")
             {
                 _foundSettings.Add(so);
             }
@@ -267,19 +344,61 @@ public class SOValidatorWindow : EditorWindow
 
     private string GetTypePrettyName(Type t)
     {
-        if (t.Name.Contains("Event")) return "EVENT";
-        if (t.Name.Contains("Variable")) return "VARIABLE";
-        if (t.Name.Contains("Settings")) return "SETTINGS";
+        string path = ""; // В этом контексте путь редко нужен для лейбла, но для надежности проверим тип
+        if (IsEvent(t, "")) return "EVENT";
+        if (IsVariable(t, "")) return "VARIABLE";
+        if (IsSettings(t, "")) return "SETTINGS";
         return t.Name.ToUpper();
     }
 
-    private string GetColorForType(Type t)
+    private string GetColorForType(Type t, string path = "")
     {
-        string name = t.Name;
-        if (name.Contains("Event")) return "#FF9800";
-        if (name.Contains("Variable")) return "#4CAF50";
-        if (name.Contains("Settings")) return "#55aaff";
+        if (IsEvent(t, path)) return "#FF9800";
+        if (IsVariable(t, path)) return "#4CAF50";
+        if (IsSettings(t, path)) return "#55aaff";
         return "#ffffff";
+    }
+
+    // --- ЛОГИКА ОПРЕДЕЛЕНИЯ ТИПОВ ---
+
+    private bool IsEvent(Type t, string path)
+    {
+        if (!_autoMode && !string.IsNullOrEmpty(path)) return !string.IsNullOrEmpty(_eventsPath) && path.StartsWith(_eventsPath);
+
+        if (t.Name.Contains("Event")) return true;
+        if (typeof(GameEvent).IsAssignableFrom(t)) return true;
+        if (path.ToLower().Contains("/events/")) return true;
+        return false;
+    }
+
+    private bool IsVariable(Type t, string path)
+    {
+        if (!_autoMode && !string.IsNullOrEmpty(path)) return !string.IsNullOrEmpty(_variablesPath) && path.StartsWith(_variablesPath);
+
+        if (t.Name.Contains("Variable")) return true;
+        if (typeof(ScriptableVariableBase).IsAssignableFrom(t)) return true;
+        if (path.ToLower().Contains("/variables/")) return true;
+        return false;
+    }
+
+    private bool IsSettings(Type t, string path)
+    {
+        if (!_autoMode && !string.IsNullOrEmpty(path)) return !string.IsNullOrEmpty(_settingsPath) && path.StartsWith(_settingsPath);
+
+        // 1. По атрибуту (самый надежный способ)
+        if (t.GetCustomAttribute<SOSettingsAttribute>() != null) return true;
+        
+        // 2. По имени
+        if (t.Name.Contains("Settings")) return true;
+        
+        // 3. По папке, в которой лежит ассет
+        if (!string.IsNullOrEmpty(path))
+        {
+            string lowPath = path.ToLower();
+            if (lowPath.Contains("/settings/") || lowPath.Contains("/data/")) return true;
+        }
+
+        return false;
     }
 
     private Color HexToColor(string hex)

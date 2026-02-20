@@ -14,15 +14,10 @@ public class VisitorSpawner : SignalBinder
     public int minVisitors = 1;
     public int maxVisitors = 15;
 
-    private void Start()
-    {
-        Bind(GET_onDayStarted, StartNewDay);
-        Bind(GET_onNightStarted, StopSpawning);
-    }
-    
     // Reference to the coroutine so it can be stopped at night
     private Coroutine dailyRoutine;
 
+    [Listen(nameof(GET_onDayStarted))]
     public void StartNewDay()
     {
         // Stop previous processes if any
@@ -32,6 +27,7 @@ public class VisitorSpawner : SignalBinder
         dailyRoutine = StartCoroutine(VirtualVisitorRoutine());
     }
 
+    [Listen(nameof(GET_onNightStarted))]
     public void StopSpawning()
     {
         if (dailyRoutine != null)
@@ -40,6 +36,8 @@ public class VisitorSpawner : SignalBinder
             dailyRoutine = null;
         }
     }
+
+    
 
     IEnumerator VirtualVisitorRoutine()
     {

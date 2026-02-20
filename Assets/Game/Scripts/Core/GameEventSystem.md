@@ -1,87 +1,62 @@
-# 📡 ARCHITECTURE BIBLE: GAME EVENT SYSTEM (SIGNAL-BASED)
+# 📡 ARCHITECTURE BIBLE: GAME EVENT SYSTEM
 
-Система для связи компонентов через ScriptableObject-сигналы.
+Система связи компонентов через ScriptableObject-сигналы и динамические переменные.
 
 ---
 
-## 1. Варианты использования
+## 🔝 ПРИОРЫТЕТНЫЙ ВАРИАНТ (Через Атрибуты)
 
-### Вариант А: SignalBinder (Рекомендуемый)
-Наследование от `SignalBinder`. Работает чисто через код.
-*   **Как это работает**: Внутри `SignalBinder` есть словарь (Map). Когда вы вызываете `Bind(event, method)`, метод сохраняется в этот словарь.
-*   **Механика подписки**: Подписка и отписка происходят автоматически в `OnEnable` и `OnDisable`.
-*   **Плюсы**: Нет лишних UnityEvents в инспекторе, код наглядный, самая высокая производительность.
-*   **Важно**: Если вы переопределяете `OnEnable/OnDisable` в своем скрипте, обязательно вызывайте `base.OnEnable() / base.OnDisable()`.
+Используйте этот метод во всех новых скриптах. Это самый чистый и безопасный способ, который минимизирует количество кода.
 
+### 1. Подписка на Переменные `[OnChanged]`
+Автоматически вызывает метод при изменении значения в `ScriptableVariable` (например, Деньги, Здоровье).
 ```csharp
-// --- ПРИМЕР ОРГАНИЗАЦИИ СКРИПТА ---
-public class PlayerEffect : SignalBinder 
-{
-    [Header("Subscribed Events")] // Кто нам шлет сигналы (Вход)
-    [SerializeField] private GameEvent GET_onJump;
-    
-    [Header("Raising Events")]    // Кому мы шлем сигналы (Выход)
-    [SerializeField] private GameEvent CALL_onEffectEnd;
+[SerializeField, OnChanged(nameof(RefreshUI))] 
+private FloatVariable VAR_Money;
 
-    [Header("Settings Assets")]  // Ссылки на SO-ассеты (Конфиги)
-    [SerializeField] private SunSettings SET_SunSettings;
-
-    [Header("Variables SO")] // Ссылки на переменные SO-ассеты для чтения или записи на прямую
-    [SerializeField] private VariableSO VAR_VariableSO;
-
-    [Header("Settings")]          // Обычные настройки скрипта (Примитивы)
-    [SerializeField] private float effectDuration = 1.0f;
-    
-    private void OnEnable() 
-    {
-        // Подписываемся на события
-        Bind(GET_onJump, PlayEffect);
-    }
-    
-    // Методы, которые будут вызываться при получении сигнала
-    private void PlayEffect() 
-    { 
-        // Логика...
-        
-
-    private void RiseEvent() 
-    { 
-        // Вызываем событие
-        CALL_onEffectEnd.Raise();
-    }
-}
+private void RefreshUI() { /* Обновление текста/графики */ }
 ```
 
-### Вариант Б: GameEventListener
-Отдельный компонент, который вешается на GameObject. Используется, когда нельзя изменить базовый класс скрипта.
-*   **Как это работает**: Вы добавляете компонент `GameEventListener` на объект, перетаскиваете в него ассет события и в списке `Response()` выбираете нужный метод любого другого скрипта.
-*   **Механика подписки**: Работает через классические UnityEvents. Событие вызывает `Response.Invoke()`.
-*   **Плюсы**: Гибкость, можно связывать объекты прямо в редакторе без изменения кода.
-*   **Минус**: Чуть медленнее из-за работы UnityEvent и больше визуального мусора в инспекторе.
+### 2. Подписка на События `[Listen]`
+Автоматически подписывает метод на `GameEvent` ассет.
+```csharp
+[SerializeField] private GameEvent GET_onDayStarted;
+
+[Listen(nameof(GET_onDayStarted))]
+private void StartNewDay() { /* Логика начала дня */ }
+```
+
+**⚠️ Важно для ИИ и Людей**: 
+- Скрипт **ДОЛЖЕН** наследоваться от `SignalBinder`.
+- Регистрация и отписка происходят полностью автоматически через атрибуты.
+- Методы, помеченные атрибутами, должны быть без параметров (void).
 
 ---
 
-## 2. Вариант В: ISignalListener (Кратко)
-Интерфейс для прямой реализации метода `OnSignalReceived(GameEvent incomingEvent)`.
-*   **Статус**: Не рекомендуется. Требует ручной фильтрации событий через `if/switch`, что усложняет код.
+## 🛠 ВАРИАНТ Б (Инспекторный / Legacy)
+
+Если вы **не можете** изменить базовый класс скрипта (он уже наследуется от чего-то другого, не от `SignalBinder`), используйте этот метод.
+
+### GameEventListener (Компонент)
+1. Добавьте компонент `GameEventListener` на GameObject.
+2. В поле **Event** перетащите ассет события.
+3. В списке **Response()** (UnityEvent) добавьте слот и выберите метод вашего скрипта.
 
 ---
 
-## 3. Именование и Организация (Best Practices)
-Используйте `[Header]` для визуального разделения потоков данных в инспекторе.
+## 📋 Именование (Best Practices)
 
-| Тип | Префикс | Группа (Header) | Описание |
-|---|---|---|---|
-| **Вход** | `GET_` | **Subscribed Events** | Подписка на событие |
-| **Выход** | `CALL_` | **Raising Events** | Вызов события через `.Raise()` |
-| **Ассет** | `EV_` | (Project View) | Название файла ассета (ScriptableObject) |
-| **Ресурсы**| `_` | **Settings Assets** | Ссылки на ScriptableObject конфиги (напр. SunSettings) |
-| **Опции** | `_` | **Settings** | Обычные параметры скрипта (float, int, bool) |
+| Префикс | Группа (Header) | Описание |
+|---|---|---|
+| `GET_` | **Subscribed Events** | Поле для ассета GameEvent |
+| `VAR_` | **Variables SO** | Ссылка на ScriptableVariable |
+| `CALL_` | **Raising Events** | Вызов события через `.Raise()` |
 
 ---
 
-## 4. Правила для ИИ-агента (AI Instructions)
-1. **Лаконичность**: Не пиши длинные пояснения в коде.
-2. **Предположение знаний**: Пользователь знает эту архитектуру.
-3. **Простота**: Пиши обычные, короткие комментарии.
-4. **Наследование**: При редактировании наследников `SignalBinder` всегда следи за вызовом `base` в событиях жизни объекта.
+## 🤖 Инструкции для ИИ (AI Instructions)
+
+1. **Приоритет Атрибутов**: Всегда используй `[OnChanged]` и `[Listen]` для подписки на события и переменные.
+2. **Использование OnEnable**: Если скрипту нужна дополнительная логика при активации (не связанная с подписками), ты МОЖЕШЬ создавать `protected override void OnEnable()`.
+3. **Критическое правило**: При переопределении `OnEnable` или `OnDisable` ты **ОБЯЗАН** первым делом вызвать `base.OnEnable()` или `base.OnDisable()`, иначе автоматические подписки не заработают.
+4. **Наследование**: Всегда используй `public class Name : SignalBinder`.

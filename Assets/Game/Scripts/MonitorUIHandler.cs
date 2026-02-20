@@ -2,15 +2,15 @@ using UnityEngine;
 // Trigger recompile
 using UnityEngine.UIElements;
 
-public class MonitorUIHandler : MonoBehaviour
+public class MonitorUIHandler : SignalBinder
 {
     [Header("UI Toolkit")]
     public UIDocument monitorUIDoc;
 
     [Header("Variables SO (Display)")]
-    [SerializeField] private FloatVariable VAR_Money;
-    [SerializeField] private IntVariable VAR_TrapsCount;
-    [SerializeField] private IntVariable VAR_CamerasCount;
+    [SerializeField, OnChanged(nameof(RefreshUI))] private FloatVariable VAR_Money;
+    [SerializeField, OnChanged(nameof(RefreshUI))] private IntVariable VAR_TrapsCount;
+    [SerializeField, OnChanged(nameof(RefreshUI))] private IntVariable VAR_CamerasCount;
 
     [Header("Shop Settings")]
     public float trapPrice = 20f;
@@ -25,21 +25,26 @@ public class MonitorUIHandler : MonoBehaviour
         if (monitorUIDoc != null && monitorUIDoc.enabled)
         {
             BindUI();
+            RefreshUI();
         }
     }
 
-    void Update()
+    // OnEnable больше не нужен, SignalBinder сам подпишет переменные через OnChanged!
+    
+    private void RefreshUI()
     {
-        if (CctvManager.instance != null && CctvManager.instance.isMonitorActive)
+        // Не обновляем UI, если монитор не активен или игрок смотрит в камеры/карту
+        if (CctvManager.instance == null || !CctvManager.instance.isMonitorActive) return;
+        if (CctvManager.instance.isWatchingCameras || CctvManager.instance.isWatchingMap) return;
+        
+        if (moneyText != null && VAR_Money != null)
         {
-            if (!CctvManager.instance.isWatchingCameras && !CctvManager.instance.isWatchingMap && moneyText != null)
-            {
-                if (VAR_Money != null)
-                    moneyText.text = $"$ {VAR_Money.Value}";
-                
-                if (infoText != null && VAR_TrapsCount != null && VAR_CamerasCount != null)
-                    infoText.text = $"Ловушки: {VAR_TrapsCount.Value} | Камеры: {VAR_CamerasCount.Value}";
-            }
+            moneyText.text = $"$ {VAR_Money.Value}";
+        }
+        
+        if (infoText != null && VAR_TrapsCount != null && VAR_CamerasCount != null)
+        {
+            infoText.text = $"Ловушки: {VAR_TrapsCount.Value} | Камеры: {VAR_CamerasCount.Value}";
         }
     }
 
@@ -106,6 +111,7 @@ public class MonitorUIHandler : MonoBehaviour
         {
             monitorUIDoc.enabled = true;
             BindUI();
+            RefreshUI(); // Принудительно обновляем текст при открытии монитора
         }
     }
 

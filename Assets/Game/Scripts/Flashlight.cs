@@ -2,7 +2,7 @@ using UnityEngine;
 
 public class Flashlight : SignalBinder
 {
-    [Header("Events")]
+    [Header("Subscribed Events")]
     public GameEvent EV_MonitorEntered;
     public GameEvent EV_MonitorExited;
 
@@ -23,7 +23,7 @@ public class Flashlight : SignalBinder
 
     void Update()
     {
-        // Не даем переключать фанарик, если мы в мониторе
+        // Не даем переключать фанарик, если мы в мониторе.
         if (_isMonitorActive) return;
 
         if (Input.GetKeyDown(KeyCode.F))
