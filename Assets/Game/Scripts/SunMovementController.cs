@@ -1,12 +1,15 @@
 using UnityEngine;
 
-public class SunMovementController : MonoBehaviour
+public class SunMovementController : SignalBinder
 {
-    [Header("Events")]
+    [Header("Subscribed Events")]
+    [SerializeField] private GameEvent GET_requestTimeSkipEvent;
+
+    [Header("Raising Events")]
     [SerializeField] private GameEvent call_onDayStarted;
     [SerializeField] private GameEvent call_onNightStarted;
 
-    [Header("Settings")]
+    [Header("Settings Assets")]
     [SerializeField] private SunSettings settings;
 
     [Header("State (Read Only)")]
@@ -18,6 +21,8 @@ public class SunMovementController : MonoBehaviour
 
     private void Start()
     {
+        Bind(GET_requestTimeSkipEvent, TogglePhase);
+
         // Инициализируем визуализацию при старте
         if (isNight) SetVisualsForNight();
         else SetVisualsForDay();
@@ -102,7 +107,11 @@ public class SunMovementController : MonoBehaviour
         RenderSettings.ambientIntensity = settings.dayIntensity;
         if (sunLight) sunLight.intensity = settings.dayIntensity;
 
-        if (call_onDayStarted != null) call_onDayStarted.Raise();
+        if (call_onDayStarted != null) 
+        {
+            Debug.Log("[SUN] Raising call_onDayStarted");
+            call_onDayStarted.Raise();
+        }
     }
 
     public void SetVisualsForNight()
@@ -112,6 +121,10 @@ public class SunMovementController : MonoBehaviour
         RenderSettings.ambientIntensity = settings.nightIntensity;
         if (sunLight) sunLight.intensity = settings.nightIntensity;
 
-        if (call_onNightStarted != null) call_onNightStarted.Raise();
+        if (call_onNightStarted != null) 
+        {
+            Debug.Log("[SUN] Raising call_onNightStarted");
+            call_onNightStarted.Raise();
+        }
     }
 }

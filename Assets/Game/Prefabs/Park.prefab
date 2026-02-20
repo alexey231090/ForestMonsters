@@ -12,6 +12,7 @@ GameObject:
   - component: {fileID: 577207655387465609}
   - component: {fileID: 5139932021708334615}
   - component: {fileID: 7976244268864741495}
+  - component: {fileID: 4824162171494721518}
   m_Layer: 0
   m_Name: CubeTrigger
   m_TagString: ParkTrigger
@@ -112,6 +113,33 @@ BoxCollider:
   serializedVersion: 3
   m_Size: {x: 1, y: 1, z: 1}
   m_Center: {x: 0, y: 0, z: 0}
+--- !u!54 &4824162171494721518
+Rigidbody:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 454901306857807619}
+  serializedVersion: 5
+  m_Mass: 1
+  m_LinearDamping: 0
+  m_AngularDamping: 0.05
+  m_CenterOfMass: {x: 0, y: 0, z: 0}
+  m_InertiaTensor: {x: 1, y: 1, z: 1}
+  m_InertiaRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ImplicitCom: 1
+  m_ImplicitTensor: 1
+  m_UseGravity: 0
+  m_IsKinematic: 1
+  m_Interpolate: 0
+  m_Constraints: 0
+  m_CollisionDetection: 0
 --- !u!1 &1707128776461195059
 GameObject:
   m_ObjectHideFlags: 0
@@ -352,6 +380,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 78f1d2e04e845f6429d331ca5ae98b51, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  VAR_CapturedCreatures: {fileID: 0}
   monsterModel: {fileID: 1707128776461195059}
   isOccupied: 0
 --- !u!1 &2018445130810584635
@@ -708,6 +737,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 78f1d2e04e845f6429d331ca5ae98b51, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  VAR_CapturedCreatures: {fileID: 0}
   monsterModel: {fileID: 2268152331205550180}
   isOccupied: 0
 --- !u!1 &5359161110884784483
@@ -840,12 +870,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: cb975c69b2859044cbddb58b8ca31cec, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  parkTriggerTag: ParkTrigger
-  platforms:
-  - {fileID: 6557719308239664779}
-  - {fileID: 8412970879475790982}
-  - {fileID: 6379486629582724709}
-  - {fileID: 3126473388971530704}
+  VAR_Money: {fileID: 11400000, guid: ede8e290731facf48948a131ce83664e, type: 2}
+  activePlatforms: []
+  pricePerMeme: 1.5
 --- !u!1 &6228149108375296730
 GameObject:
   m_ObjectHideFlags: 0
@@ -1086,6 +1113,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 78f1d2e04e845f6429d331ca5ae98b51, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  VAR_CapturedCreatures: {fileID: 0}
   monsterModel: {fileID: 6228149108375296730}
   isOccupied: 0
 --- !u!1 &7536854824827778727
@@ -1214,5 +1242,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 78f1d2e04e845f6429d331ca5ae98b51, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  VAR_CapturedCreatures: {fileID: 0}
   monsterModel: {fileID: 2018445130810584635}
   isOccupied: 0

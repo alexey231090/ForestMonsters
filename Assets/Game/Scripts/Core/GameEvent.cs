@@ -4,35 +4,35 @@ using UnityEngine;
 [CreateAssetMenu(menuName = "Architecture/Game Event")]
 public class GameEvent : ScriptableObject
 {
-    // ─── Старая система (GameEventListener + UnityEvent) ───
+    // ─── Variant B (GameEventListener + UnityEvent) ───
     private readonly List<GameEventListener> eventListeners = new List<GameEventListener>();
 
-    // ─── Новая система (ISignalListener / SmartListener) ───
+    // ─── Variant A (ISignalListener / SignalBinder) ───
     private readonly List<ISignalListener> signalListeners = new List<ISignalListener>();
 
-    // Публичный доступ для инспектора
+    // Public access for inspector
     public IReadOnlyList<GameEventListener> EventListeners => eventListeners;
     public IReadOnlyList<ISignalListener> SignalListeners => signalListeners;
 
     /// <summary>
-    /// Вызывает событие — оповещает всех подписчиков (обеих систем).
+    /// Raises the event — notifies all subscribers (both variants).
     /// </summary>
     public void Raise()
     {
-        // Старая система — обратная совместимость
+        // Variant B (Legacy) — backward compatibility
         for (int i = eventListeners.Count - 1; i >= 0; i--)
             eventListeners[i].OnEventRaised();
 
-        // Новая система — сигналы
+        // Variant A (Signals)
         for (int i = signalListeners.Count - 1; i >= 0; i--)
             signalListeners[i].OnSignalReceived(this);
     }
 
-    // ─── Регистрация старой системы ───
+    // ─── Variant B Registration ───
     public void RegisterListener(GameEventListener listener) => eventListeners.Add(listener);
     public void UnregisterListener(GameEventListener listener) => eventListeners.Remove(listener);
 
-    // ─── Регистрация новой системы ───
+    // ─── Variant A Registration ───
     public void RegisterSignal(ISignalListener listener)
     {
         if (!signalListeners.Contains(listener))

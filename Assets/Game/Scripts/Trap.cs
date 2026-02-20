@@ -9,6 +9,9 @@ public class Trap : MonoBehaviour
     public float pickUpDuration = 0.5f; // Скорость подъема к рукам
     public float dropDuration = 0.5f;   // Скорость опускания на землю
 
+    [Header("Variables SO")]
+    [SerializeField] private IntVariable VAR_TrapsCount;
+
     [Header("References")]
     public Animator animatorCell;
     public Transform captureCenterPoint;
@@ -37,13 +40,14 @@ public class Trap : MonoBehaviour
         {
             if (HasCatch())
             {
+                // Проверяем доставку в парк (это должно работать, даже если монстр УЖЕ пойман)
                 if (ParkManager.instance != null && ParkManager.instance.TryDeliverMonster())
                 {
                     Debug.Log("[TRAP] Monster delivered! Returning trap to inventory.");
                     
-                    if (GameManager.instance != null)
+                    if (VAR_TrapsCount != null)
                     {
-                        GameManager.instance.trapsCount++;
+                        VAR_TrapsCount.ApplyChange(1);
                     }
                     
                     // Удаляем весь TrapBox

@@ -1,8 +1,11 @@
 using UnityEngine;
 using System.Collections;
 
-public class ParkPlatform : MonoBehaviour
+public class ParkPlatform : MonoBehaviour, IInteractable
 {
+    [Header("Variables SO")]
+    [SerializeField] private IntVariable VAR_CapturedCreatures;
+
     [Header("Settings")]
     public GameObject monsterModel;
     public bool isOccupied = false;
@@ -10,7 +13,15 @@ public class ParkPlatform : MonoBehaviour
     void Start()
     {
         if (monsterModel != null) monsterModel.SetActive(isOccupied);
+        if (isOccupied && ParkManager.instance != null) ParkManager.instance.RegisterPlatform(this);
     }
+
+    void OnDestroy()
+    {
+        if (ParkManager.instance != null) ParkManager.instance.UnregisterPlatform(this);
+    }
+
+    public void Interact() => TryPlaceMonster();
 
     public void TryPlaceMonster()
     {
@@ -20,9 +31,10 @@ public class ParkPlatform : MonoBehaviour
             return;
         }
 
-        // 2. Проверяем, есть ли монстры в инвентаре (через GameManager)
-        if (GameManager.instance != null && GameManager.instance.TryRemoveCreature())
+        // 2. Проверяем, есть ли монстры в инвентаре
+        if (VAR_CapturedCreatures != null && VAR_CapturedCreatures.Value > 0)
         {
+            VAR_CapturedCreatures.ApplyChange(-1);
             isOccupied = true;
 
             if (monsterModel != null)
@@ -30,8 +42,8 @@ public class ParkPlatform : MonoBehaviour
                 monsterModel.SetActive(true);
             }
 
-            // Добавляем эту платформу в список активных, чтобы посетители её видели
-            GameManager.instance.activePlatforms.Add(this);
+            // Добавляем эту платформу в список активных
+            if (ParkManager.instance != null) ParkManager.instance.RegisterPlatform(this);
 
             Debug.Log("Монстр размещен на платформе!");
         }
@@ -48,9 +60,9 @@ public class ParkPlatform : MonoBehaviour
         isOccupied = true;
         if (monsterModel != null) monsterModel.SetActive(true);
         
-        if (GameManager.instance != null)
+        if (ParkManager.instance != null)
         {
-            GameManager.instance.activePlatforms.Add(this);
+            ParkManager.instance.RegisterPlatform(this);
         }
     }
 }

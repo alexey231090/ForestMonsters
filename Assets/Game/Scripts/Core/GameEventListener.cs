@@ -2,9 +2,9 @@ using UnityEngine;
 using UnityEngine.Events;
 
 /// <summary>
-/// Классический слушатель событий (старая система).
-/// Подписывается на GameEvent и вызывает UnityEvent Response.
-/// Сохранён для обратной совместимости.
+/// Classic event listener (legacy system).
+/// Subscribes to GameEvent and invokes UnityEvent Response.
+/// Maintained for backward compatibility.
 /// </summary>
 public class GameEventListener : MonoBehaviour
 {

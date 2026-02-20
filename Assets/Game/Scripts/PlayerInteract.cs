@@ -43,6 +43,10 @@ public class PlayerInteract : MonoBehaviour
     public float trapDustOffset = 0.1f;
     public float cameraDustOffset = 0.1f;
 
+    [Header("Variables SO")]
+    [SerializeField] private IntVariable VAR_TrapsCount;
+    [SerializeField] private IntVariable VAR_CamerasCount;
+
     // --- ВНУТРЕННИЕ ПЕРЕМЕННЫЕ ---
     private int selectedItemIndex = -1; // -1 значит "Ничего не выбрано"
     private GameObject currentGhost;
@@ -76,12 +80,14 @@ public class PlayerInteract : MonoBehaviour
         // 2. ВЫБОР ПРЕДМЕТА
         if (Input.GetKeyDown(KeyCode.Alpha1)) 
         {
-            Debug.Log($"[INPUT] Нажата 1. Ловушек: {GameManager.instance.trapsCount}");
+            int tCount = VAR_TrapsCount != null ? VAR_TrapsCount.Value : 0;
+            Debug.Log($"[INPUT] Нажата 1. Ловушек: {tCount}");
             ChangeItem(0);
         }
         if (Input.GetKeyDown(KeyCode.Alpha2)) 
         {
-            Debug.Log($"[INPUT] Нажата 2. Камер: {GameManager.instance.camerasCount}");
+            int cCount = VAR_CamerasCount != null ? VAR_CamerasCount.Value : 0;
+            Debug.Log($"[INPUT] Нажата 2. Камер: {cCount}");
             ChangeItem(1);
         }
 
@@ -112,8 +118,8 @@ public class PlayerInteract : MonoBehaviour
 
         // 1. Проверяем наличие предметов
         bool hasItem = false;
-        if (selectedItemIndex == 0 && GameManager.instance.trapsCount > 0) hasItem = true;
-        if (selectedItemIndex == 1 && GameManager.instance.camerasCount > 0) hasItem = true;
+        if (selectedItemIndex == 0 && VAR_TrapsCount != null && VAR_TrapsCount.Value > 0) hasItem = true;
+        if (selectedItemIndex == 1 && VAR_CamerasCount != null && VAR_CamerasCount.Value > 0) hasItem = true;
 
         if (!hasItem) 
         { 
@@ -237,8 +243,9 @@ public class PlayerInteract : MonoBehaviour
 
             if (selectedItemIndex == 0)
             {
-                if (GameManager.instance.TryUseTrap())
+                if (VAR_TrapsCount != null && VAR_TrapsCount.Value > 0)
                 {
+                    VAR_TrapsCount.ApplyChange(-1);
                     canPlace = true;
                     objectToSpawn = trapPrefab;
                     currentRealDepth = trapEmbedDepth;
@@ -246,8 +253,9 @@ public class PlayerInteract : MonoBehaviour
             }
             else if (selectedItemIndex == 1)
             {
-                if (GameManager.instance.TryUseCamera())
+                if (VAR_CamerasCount != null && VAR_CamerasCount.Value > 0)
                 {
+                    VAR_CamerasCount.ApplyChange(-1);
                     canPlace = true;
                     objectToSpawn = cameraItemPrefab;
                     currentRealDepth = cameraEmbedDepth;
@@ -301,6 +309,13 @@ public class PlayerInteract : MonoBehaviour
 
             if (Input.GetKeyDown(KeyCode.E))
             {
+                IInteractable interactable = hit.collider.GetComponent<IInteractable>();
+                if (interactable != null)
+                {
+                    interactable.Interact();
+                    return;
+                }
+
                 MonitorTrigger monitor = hit.collider.GetComponent<MonitorTrigger>();
                 if (monitor != null && CctvManager.instance != null && !CctvManager.instance.isMonitorActive)
                 {
@@ -308,11 +323,6 @@ public class PlayerInteract : MonoBehaviour
                     CctvManager.instance.EnterMonitorMode(); return;
                 }
 
-                BedTrigger bed = hit.collider.GetComponent<BedTrigger>();
-                if (bed != null && GameManager.instance != null) { GameManager.instance.SkipCurrentPhase(); return; }
-
-                ParkPlatform platform = hit.collider.GetComponent<ParkPlatform>();
-                if (platform != null) { platform.TryPlaceMonster(); return; }
             }
         }
 

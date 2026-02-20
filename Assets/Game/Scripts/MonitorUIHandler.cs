@@ -1,10 +1,20 @@
 using UnityEngine;
+// Trigger recompile
 using UnityEngine.UIElements;
 
 public class MonitorUIHandler : MonoBehaviour
 {
     [Header("UI Toolkit")]
     public UIDocument monitorUIDoc;
+
+    [Header("Variables SO (Display)")]
+    [SerializeField] private FloatVariable VAR_Money;
+    [SerializeField] private IntVariable VAR_TrapsCount;
+    [SerializeField] private IntVariable VAR_CamerasCount;
+
+    [Header("Shop Settings")]
+    public float trapPrice = 20f;
+    public float cameraPrice = 15f;
 
     private VisualElement root;
     private Label moneyText;
@@ -22,11 +32,13 @@ public class MonitorUIHandler : MonoBehaviour
     {
         if (CctvManager.instance != null && CctvManager.instance.isMonitorActive)
         {
-            if (!CctvManager.instance.isWatchingCameras && !CctvManager.instance.isWatchingMap && moneyText != null && GameManager.instance != null)
+            if (!CctvManager.instance.isWatchingCameras && !CctvManager.instance.isWatchingMap && moneyText != null)
             {
-                moneyText.text = $"$ {GameManager.instance.money}";
-                if (infoText != null)
-                    infoText.text = $"Ловушки: {GameManager.instance.trapsCount} | Камеры: {GameManager.instance.camerasCount}";
+                if (VAR_Money != null)
+                    moneyText.text = $"$ {VAR_Money.Value}";
+                
+                if (infoText != null && VAR_TrapsCount != null && VAR_CamerasCount != null)
+                    infoText.text = $"Ловушки: {VAR_TrapsCount.Value} | Камеры: {VAR_CamerasCount.Value}";
             }
         }
     }
@@ -55,13 +67,30 @@ public class MonitorUIHandler : MonoBehaviour
 
     void OnBuyTrapClicked()
     {
-        if (GameManager.instance != null) GameManager.instance.BuyTrap();
-        print("купил ловушку");
+        if (VAR_Money != null && VAR_TrapsCount != null && VAR_Money.Value >= trapPrice)
+        {
+            VAR_Money.ApplyChange(-trapPrice);
+            VAR_TrapsCount.ApplyChange(1);
+            print("купил ловушку");
+        }
+        else
+        {
+            print("Недостаточно денег!");
+        }
     }
 
     void OnBuyCameraClicked()
     {
-        if (GameManager.instance != null) GameManager.instance.BuyCamera();
+        if (VAR_Money != null && VAR_CamerasCount != null && VAR_Money.Value >= cameraPrice)
+        {
+            VAR_Money.ApplyChange(-cameraPrice);
+            VAR_CamerasCount.ApplyChange(1);
+            print("купил камеру");
+        }
+        else
+        {
+            print("Недостаточно денег!");
+        }
     }
 
     void OnExitButtonClicked()

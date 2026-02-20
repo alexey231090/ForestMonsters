@@ -1,16 +1,15 @@
 using UnityEngine;
 
-public class BedTrigger : MonoBehaviour
+public class BedTrigger : MonoBehaviour, IInteractable
 {
-    // Start is called once before the first execution of Update after the MonoBehaviour is created
-    void Start()
-    {
-        
-    }
+    [SerializeField] private GameEvent CALL_requestTimeSkipEvent;
 
-    // Update is called once per frame
-    void Update()
+    public void Interact()
     {
-        
+        if (CALL_requestTimeSkipEvent != null)
+        {
+            CALL_requestTimeSkipEvent.Raise();
+            Debug.Log("[BedTrigger] Requesting time skip..");
+        }
     }
 }

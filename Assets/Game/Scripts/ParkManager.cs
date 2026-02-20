@@ -4,36 +4,39 @@ using System.Collections.Generic;
 public class ParkManager : MonoBehaviour
 {
     public static ParkManager instance;
-    
-    [Header("Settings")]
-    public string parkTriggerTag = "ParkTrigger";
-    
-    [Header("References")]
-    public List<ParkPlatform> platforms = new List<ParkPlatform>();
+
+    [Header("Settings Assets")]
+    [SerializeField] private FloatVariable VAR_Money;
+
+    [Header("Park State")]
+    public List<ParkPlatform> activePlatforms = new List<ParkPlatform>();
+    public float pricePerMeme = 1.5f;
 
     void Awake()
     {
         instance = this;
-        // Если платформы не назначены вручную, попробуем найти их в детях
-        if (platforms.Count == 0)
+    }
+
+    public void RegisterPlatform(ParkPlatform platform)
+    {
+        if (!activePlatforms.Contains(platform))
         {
-            platforms.AddRange(GetComponentsInChildren<ParkPlatform>());
+            activePlatforms.Add(platform);
+        }
+    }
+
+    public void UnregisterPlatform(ParkPlatform platform)
+    {
+        if (activePlatforms.Contains(platform))
+        {
+            activePlatforms.Remove(platform);
         }
     }
 
     public bool TryDeliverMonster()
     {
-        foreach (var platform in platforms)
-        {
-            if (platform != null && !platform.isOccupied)
-            {
-                platform.PlaceMonsterDirectly();
-                Debug.Log($"[PARK] Monster delivered to platform: {platform.name}");
-                return true;
-            }
-        }
-
-        Debug.LogWarning("[PARK] No free platforms available!");
-        return false;
+        // Логика доставки монстра в парк. Пока просто true
+        // В будущем тут можно проверить, есть ли свободные места
+        return true;
     }
 }

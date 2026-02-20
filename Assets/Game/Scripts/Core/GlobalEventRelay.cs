@@ -1,17 +1,17 @@
 using UnityEngine;
 
 /// <summary>
-/// Ретранслятор событий. Подписывается на GameEvent и пробрасывает сигнал
-/// всем ISignalListener на этом же GameObject.
-/// 
-/// Используется для объектов, которые НЕ наследуют SmartListener,
-/// но реализуют ISignalListener напрямую.
-/// 
-/// SmartListener'ам этот компонент НЕ нужен — они подписываются автоматически.
+/// Event relay. Subscribes to GameEvent and forwards the signal
+/// to all ISignalListener on the same GameObject.
+///
+/// Used for objects that do NOT inherit from SignalBinder,
+/// but implement ISignalListener directly.
+///
+/// SignalBinders do NOT need this component — they subscribe automatically.
 /// </summary>
 public class GlobalEventRelay : MonoBehaviour, ISignalListener
 {
-    [Tooltip("Событие, которое этот ретранслятор будет слушать")]
+    [Tooltip("The event that this relay will listen to")]
     [SerializeField] private GameEvent gameEvent;
 
     public GameEvent GameEventRef => gameEvent;
@@ -22,7 +22,7 @@ public class GlobalEventRelay : MonoBehaviour, ISignalListener
     {
         if (gameEvent == null) return;
 
-        // Находим все ISignalListener на этом объекте (кроме самого себя)
+        // Find all ISignalListener on this object (except itself)
         _listeners = GetComponents<ISignalListener>();
         gameEvent.RegisterSignal(this);
     }
@@ -39,7 +39,7 @@ public class GlobalEventRelay : MonoBehaviour, ISignalListener
 
         foreach (var listener in _listeners)
         {
-            // Не пробрасываем самому себе, чтобы не было рекурсии
+            // Don't forward to itself to avoid recursion
             if (listener as Object != this)
                 listener.OnSignalReceived(incomingEvent);
         }

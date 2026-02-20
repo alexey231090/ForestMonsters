@@ -1,13 +1,23 @@
 using UnityEngine;
 using System.Collections.Generic;
 
-public class EnemySpawner : MonoBehaviour
+public class EnemySpawner : SignalBinder
 {
+    [Header("Subscribed Events")]
+    [SerializeField] private GameEvent GET_onDayStarted;
+    [SerializeField] private GameEvent GET_onNightStarted;
+
     [Header("Enemies Settings")]
     public GameObject enemyPrefab;
     public Transform[] spawnPoints; // Spawn points for enemies
     public int enemiesPerNight = 3; // Maximum number of enemies to spawn
     public float spawnRadius = 2.0f; // Радиус случайного смещения от точки спавна
+
+    private void Start()
+    {
+        Bind(GET_onDayStarted, ClearEnemies);
+        Bind(GET_onNightStarted, SpawnEnemies);
+    }
 
     // Класс для связи врага с его точкой спавна
     private class ActiveEnemyInfo
@@ -21,6 +31,7 @@ public class EnemySpawner : MonoBehaviour
 
     public void SpawnEnemies()
     {
+        Debug.Log("[ENEMY SPAWNER] Received Night Started signal!");
         if (spawnPoints == null || spawnPoints.Length == 0)
         {
             Debug.LogWarning("No spawn points available!");
@@ -79,6 +90,7 @@ public class EnemySpawner : MonoBehaviour
 
     public void ClearEnemies()
     {
+        Debug.Log($"[SPAWNER] Clearing {activeEnemiesInfo.Count} enemies.");
         List<ActiveEnemyInfo> nextNightEnemies = new List<ActiveEnemyInfo>();
 
         foreach (var info in activeEnemiesInfo)

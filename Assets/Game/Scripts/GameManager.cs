@@ -3,32 +3,34 @@ using System.Collections.Generic;
 
 public class GameManager : SignalBinder
 {
+    /*
     public static GameManager instance;
 
-    [Header("--- Tycoon Economy ---")]
-    public float money = 100f;
-    public int capturedCreatures = 0;
-    public float pricePerMeme = 1.5f;
 
-    [Header("--- Items Inventory ---")]
-    public int trapsCount = 12;
-    public int camerasCount = 10;
-    public float trapPrice = 20f;
-    public float cameraPrice = 15f;
 
-    [Header("--- Park ---")]
-    public List<ParkPlatform> activePlatforms = new List<ParkPlatform>();
-
-    [Header("--- Spawners ---")]
-    public VisitorSpawner visitorSpawner;
-    public EnemySpawner enemySpawner;
-
-    [Header("--- Event Listeners (Inputs) ---")]
+    [Header("Subscribed Events")]
     [SerializeField] private GameEvent GET_onDayStarted;
     [SerializeField] private GameEvent GET_onNightStarted;
 
-    [Header("--- State (Read Only) ---")]
-    public bool isNight = false;
+    [Header("Variables SO")]
+    [SerializeField] private FloatVariable VAR_Money;
+    [SerializeField] private IntVariable VAR_CapturedCreatures;
+    [SerializeField] private IntVariable VAR_TrapsCount;
+    [SerializeField] private IntVariable VAR_CamerasCount;
+
+    [Header("--- Tycoon Economy ---")]
+    public float money { get => VAR_Money != null ? VAR_Money.Value : 0; set { if (VAR_Money != null) VAR_Money.Value = value; } }
+    public int capturedCreatures { get => VAR_CapturedCreatures != null ? VAR_CapturedCreatures.Value : 0; set { if (VAR_CapturedCreatures != null) VAR_CapturedCreatures.Value = value; } }
+    public float pricePerMeme = 1.5f;
+
+    [Header("--- Items Inventory ---")]
+    public int trapsCount { get => VAR_TrapsCount != null ? VAR_TrapsCount.Value : 0; set { if (VAR_TrapsCount != null) VAR_TrapsCount.Value = value; } }
+    public int camerasCount { get => VAR_CamerasCount != null ? VAR_CamerasCount.Value : 0; set { if (VAR_CamerasCount != null) VAR_CamerasCount.Value = value; } }
+    public float trapPrice = 20f;
+    public float cameraPrice = 15f;
+
+    [Header("--- Park --")]
+    public List<ParkPlatform> activePlatforms = new List<ParkPlatform>();
 
     void Awake()
     {
@@ -38,10 +40,6 @@ public class GameManager : SignalBinder
         Bind(GET_onDayStarted, OnDayStarted);
         Bind(GET_onNightStarted, OnNightStarted);
     }
-
-    // Наследуемся от SignalBinder, поэтому переопределяем методы, если нужно,
-    // но в SignalBinder OnEnable/OnDisable делают основную работу.
-    // Если здесь будут свои OnEnable/OnDisable, нужно не забывать base.OnEnable().
 
     void Update()
     {
@@ -56,21 +54,11 @@ public class GameManager : SignalBinder
 
     private void OnDayStarted()
     {
-        isNight = false;
-        
-        if (enemySpawner != null) enemySpawner.ClearEnemies();
-        if (visitorSpawner != null) visitorSpawner.StartNewDay();
-
         Debug.Log(">>> GameManager: Реагирую на НАЧАЛО ДНЯ");
     }
 
     private void OnNightStarted()
     {
-        isNight = true;
-
-        if (visitorSpawner != null) visitorSpawner.StopSpawning();
-        if (enemySpawner != null) enemySpawner.SpawnEnemies();
-
         Debug.Log(">>> GameManager: Реагирую на НАЧАЛО НОЧИ");
     }
 
@@ -86,41 +74,64 @@ public class GameManager : SignalBinder
 
     public bool BuyTrap()
     {
-        if (money >= trapPrice) { money -= trapPrice; trapsCount++; return true; }
+        if (VAR_Money != null && VAR_TrapsCount != null && VAR_Money.Value >= trapPrice) 
+        { 
+            VAR_Money.ApplyChange(-trapPrice); 
+            VAR_TrapsCount.ApplyChange(1); 
+            return true; 
+        }
         return false;
     }
 
     public bool BuyCamera()
     {
-        if (money >= cameraPrice) { money -= cameraPrice; camerasCount++; return true; }
+        if (VAR_Money != null && VAR_CamerasCount != null && VAR_Money.Value >= cameraPrice) 
+        { 
+            VAR_Money.ApplyChange(-cameraPrice); 
+            VAR_CamerasCount.ApplyChange(1); 
+            return true; 
+        }
         return false;
     }
 
     public bool TryUseTrap()
     {
-        if (trapsCount > 0) { trapsCount--; return true; }
+        if (VAR_TrapsCount != null && VAR_TrapsCount.Value > 0) 
+        { 
+            VAR_TrapsCount.ApplyChange(-1); 
+            return true; 
+        }
         return false;
     }
 
     public bool TryUseCamera()
     {
-        if (camerasCount > 0) { camerasCount--; return true; }
+        if (VAR_CamerasCount != null && VAR_CamerasCount.Value > 0) 
+        { 
+            VAR_CamerasCount.ApplyChange(-1); 
+            return true; 
+        }
         return false;
     }
 
     public void AddCreature()
     {
-        capturedCreatures++;
+        if (VAR_CapturedCreatures != null) VAR_CapturedCreatures.ApplyChange(1);
     }
 
     public bool TryRemoveCreature()
     {
-        if (capturedCreatures > 0) { capturedCreatures--; return true; }
+        if (VAR_CapturedCreatures != null && VAR_CapturedCreatures.Value > 0) 
+        { 
+            VAR_CapturedCreatures.ApplyChange(-1); 
+            return true; 
+        }
         return false;
     }
 
     public void AddMoney(float amount)
     {
-        money += amount;
+        if (VAR_Money != null) VAR_Money.ApplyChange(amount);
     }
+    */
 }

@@ -1,4 +1,5 @@
 using UnityEngine;
+// Trigger recompile
 using UnityEngine.UI;
 using DG.Tweening;
     
@@ -12,6 +13,10 @@ using DG.Tweening;
     
         [Header("UI")]
         public Image holdProgressBar;
+
+        [Header("Variables SO")]
+        [SerializeField] private IntVariable VAR_TrapsCount;
+        [SerializeField] private IntVariable VAR_CamerasCount;
     
         // Внутренние переменные
         private Trap carriedTrap; // Объект, который мы сейчас несем
@@ -95,7 +100,7 @@ using DG.Tweening;
                 else
                 {
                     // Если пустая -> ВОЗВРАЩАЕМ В ИНВЕНТАРЬ
-                    if (GameManager.instance != null) GameManager.instance.trapsCount++;
+                    if (VAR_TrapsCount != null) VAR_TrapsCount.ApplyChange(1);
                     
                     // Удаляем весь объект (включая родителя TrapBox)
                     if (trap.trapbox != null) Destroy(trap.trapbox.gameObject);
@@ -110,7 +115,7 @@ using DG.Tweening;
             // Для простоты проверим по компоненту Camera или SecurityCameraSetup
             if (obj.GetComponentInParent<SecurityCameraSetup>() != null)
             {
-                if (GameManager.instance != null) GameManager.instance.camerasCount++;
+                if (VAR_CamerasCount != null) VAR_CamerasCount.ApplyChange(1);
                 Destroy(obj); // Удаляем со сцены
                 Debug.Log("Камера возвращена в инвентарь.");
                 return;
