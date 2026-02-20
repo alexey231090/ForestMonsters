@@ -35,8 +35,18 @@ public class ParkManager : MonoBehaviour
 
     public bool TryDeliverMonster()
     {
-        // Логика доставки монстра в парк. Пока просто true
-        // В будущем тут можно проверить, есть ли свободные места
-        return true;
+        // Ищем первую свободную платформу
+        foreach (var platform in activePlatforms)
+        {
+            if (platform != null && !platform.isOccupied)
+            {
+                platform.PlaceMonsterDirectly();
+                Debug.Log($"[PARK] Monster placed on platform.: {platform.name}");
+                return true;
+            }
+        }
+
+        Debug.LogWarning("[PARK] No free platforms available!");
+        return false;
     }
 }

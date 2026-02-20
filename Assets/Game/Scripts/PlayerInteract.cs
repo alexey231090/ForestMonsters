@@ -57,6 +57,11 @@ public class PlayerInteract : MonoBehaviour
     {
         carrier = GetComponent<PlayerCarrier>();
         if (playerUI == null) playerUI = Object.FindFirstObjectByType<PlayerUIHandler>();
+        
+        Debug.Log($"[INTERACT] UI Handler found: {playerUI != null}");
+        if (VAR_TrapsCount == null) Debug.LogWarning("[INTERACT] VAR_TrapsCount IS MISSING in inspector!");
+        if (VAR_CamerasCount == null) Debug.LogWarning("[INTERACT] VAR_CamerasCount IS MISSING in inspector!");
+        if (trapGhostPrefab == null) Debug.LogWarning("[INTERACT] trapGhostPrefab IS MISSING in inspector!");
     }
 
     void Update()
@@ -69,6 +74,12 @@ public class PlayerInteract : MonoBehaviour
         }
         
         Debug.DrawRay(origin.position, origin.forward * interactDistance, Color.red);
+        
+        // Debug origin position
+        if (Time.frameCount % 60 == 0 && selectedItemIndex != -1)
+        {
+            Debug.Log($"[INTERACT] Current Origin: {origin.name} at {origin.position}. Forward: {origin.forward}. Monitor Active: {(CctvManager.instance != null ? CctvManager.instance.isMonitorActive : "null")}");
+        }
 
         // 1. ЕСЛИ МЫ НЕСЕМ КЛЕТКУ
         if (carrier.IsCarrying())
@@ -123,12 +134,22 @@ public class PlayerInteract : MonoBehaviour
 
         if (!hasItem) 
         { 
-            DisableBuildMode(); // Кончились предметы - выключаем режим
+            Debug.Log($"[INTERACT] No items left or SO missing. Index: {selectedItemIndex}. Mode Disabled.");
+            DisableBuildMode();
             return; 
         }
 
         RaycastHit hit;
         bool isLooking = Physics.Raycast(origin.position, origin.forward, out hit, buildDistance, groundLayer);
+        
+        if (!isLooking)
+        {
+            // Debug check for layer
+            if (Physics.Raycast(origin.position, origin.forward, out hit, buildDistance))
+            {
+                Debug.LogWarning($"[INTERACT] Raycast hit object on layer {LayerMask.LayerToName(hit.collider.gameObject.layer)}, but not in GroundLayer mask!");
+            }
+        }
         
         // 2. Ищем землю
         if (isLooking)
@@ -194,6 +215,7 @@ public class PlayerInteract : MonoBehaviour
 
     void ChangeItem(int index)
     {
+        Debug.Log($"[INTERACT] ChangeItem({index}) called.");
         selectedItemIndex = index;
         ghostTimer = ghostTimeout; // При смене предмета таймер обновляется
         DestroyGhost();
@@ -204,6 +226,8 @@ public class PlayerInteract : MonoBehaviour
             playerUI.SetFuseActive(index, true);
             playerUI.SetFuseProgress(index, 1f);
         }
+        else Debug.LogWarning("[INTERACT] playerUI is NULL in ChangeItem!");
+        
         wasLookingAtGround = true;
     }
 

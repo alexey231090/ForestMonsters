@@ -61,12 +61,22 @@ public class PlayerUIHandler : MonoBehaviour
 
     private void BindUI()
     {
-        if (playerUIDoc == null) return;
+        if (playerUIDoc == null) 
+        {
+            Debug.LogError("[UI] playerUIDoc is null during BindUI!");
+            return;
+        }
         var root = playerUIDoc.rootVisualElement;
-        if (root == null) return;
+        if (root == null)
+        {
+            Debug.LogError("[UI] rootVisualElement is null! Maybe UI not loaded?");
+            return;
+        }
 
         slotTrap = root.Q<VisualElement>("SlotTrap");
         slotCamera = root.Q<VisualElement>("SlotCamera");
+        
+        Debug.Log($"[UI] Bind Results: SlotTrap: {slotTrap != null}, SlotCamera: {slotCamera != null}");
         fuseTrap = root.Q<VisualElement>("FuseTrap");
         fuseCam = root.Q<VisualElement>("FuseCam");
         fuseTrapTop = root.Q<VisualElement>("FuseTrapTop");
@@ -86,7 +96,17 @@ public class PlayerUIHandler : MonoBehaviour
     /// </summary>
     public void SelectSlot(int index)
     {
-        if (slotTrap == null || slotCamera == null) return;
+        if (slotTrap == null || slotCamera == null)
+        {
+            Debug.LogWarning("[UI] Slots are null, attempting re-bind...");
+            BindUI();
+        }
+        
+        if (slotTrap == null || slotCamera == null)
+        {
+            Debug.LogError("[UI] Critical: Failed to bind slots even after retry!");
+            return;
+        }
 
         slotTrap.RemoveFromClassList(CLASS_SELECTED);
         slotCamera.RemoveFromClassList(CLASS_SELECTED);
@@ -103,6 +123,10 @@ public class PlayerUIHandler : MonoBehaviour
     /// </summary>
     public void SetFuseActive(int index, bool active)
     {
+        if (fuseTrap == null || fuseCam == null)
+        {
+            BindUI();
+        }
         if (fuseTrap == null || fuseCam == null) return;
 
         // Скрыть все

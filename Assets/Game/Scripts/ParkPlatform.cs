@@ -13,7 +13,10 @@ public class ParkPlatform : MonoBehaviour, IInteractable
     void Start()
     {
         if (monsterModel != null) monsterModel.SetActive(isOccupied);
-        if (isOccupied && ParkManager.instance != null) ParkManager.instance.RegisterPlatform(this);
+        
+        // Регистрируем платформу в любом случае, чтобы менеджер знал о свободном месте
+        if (ParkManager.instance != null) 
+            ParkManager.instance.RegisterPlatform(this);
     }
 
     void OnDestroy()

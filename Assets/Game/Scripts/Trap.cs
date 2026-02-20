@@ -20,8 +20,9 @@ public class Trap : MonoBehaviour
     public TrapBox trapbox; // Ссылка на родительский объект (сама коробка)
 
     private bool isUsed = false;
+    private bool isDelivered = false; // Флаг для защиты от двойной доставки
     private GameObject caughtEnemy;
-    private Collider myCollider; // Коллайдер самой ловушки/триггера
+    private Collider myCollider;
 
     void Start()
     {
@@ -35,26 +36,22 @@ public class Trap : MonoBehaviour
 
     void OnTriggerEnter(Collider other)
     {
-        // Проверяем доставку в парк (это должно работать, даже если монстр УЖЕ пойман)
+        // Проверяем доставку в парк
         if (other.CompareTag("ParkTrigger"))
         {
-            if (HasCatch())
+            if (HasCatch() && !isDelivered)
             {
-                // Проверяем доставку в парк (это должно работать, даже если монстр УЖЕ пойман)
                 if (ParkManager.instance != null && ParkManager.instance.TryDeliverMonster())
                 {
+                    isDelivered = true; // Мгновенно блокируем повторный вход
                     Debug.Log("[TRAP] Monster delivered! Returning trap to inventory.");
                     
-                    if (VAR_TrapsCount != null)
-                    {
-                        VAR_TrapsCount.ApplyChange(1);
-                    }
+                    if (VAR_TrapsCount != null) VAR_TrapsCount.ApplyChange(1);
                     
-                    // Удаляем весь TrapBox
                     Destroy(transform.parent.gameObject);
                 }
             }
-            return; // Выходим, чтобы не проверять поимку врага здесь
+            return;
         }
 
         // Логика поимки врага (только если ловушка еще пуста)

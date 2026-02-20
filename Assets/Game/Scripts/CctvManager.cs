@@ -23,6 +23,10 @@ public class CctvManager : MonoBehaviour
     public List<Camera> securityCameras = new List<Camera>();
     public int currentCamIndex = 0;
 
+    [Header("Events")]
+    public GameEvent onMonitorEntered;
+    public GameEvent onMonitorExited;
+
     public bool isMonitorActive = false;
 
     public bool isWatchingCameras = false;
@@ -104,6 +108,8 @@ public class CctvManager : MonoBehaviour
         if (playerHUD != null) playerHUD.Hide();
 
         if (uiHandler != null) uiHandler.ShowUI();
+
+        if (onMonitorEntered != null) onMonitorEntered.Raise();
     }
 
 
@@ -151,6 +157,8 @@ public class CctvManager : MonoBehaviour
         UnityEngine.Cursor.lockState = CursorLockMode.Locked;
         UnityEngine.Cursor.visible = false;
         
+        if (onMonitorExited != null) onMonitorExited.Raise();
+
         lastExitTime = Time.time; // Запоминаем время выхода
     }
 

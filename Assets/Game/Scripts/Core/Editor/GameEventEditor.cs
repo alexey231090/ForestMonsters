@@ -18,6 +18,7 @@ public class GameEventEditor : Editor
     private GUIStyle _boxStyle;
     private GUIStyle _methodStyle;
     private GUIStyle _signalStyle;
+    private GUIStyle _headerStyle;
 
     private void OnEnable()
     {
@@ -41,7 +42,8 @@ public class GameEventEditor : Editor
             _methodStyle = new GUIStyle(EditorStyles.miniLabel)
             {
                 richText = true,
-                wordWrap = true
+                wordWrap = true,
+                fontSize = 12
             };
         }
 
@@ -50,7 +52,17 @@ public class GameEventEditor : Editor
             _signalStyle = new GUIStyle(EditorStyles.miniLabel)
             {
                 richText = true,
-                wordWrap = true
+                wordWrap = true,
+                fontSize = 13
+            };
+        }
+
+        if (_headerStyle == null)
+        {
+            _headerStyle = new GUIStyle(EditorStyles.boldLabel)
+            {
+                fontSize = 15,
+                richText = true
             };
         }
     }
@@ -96,7 +108,7 @@ public class GameEventEditor : Editor
         EditorGUILayout.Space(10);
 
         // ─── Subscribers (Listeners) ───
-        EditorGUILayout.LabelField($"📥 SUBSCRIBERS (Listen for this): {_sceneSubscribers.Count}", EditorStyles.boldLabel);
+        EditorGUILayout.LabelField($"📥 <color=#4CAF50>SUBSCRIBERS</color> (Listen for this): {_sceneSubscribers.Count}", _headerStyle);
         if (_sceneSubscribers.Count > 0)
         {
             foreach (var smart in _sceneSubscribers)
@@ -106,10 +118,10 @@ public class GameEventEditor : Editor
         }
         else EditorGUILayout.HelpBox("No scripts are listening for this event.", MessageType.None);
 
-        EditorGUILayout.Space(5);
+        EditorGUILayout.Space(10);
 
         // ─── Invokers (Raisers) ───
-        EditorGUILayout.LabelField($"📤 INVOKERS (Raise this): {_sceneInvokers.Count}", EditorStyles.boldLabel);
+        EditorGUILayout.LabelField($"📤 <color=#FF9800>INVOKERS</color> (Raise this): {_sceneInvokers.Count}", _headerStyle);
         if (_sceneInvokers.Count > 0)
         {
             foreach (var smart in _sceneInvokers)
