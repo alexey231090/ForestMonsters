@@ -1,6 +1,5 @@
 using UnityEngine;
 
-// Этот атрибут гарантирует, что скрипт переноски тоже висит на игроке
 [RequireComponent(typeof(PlayerCarrier))]
 public class PlayerInteract : MonoBehaviour
 {
@@ -29,7 +28,6 @@ public class PlayerInteract : MonoBehaviour
     [Header("References")]
     public Transform cameraPrefab;
     public CctvManager cctvManager;
-    public PlayerUIHandler playerUI;
     
     private PlayerCarrier carrier;
 
@@ -44,24 +42,30 @@ public class PlayerInteract : MonoBehaviour
     public float cameraDustOffset = 0.1f;
 
     [Header("Variables SO")]
-    [SerializeField] private IntVariable VAR_TrapsCount;
-    [SerializeField] private IntVariable VAR_CamerasCount;
+    [SerializeField] IntVariable VAR_TrapsCount;
+    [SerializeField] IntVariable VAR_CamerasCount;
+    [SerializeField] IntVariable VAR_SelectedSlot;
+    [SerializeField] FloatVariable VAR_BuildFuseProgress;
+    [SerializeField] BoolVariable VAR_IsBuildFuseActive;
+    [SerializeField] BoolVariable VAR_IsCarrying;
+    [SerializeField] FloatVariable VAR_PickupProgress; // Для бара при установке
+
+    [Header("Placement Hold Settings")]
+    public float placeHoldTimeRequired = 0.5f; // Время удержания для установки
 
     // --- ВНУТРЕННИЕ ПЕРЕМЕННЫЕ ---
-    private int selectedItemIndex = -1; // -1 значит "Ничего не выбрано"
     private GameObject currentGhost;
     private float ghostTimer = 0f; // Текущий таймер жизни призрака
     private bool wasLookingAtGround = false;
+    private float placeHoldTimer = 0f; // Таймер удержания ЛКМ для установки
 
-    void Start()
+    void OnEnable()
     {
         carrier = GetComponent<PlayerCarrier>();
-        if (playerUI == null) playerUI = Object.FindFirstObjectByType<PlayerUIHandler>();
         
-        Debug.Log($"[INTERACT] UI Handler found: {playerUI != null}");
-        if (VAR_TrapsCount == null) Debug.LogWarning("[INTERACT] VAR_TrapsCount IS MISSING in inspector!");
-        if (VAR_CamerasCount == null) Debug.LogWarning("[INTERACT] VAR_CamerasCount IS MISSING in inspector!");
-        if (trapGhostPrefab == null) Debug.LogWarning("[INTERACT] trapGhostPrefab IS MISSING in inspector!");
+        // Initial state sync
+        if (VAR_SelectedSlot != null) VAR_SelectedSlot.Value = -1;
+        if (VAR_IsBuildFuseActive != null) VAR_IsBuildFuseActive.Value = false;
     }
 
     void Update()
@@ -73,46 +77,34 @@ public class PlayerInteract : MonoBehaviour
             else origin = transform;
         }
         
-        Debug.DrawRay(origin.position, origin.forward * interactDistance, Color.red);
-        
-        // Debug origin position
-        if (Time.frameCount % 60 == 0 && selectedItemIndex != -1)
-        {
-            Debug.Log($"[INTERACT] Current Origin: {origin.name} at {origin.position}. Forward: {origin.forward}. Monitor Active: {(CctvManager.instance != null ? CctvManager.instance.isMonitorActive : "null")}");
-        }
-
         // 1. ЕСЛИ МЫ НЕСЕМ КЛЕТКУ
-        if (carrier.IsCarrying())
+        bool isCarrying = VAR_IsCarrying != null && VAR_IsCarrying.Value;
+        if (isCarrying)
         {
             DisableBuildMode(); // Выключаем режим стройки при переноске
             return; 
         }
 
         // 2. ВЫБОР ПРЕДМЕТА
-        if (Input.GetKeyDown(KeyCode.Alpha1)) 
-        {
-            int tCount = VAR_TrapsCount != null ? VAR_TrapsCount.Value : 0;
-            Debug.Log($"[INPUT] Нажата 1. Ловушек: {tCount}");
-            ChangeItem(0);
-        }
-        if (Input.GetKeyDown(KeyCode.Alpha2)) 
-        {
-            int cCount = VAR_CamerasCount != null ? VAR_CamerasCount.Value : 0;
-            Debug.Log($"[INPUT] Нажата 2. Камер: {cCount}");
-            ChangeItem(1);
-        }
+        if (Input.GetKeyDown(KeyCode.Alpha1)) ChangeItem(0);
+        if (Input.GetKeyDown(KeyCode.Alpha2)) ChangeItem(1);
 
         // 3. ПРИЗРАК И ТАЙМЕР
         UpdateGhostLogic(origin);
 
-        // 4. УСТАНОВКА ПРЕДМЕТА (ЛКМ)
-        // Разрешаем только если режим стройки активен (не -1) и призрак виден
-        if (selectedItemIndex != -1 && Input.GetMouseButtonDown(0))
+        // 4. УСТАНОВКА ПРЕДМЕТА (ЛКМ с удержанием)
+        int selectedIndex = VAR_SelectedSlot != null ? VAR_SelectedSlot.Value : -1;
+        HandlePlacementHold(origin, selectedIndex);
+
+        // 5. ОТМЕНА СТРОИТЕЛЬСТВА (ПКМ или E)
+        if (selectedIndex != -1 && (Input.GetMouseButtonDown(1) || Input.GetKeyDown(KeyCode.E)))
         {
-            TryPlaceItem(origin);
+            DisableBuildMode();
+            ResetPlaceHoldTimer();
+            return; // Прерываем выполнение Update, чтобы не вызвать HandleInteraction
         }
 
-        // 5. ВЗАИМОДЕЙСТВИЕ (E)
+        // 6. ВЗАИМОДЕЙСТВИЕ (E - только если не в режиме стройки)
         HandleInteraction(origin);
     }
 
@@ -120,8 +112,10 @@ public class PlayerInteract : MonoBehaviour
 
     void UpdateGhostLogic(Transform origin)
     {
+        int selectedIndex = VAR_SelectedSlot != null ? VAR_SelectedSlot.Value : -1;
+
         // Если ничего не выбрано - выходим
-        if (selectedItemIndex == -1) 
+        if (selectedIndex == -1) 
         {
             DestroyGhost();
             return;
@@ -129,12 +123,11 @@ public class PlayerInteract : MonoBehaviour
 
         // 1. Проверяем наличие предметов
         bool hasItem = false;
-        if (selectedItemIndex == 0 && VAR_TrapsCount != null && VAR_TrapsCount.Value > 0) hasItem = true;
-        if (selectedItemIndex == 1 && VAR_CamerasCount != null && VAR_CamerasCount.Value > 0) hasItem = true;
+        if (selectedIndex == 0 && VAR_TrapsCount != null && VAR_TrapsCount.Value > 0) hasItem = true;
+        if (selectedIndex == 1 && VAR_CamerasCount != null && VAR_CamerasCount.Value > 0) hasItem = true;
 
         if (!hasItem) 
         { 
-            Debug.Log($"[INTERACT] No items left or SO missing. Index: {selectedItemIndex}. Mode Disabled.");
             DisableBuildMode();
             return; 
         }
@@ -142,30 +135,18 @@ public class PlayerInteract : MonoBehaviour
         RaycastHit hit;
         bool isLooking = Physics.Raycast(origin.position, origin.forward, out hit, buildDistance, groundLayer);
         
-        if (!isLooking)
-        {
-            // Debug check for layer
-            if (Physics.Raycast(origin.position, origin.forward, out hit, buildDistance))
-            {
-                Debug.LogWarning($"[INTERACT] Raycast hit object on layer {LayerMask.LayerToName(hit.collider.gameObject.layer)}, but not in GroundLayer mask!");
-            }
-        }
-        
         // 2. Ищем землю
         if (isLooking)
         {
             // --- МЫ СМОТРИМ НА ЗЕМЛЮ ---
             ghostTimer = ghostTimeout; // Сбрасываем таймер на максимум (5 сек)
 
-            // UI Logic: Вернули взгляд на землю — фитиль полный
-            if (playerUI)
-            {
-                playerUI.SetFuseActive(selectedItemIndex, true);
-                playerUI.SetFuseProgress(selectedItemIndex, 1f);
-            }
+            // UI Logic через SO
+            if (VAR_IsBuildFuseActive != null) VAR_IsBuildFuseActive.Value = true;
+            if (VAR_BuildFuseProgress != null) VAR_BuildFuseProgress.Value = 1f;
 
             // Логика создания/перемещения призрака
-            GameObject neededGhostPrefab = (selectedItemIndex == 0) ? trapGhostPrefab : cameraGhostPrefab;
+            GameObject neededGhostPrefab = (selectedIndex == 0) ? trapGhostPrefab : cameraGhostPrefab;
 
             if (currentGhost == null) currentGhost = Instantiate(neededGhostPrefab);
             else if (!currentGhost.name.Contains(neededGhostPrefab.name))
@@ -175,9 +156,9 @@ public class PlayerInteract : MonoBehaviour
             }
 
             Quaternion rotation = Quaternion.FromToRotation(Vector3.up, hit.normal);
-            float ghostHeightAdjust = (selectedItemIndex == 0) ? trapGhostOffset : cameraGhostOffset;
+            float ghostHeightAdjust = (selectedIndex == 0) ? trapGhostOffset : cameraGhostOffset;
 
-            if (selectedItemIndex == 1) // Поворот камеры
+            if (selectedIndex == 1) // Поворот камеры
             {
                 Vector3 lookPos = transform.position - hit.point;
                 lookPos.y = 0;
@@ -194,19 +175,15 @@ public class PlayerInteract : MonoBehaviour
             DestroyGhost(); // Прячем визуал
 
             // UI Logic: Отвели взгляд — фитиль укорачивается по таймеру
-            if (playerUI)
-            {
-                float p = Mathf.Clamp01(ghostTimer / ghostTimeout);
-                playerUI.SetFuseActive(selectedItemIndex, true);
-                playerUI.SetFuseProgress(selectedItemIndex, p);
-            }
+            float p = Mathf.Clamp01(ghostTimer / ghostTimeout);
+            if (VAR_IsBuildFuseActive != null) VAR_IsBuildFuseActive.Value = true;
+            if (VAR_BuildFuseProgress != null) VAR_BuildFuseProgress.Value = p;
 
             // Уменьшаем таймер
             ghostTimer -= Time.deltaTime;
             if (ghostTimer <= 0)
             {
                 DisableBuildMode(); // Время вышло - отключаем режим
-                Debug.Log("Режим строительства отключен из-за бездействия.");
             }
         }
 
@@ -215,31 +192,21 @@ public class PlayerInteract : MonoBehaviour
 
     void ChangeItem(int index)
     {
-        Debug.Log($"[INTERACT] ChangeItem({index}) called.");
-        selectedItemIndex = index;
+        if (VAR_SelectedSlot != null) VAR_SelectedSlot.Value = index;
         ghostTimer = ghostTimeout; // При смене предмета таймер обновляется
         DestroyGhost();
 
-        if (playerUI)
-        {
-            playerUI.SelectSlot(index);
-            playerUI.SetFuseActive(index, true);
-            playerUI.SetFuseProgress(index, 1f);
-        }
-        else Debug.LogWarning("[INTERACT] playerUI is NULL in ChangeItem!");
+        if (VAR_IsBuildFuseActive != null) VAR_IsBuildFuseActive.Value = true;
+        if (VAR_BuildFuseProgress != null) VAR_BuildFuseProgress.Value = 1f;
         
         wasLookingAtGround = true;
     }
 
     void DisableBuildMode()
     {
-        selectedItemIndex = -1;
+        if (VAR_SelectedSlot != null) VAR_SelectedSlot.Value = -1;
+        if (VAR_IsBuildFuseActive != null) VAR_IsBuildFuseActive.Value = false;
         DestroyGhost();
-        if (playerUI)
-        {
-            playerUI.SelectSlot(-1);
-            playerUI.SetFuseActive(-1, false);
-        }
     }
 
     void DestroyGhost()
@@ -265,7 +232,9 @@ public class PlayerInteract : MonoBehaviour
             GameObject objectToSpawn = null;
             float currentRealDepth = 0f;
 
-            if (selectedItemIndex == 0)
+            int selectedIndex = VAR_SelectedSlot != null ? VAR_SelectedSlot.Value : -1;
+
+            if (selectedIndex == 0)
             {
                 if (VAR_TrapsCount != null && VAR_TrapsCount.Value > 0)
                 {
@@ -275,7 +244,7 @@ public class PlayerInteract : MonoBehaviour
                     currentRealDepth = trapEmbedDepth;
                 }
             }
-            else if (selectedItemIndex == 1)
+            else if (selectedIndex == 1)
             {
                 if (VAR_CamerasCount != null && VAR_CamerasCount.Value > 0)
                 {
@@ -289,7 +258,7 @@ public class PlayerInteract : MonoBehaviour
             if (canPlace && objectToSpawn != null)
             {
                 Quaternion rotation = Quaternion.FromToRotation(Vector3.up, hit.normal);
-                if (selectedItemIndex == 1)
+                if (selectedIndex == 1)
                 {
                     Vector3 lookPos = transform.position - hit.point;
                     lookPos.y = 0;
@@ -301,7 +270,7 @@ public class PlayerInteract : MonoBehaviour
 
                 if (dustEffectPrefab != null)
                 {
-                    float dustOffset = (selectedItemIndex == 0) ? trapDustOffset : cameraDustOffset;
+                    float dustOffset = (selectedIndex == 0) ? trapDustOffset : cameraDustOffset;
                     Vector3 dustPos = hit.point + (hit.normal * dustOffset);
                     Instantiate(dustEffectPrefab, dustPos, Quaternion.LookRotation(hit.normal));
                 }
@@ -312,7 +281,7 @@ public class PlayerInteract : MonoBehaviour
         }
     }
 
-    // ================== ЛОГИКА ВЗАИМОДЕЙСТВИЯ (Без изменений) ==================
+    // ================== ЛОГИКА ВЗАИМОДЕЙСТВИЯ (E) ==================
 
     void HandleInteraction(Transform origin)
     {
@@ -321,14 +290,26 @@ public class PlayerInteract : MonoBehaviour
 
         if (Physics.Raycast(origin.position, origin.forward, out hit, interactDistance, interactLayer))
         {
-            bool isTrap = hit.collider.GetComponentInChildren<Trap>(true) != null;
-            bool isCamera = hit.collider.GetComponentInChildren<Camera>(true) != null;
+            // Ищем компоненты в родителе или детях, чтобы захват точно сработал
+            Trap trap = hit.collider.GetComponentInParent<Trap>();
+            if (trap == null) trap = hit.collider.GetComponentInChildren<Trap>();
 
-            if (isTrap || isCamera)
+            SecurityCameraSetup camera = hit.collider.GetComponentInParent<SecurityCameraSetup>();
+            if (camera == null) camera = hit.collider.GetComponentInChildren<SecurityCameraSetup>();
+
+            if (trap != null || camera != null)
             {
                 lookingAtPickupable = true;
-                if (Input.GetKey(KeyCode.E)) carrier.ProcessHold(hit.collider.gameObject);
+                if (Input.GetKey(KeyCode.E)) 
+                {
+                    carrier.ProcessHold(hit.collider.gameObject);
+                }
                 return; 
+            }
+            else
+            {
+                // Лог для дебага, если мы навели на что-то на слое Interact, но это не ловушка
+                // Debug.Log($"[Interaction] Hit {hit.collider.name}, but no Trap or Camera found.");
             }
 
             if (Input.GetKeyDown(KeyCode.E))
@@ -343,13 +324,58 @@ public class PlayerInteract : MonoBehaviour
                 MonitorTrigger monitor = hit.collider.GetComponent<MonitorTrigger>();
                 if (monitor != null && CctvManager.instance != null && !CctvManager.instance.isMonitorActive)
                 {
-                    print("monitor");
                     CctvManager.instance.EnterMonitorMode(); return;
                 }
-
             }
         }
 
         if (!lookingAtPickupable) carrier.ResetHoldTimer();
+    }
+
+    // ================== ЛОГИКА УДЕРЖАНИЯ ЛКМ ДЛЯ УСТАНОВКИ ==================
+
+    void HandlePlacementHold(Transform origin, int selectedIndex)
+    {
+        // Если ничего не выбрано или нет призрака - сбрасываем таймер
+        if (selectedIndex == -1 || currentGhost == null)
+        {
+            ResetPlaceHoldTimer();
+            return;
+        }
+
+        // Проверяем что мы смотрим на землю
+        RaycastHit hit;
+        bool isLookingAtGround = Physics.Raycast(origin.position, origin.forward, out hit, buildDistance, groundLayer);
+
+        if (isLookingAtGround && Input.GetMouseButton(0)) // ЛКМ зажата
+        {
+            // Увеличиваем таймер
+            placeHoldTimer += Time.deltaTime;
+
+            // Обновляем бар прогресса
+            if (VAR_PickupProgress != null)
+                VAR_PickupProgress.Value = placeHoldTimer / placeHoldTimeRequired;
+
+            // Если удержали достаточно - устанавливаем
+            if (placeHoldTimer >= placeHoldTimeRequired)
+            {
+                TryPlaceItem(origin);
+                ResetPlaceHoldTimer();
+            }
+        }
+        else
+        {
+            // Если отпустили ЛКМ или смотрим не на землю - сбрасываем
+            if (!Input.GetMouseButton(0))
+            {
+                ResetPlaceHoldTimer();
+            }
+        }
+    }
+
+    void ResetPlaceHoldTimer()
+    {
+        placeHoldTimer = 0f;
+        if (VAR_PickupProgress != null) VAR_PickupProgress.Value = 0f;
     }
 }

@@ -1,10 +1,15 @@
 using UnityEngine;
 using UnityEngine.UIElements;
 
-public class PlayerUIHandler : MonoBehaviour
+public class PlayerUIHandler : SignalBinder
 {
     [Header("UI Document")]
     public UIDocument playerUIDoc;
+
+    [Header("Observed Variables")]
+    [SerializeField, Bind("UpdateSelection")] private IntVariable VAR_SelectedSlot;
+    [SerializeField, Bind("UpdateFuseVisuals")] private FloatVariable VAR_BuildFuseProgress;
+    [SerializeField, Bind("UpdateFuseVisuals")] private BoolVariable VAR_IsBuildFuseActive;
 
     private VisualElement slotTrap;
     private VisualElement slotCamera;
@@ -14,17 +19,10 @@ public class PlayerUIHandler : MonoBehaviour
     private VisualElement fuseTrapTop, fuseTrapRight, fuseTrapBottom, fuseTrapLeft;
     private VisualElement fuseCamTop, fuseCamRight, fuseCamBottom, fuseCamLeft;
 
-    void OnEnable()
+    protected override void OnEnable()
     {
-        // Если уже есть ссылка, пробуем привязать
-        if (playerUIDoc != null)
-        {
-            BindUI();
-        }
-    }
-
-    void Start()
-    {
+        base.OnEnable();
+        
         if (playerUIDoc == null) playerUIDoc = GetComponent<UIDocument>();
         if (playerUIDoc == null)
         {
@@ -37,46 +35,21 @@ public class PlayerUIHandler : MonoBehaviour
         }
         
         BindUI();
-    }
-
-    /// <summary>
-    /// Показывает HUD и обновляет ссылки на элементы
-    /// </summary>
-    public void Show()
-    {
-        if (playerUIDoc != null)
-        {
-            playerUIDoc.enabled = true;
-            BindUI();
-        }
-    }
-
-    /// <summary>
-    /// Скрывает HUD
-    /// </summary>
-    public void Hide()
-    {
-        if (playerUIDoc != null) playerUIDoc.enabled = false;
+        
+        // Initial sync
+        UpdateSelection();
+        UpdateFuseVisuals();
     }
 
     private void BindUI()
     {
-        if (playerUIDoc == null) 
-        {
-            Debug.LogError("[UI] playerUIDoc is null during BindUI!");
-            return;
-        }
+        if (playerUIDoc == null) return;
         var root = playerUIDoc.rootVisualElement;
-        if (root == null)
-        {
-            Debug.LogError("[UI] rootVisualElement is null! Maybe UI not loaded?");
-            return;
-        }
+        if (root == null) return;
 
         slotTrap = root.Q<VisualElement>("SlotTrap");
         slotCamera = root.Q<VisualElement>("SlotCamera");
         
-        Debug.Log($"[UI] Bind Results: SlotTrap: {slotTrap != null}, SlotCamera: {slotCamera != null}");
         fuseTrap = root.Q<VisualElement>("FuseTrap");
         fuseCam = root.Q<VisualElement>("FuseCam");
         fuseTrapTop = root.Q<VisualElement>("FuseTrapTop");
@@ -87,70 +60,45 @@ public class PlayerUIHandler : MonoBehaviour
         fuseCamRight = root.Q<VisualElement>("FuseCamRight");
         fuseCamBottom = root.Q<VisualElement>("FuseCamBottom");
         fuseCamLeft = root.Q<VisualElement>("FuseCamLeft");
-        
+
         HideAllFuses();
     }
 
-    /// <summary>
-    /// Выбирает слот (0 - Ловушка, 1 - Камера, -1 - Ничего)
-    /// </summary>
-    public void SelectSlot(int index)
+    private void UpdateSelection()
     {
-        if (slotTrap == null || slotCamera == null)
-        {
-            Debug.LogWarning("[UI] Slots are null, attempting re-bind...");
-            BindUI();
-        }
-        
-        if (slotTrap == null || slotCamera == null)
-        {
-            Debug.LogError("[UI] Critical: Failed to bind slots even after retry!");
-            return;
-        }
+        if (slotTrap == null || slotCamera == null) return;
+
+        int index = VAR_SelectedSlot != null ? VAR_SelectedSlot.Value : -1;
 
         slotTrap.RemoveFromClassList(CLASS_SELECTED);
         slotCamera.RemoveFromClassList(CLASS_SELECTED);
 
         if (index == 0) slotTrap.AddToClassList(CLASS_SELECTED);
         else if (index == 1) slotCamera.AddToClassList(CLASS_SELECTED);
-
-        SetFuseActive(index, true);
-        SetFuseProgress(index, 1f);
     }
 
-    /// <summary>
-    /// Включает/выключает визуал фитиля для указанного слота
-    /// </summary>
-    public void SetFuseActive(int index, bool active)
+    private void UpdateFuseVisuals()
     {
-        if (fuseTrap == null || fuseCam == null)
-        {
-            BindUI();
-        }
         if (fuseTrap == null || fuseCam == null) return;
 
-        // Скрыть все
+        bool active = VAR_IsBuildFuseActive != null && VAR_IsBuildFuseActive.Value;
+        float progress01 = VAR_BuildFuseProgress != null ? VAR_BuildFuseProgress.Value : 0f;
+        int index = VAR_SelectedSlot != null ? VAR_SelectedSlot.Value : -1;
+
+        // Reset visibility
         fuseTrap.style.display = DisplayStyle.None;
         fuseCam.style.display = DisplayStyle.None;
 
         if (!active || index < 0) return;
 
-        if (index == 0) fuseTrap.style.display = DisplayStyle.Flex;
-        else if (index == 1) fuseCam.style.display = DisplayStyle.Flex;
-    }
-
-    /// <summary>
-    /// Устанавливает прогресс фитиля (0..1) по периметру: верх -> правая -> низ -> левая
-    /// </summary>
-    public void SetFuseProgress(int index, float progress01)
-    {
-        progress01 = Mathf.Clamp01(progress01);
-        if (index == 0)
+        if (index == 0) 
         {
+            fuseTrap.style.display = DisplayStyle.Flex;
             ApplyFuse(fuseTrapTop, fuseTrapRight, fuseTrapBottom, fuseTrapLeft, progress01);
         }
-        else if (index == 1)
+        else if (index == 1) 
         {
+            fuseCam.style.display = DisplayStyle.Flex;
             ApplyFuse(fuseCamTop, fuseCamRight, fuseCamBottom, fuseCamLeft, progress01);
         }
     }
@@ -164,10 +112,8 @@ public class PlayerUIHandler : MonoBehaviour
         float bottomFrac = Mathf.Clamp01(s - 2f);
         float leftFrac = Mathf.Clamp01(s - 3f);
 
-        // Верхняя и нижняя линии управляются шириной в процентах
         SetWidthPercent(top, topFrac);
         SetWidthPercent(bottom, bottomFrac);
-        // Правая и левая линии управляются высотой в процентах
         SetHeightPercent(right, rightFrac);
         SetHeightPercent(left, leftFrac);
     }
@@ -175,24 +121,14 @@ public class PlayerUIHandler : MonoBehaviour
     private void SetWidthPercent(VisualElement el, float frac)
     {
         if (el == null) return;
-        if (frac <= 0f)
-        {
-            el.style.display = DisplayStyle.None;
-            return;
-        }
-        el.style.display = DisplayStyle.Flex;
+        el.style.display = frac <= 0 ? DisplayStyle.None : DisplayStyle.Flex;
         el.style.width = new Length(frac * 100f, LengthUnit.Percent);
     }
 
     private void SetHeightPercent(VisualElement el, float frac)
     {
         if (el == null) return;
-        if (frac <= 0f)
-        {
-            el.style.display = DisplayStyle.None;
-            return;
-        }
-        el.style.display = DisplayStyle.Flex;
+        el.style.display = frac <= 0 ? DisplayStyle.None : DisplayStyle.Flex;
         el.style.height = new Length(frac * 100f, LengthUnit.Percent);
     }
 
@@ -200,5 +136,23 @@ public class PlayerUIHandler : MonoBehaviour
     {
         if (fuseTrap != null) fuseTrap.style.display = DisplayStyle.None;
         if (fuseCam != null) fuseCam.style.display = DisplayStyle.None;
+    }
+
+    public void Show()
+    {
+        if (playerUIDoc != null) 
+        {
+            playerUIDoc.enabled = true;
+            // Перепривязываем UI после включения - элементы могли стать null
+            BindUI();
+            // Принудительно обновляем визуалы
+            UpdateSelection();
+            UpdateFuseVisuals();
+        }
+    }
+
+    public void Hide()
+    {
+        if (playerUIDoc != null) playerUIDoc.enabled = false;
     }
 }

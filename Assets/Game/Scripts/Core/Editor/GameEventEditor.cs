@@ -20,14 +20,18 @@ public class GameEventEditor : Editor
     private GUIStyle _signalStyle;
     private GUIStyle _headerStyle;
 
+    private int _lang; // 0 = RU, 1 = EN
+
     private void OnEnable()
     {
+        _lang = EditorPrefs.GetInt("SOToolsLang", 0);
         FindProjectReferences();
         FindSceneReferences();
     }
 
     private void InitStyles()
     {
+        // ... (styles logic same as original, keeping it for brevity in thought but I will write the full code.)
         if (_boxStyle == null)
         {
             _boxStyle = new GUIStyle(EditorStyles.helpBox)
@@ -41,9 +45,7 @@ public class GameEventEditor : Editor
         {
             _methodStyle = new GUIStyle(EditorStyles.miniLabel)
             {
-                richText = true,
-                wordWrap = true,
-                fontSize = 12
+                richText = true, wordWrap = true, fontSize = 12
             };
         }
 
@@ -51,9 +53,7 @@ public class GameEventEditor : Editor
         {
             _signalStyle = new GUIStyle(EditorStyles.miniLabel)
             {
-                richText = true,
-                wordWrap = true,
-                fontSize = 13
+                richText = true, wordWrap = true, fontSize = 13
             };
         }
 
@@ -61,8 +61,7 @@ public class GameEventEditor : Editor
         {
             _headerStyle = new GUIStyle(EditorStyles.boldLabel)
             {
-                fontSize = 15,
-                richText = true
+                fontSize = 15, richText = true
             };
         }
     }
@@ -71,16 +70,27 @@ public class GameEventEditor : Editor
     {
         InitStyles();
 
-        // 1. Draw the standard inspector (ScriptableObject fields)
+        // Language Toolbar
+        EditorGUILayout.BeginHorizontal();
+        GUILayout.FlexibleSpace();
+        int newLang = GUILayout.Toolbar(_lang, new string[] { "RU", "EN" }, GUILayout.Width(100));
+        if (newLang != _lang)
+        {
+            _lang = newLang;
+            EditorPrefs.SetInt("SOToolsLang", _lang);
+        }
+        EditorGUILayout.EndHorizontal();
+
+        // 1. Draw the standard inspector
         DrawDefaultInspector();
 
         GameEvent gameEvent = (GameEvent)target;
-
         EditorGUILayout.Space(10);
 
-        // 2. Test event button (only active in Play Mode)
+        // 2. Test event button
         GUI.enabled = Application.isPlaying;
-        if (GUILayout.Button("⚡ Raise Event"))
+        string raiseLabel = _lang == 0 ? "⚡ Вызвать событие" : "⚡ Raise Event";
+        if (GUILayout.Button(raiseLabel))
         {
             gameEvent.Raise();
             Debug.Log($"<color=green>Event {gameEvent.name} Raised from Editor!</color>");
@@ -88,27 +98,36 @@ public class GameEventEditor : Editor
         GUI.enabled = true;
 
         EditorGUILayout.Space(20);
-        EditorGUILayout.LabelField("📊 DEPENDENCIES INFO", EditorStyles.boldLabel);
+        string infoHeader = _lang == 0 ? "📊 ИНФОРМАЦИЯ О СВЯЗЯХ" : "📊 DEPENDENCIES INFO";
+        EditorGUILayout.LabelField(infoHeader, EditorStyles.boldLabel);
 
-        // ─── Variant B: GameEventListener on scene ───
-        EditorGUILayout.LabelField($"🎬 <color=#2196F3>EVENT LISTENERS</color> (Variant B): {_sceneListeners.Count}", _headerStyle);
+        // ─── Variant B: GameEventListener ───
+        string listenersHeader = _lang == 0 
+            ? $"🎬 <color=#2196F3>СЛУШАТЕЛИ</color> (Variant B): {_sceneListeners.Count}" 
+            : $"🎬 <color=#2196F3>EVENT LISTENERS</color> (Variant B): {_sceneListeners.Count}";
+        EditorGUILayout.LabelField(listenersHeader, _headerStyle);
+        
         if (_sceneListeners.Count > 0)
         {
             foreach (var listener in _sceneListeners)
             {
-                if (listener != null)
-                    DrawListenerCard(listener);
+                if (listener != null) DrawListenerCard(listener);
             }
         }
         else
         {
-            EditorGUILayout.HelpBox("No GameEventListeners in current scene.", MessageType.None);
+            string noListeners = _lang == 0 ? "Нет GameEventListener на текущей сцене." : "No GameEventListeners in current scene.";
+            EditorGUILayout.HelpBox(noListeners, MessageType.None);
         }
 
         EditorGUILayout.Space(10);
 
         // ─── Subscribers (Listeners) ───
-        EditorGUILayout.LabelField($"📥 <color=#4CAF50>SUBSCRIBERS</color> (Listen for this): {_sceneSubscribers.Count}", _headerStyle);
+        string subHeader = _lang == 0 
+            ? $"📥 <color=#4CAF50>ПОДПИСЧИКИ</color> (Слушают это): {_sceneSubscribers.Count}" 
+            : $"📥 <color=#4CAF50>SUBSCRIBERS</color> (Listen for this): {_sceneSubscribers.Count}";
+        EditorGUILayout.LabelField(subHeader, _headerStyle);
+        
         if (_sceneSubscribers.Count > 0)
         {
             foreach (var smart in _sceneSubscribers)
@@ -116,12 +135,20 @@ public class GameEventEditor : Editor
                 if (smart != null) DrawSmartListenerCard(smart, true);
             }
         }
-        else EditorGUILayout.HelpBox("No scripts are listening for this event.", MessageType.None);
+        else 
+        {
+            string noSubs = _lang == 0 ? "Нет скриптов, слушающих это событие." : "No scripts are listening for this event.";
+            EditorGUILayout.HelpBox(noSubs, MessageType.None);
+        }
 
         EditorGUILayout.Space(10);
 
         // ─── Invokers (Raisers) ───
-        EditorGUILayout.LabelField($"📤 <color=#FF9800>INVOKERS</color> (Raise this): {_sceneInvokers.Count}", _headerStyle);
+        string invHeader = _lang == 0 
+            ? $"📤 <color=#FF9800>ВЫЗЫВАЮЩИЕ</color> (Генерируют это): {_sceneInvokers.Count}" 
+            : $"📤 <color=#FF9800>INVOKERS</color> (Raise this): {_sceneInvokers.Count}";
+        EditorGUILayout.LabelField(invHeader, _headerStyle);
+        
         if (_sceneInvokers.Count > 0)
         {
             foreach (var smart in _sceneInvokers)
@@ -129,30 +156,41 @@ public class GameEventEditor : Editor
                 if (smart != null) DrawSmartListenerCard(smart, false);
             }
         }
-        else EditorGUILayout.HelpBox("No scripts are raising this event.", MessageType.None);
+        else 
+        {
+            string noInv = _lang == 0 ? "Нет скриптов, вызывающих это событие." : "No scripts are raising this event.";
+            EditorGUILayout.HelpBox(noInv, MessageType.None);
+        }
 
-        if (GUILayout.Button("🔄 Refresh Scene References"))
+        string refreshScene = _lang == 0 ? "🔄 Обновить связи сцены" : "🔄 Refresh Scene References";
+        if (GUILayout.Button(refreshScene))
         {
             FindSceneReferences();
         }
 
         EditorGUILayout.Space(10);
 
-        // 5. References in PROJECT (Prefabs) with methods
-        EditorGUILayout.LabelField($"📦 Prefab References (Project): {_prefabListeners.Count}", EditorStyles.boldLabel);
+        // 5. References in PROJECT
+        string prefabHeader = _lang == 0 
+            ? $"📦 Ссылки в префабах (Проект): {_prefabListeners.Count}" 
+            : $"📦 Prefab References (Project): {_prefabListeners.Count}";
+        EditorGUILayout.LabelField(prefabHeader, EditorStyles.boldLabel);
+        
         if (_prefabListeners.Count > 0)
         {
             foreach (var prefab in _prefabListeners)
             {
-                DrawPrefabCard(prefab);
+                if (prefab != null) DrawPrefabCard(prefab);
             }
         }
         else
         {
-            EditorGUILayout.HelpBox("No prefab references found.", MessageType.None);
+            string noPrefabs = _lang == 0 ? "Ссылки в префабах не найдены." : "No prefab references found.";
+            EditorGUILayout.HelpBox(noPrefabs, MessageType.None);
         }
 
-        if (GUILayout.Button("🔄 Refresh Project References"))
+        string refreshProj = _lang == 0 ? "🔄 Обновить ссылки проекта" : "🔄 Refresh Project References";
+        if (GUILayout.Button(refreshProj))
         {
             FindProjectReferences();
         }
@@ -161,8 +199,15 @@ public class GameEventEditor : Editor
     private void DrawListenerCard(GameEventListener listener)
     {
         EditorGUILayout.BeginVertical(_boxStyle);
+        EditorGUILayout.BeginHorizontal();
 
         EditorGUILayout.ObjectField(listener.gameObject, typeof(GameObject), true);
+        
+        if (GUILayout.Button("Ping", GUILayout.Width(45)))
+        {
+            EditorGUIUtility.PingObject(listener.gameObject);
+        }
+        EditorGUILayout.EndHorizontal();
         
         string label = $"  🔵 <b>{listener.gameObject.name}</b>  <color=#4EC9B0>GameEventListener</color>.<color=#DCDCAA>Response</color>()";
         EditorGUILayout.LabelField(label, _signalStyle);
@@ -176,8 +221,15 @@ public class GameEventEditor : Editor
     private void DrawSmartListenerCard(MonoBehaviour smart, bool showBindings)
     {
         EditorGUILayout.BeginVertical(_boxStyle);
+        EditorGUILayout.BeginHorizontal();
 
         EditorGUILayout.ObjectField(smart.gameObject, typeof(GameObject), true);
+
+        if (GUILayout.Button("Ping", GUILayout.Width(45)))
+        {
+            EditorGUIUtility.PingObject(smart.gameObject);
+        }
+        EditorGUILayout.EndHorizontal();
 
         string typeName = smart.GetType().Name;
         string label = $"  🧠 <b>{smart.gameObject.name}</b>  <color=#4EC9B0>{typeName}</color>.<color=#DCDCAA>OnSignalReceived</color>()";
@@ -235,7 +287,8 @@ public class GameEventEditor : Editor
         foreach (var smart in smarts)
         {
             string typeName = smart.GetType().Name;
-            string label = $"  🧠 <color=#4EC9B0>{typeName}</color> (SignalBinder)";
+            string sbLabel = _lang == 0 ? " (Слушатель Сигналов)" : " (SignalBinder)";
+            string label = $"  🧠 <color=#4EC9B0>{typeName}</color>{sbLabel}";
             EditorGUILayout.LabelField(label, _signalStyle);
         }
 
@@ -251,7 +304,8 @@ public class GameEventEditor : Editor
 
         if (count == 0)
         {
-            EditorGUILayout.LabelField($"{prefix}<color=#888>(no methods)</color>", _methodStyle);
+            string noMethods = _lang == 0 ? "(нет методов)" : "(no methods)";
+            EditorGUILayout.LabelField($"{prefix}<color=#888>{noMethods}</color>", _methodStyle);
             return;
         }
 

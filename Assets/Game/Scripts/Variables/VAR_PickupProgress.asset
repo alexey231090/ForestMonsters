@@ -9,8 +9,8 @@ MonoBehaviour:
   m_GameObject: {fileID: 0}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 4afb78d90d3800944bc7591168f7c86c, type: 3}
-  m_Name: VAR_TrapsCount
-  m_EditorClassIdentifier: 
+  m_Script: {fileID: 11500000, guid: c94eefd8ed2aef946917efd5ccdf667f, type: 3}
+  m_Name: VAR_PickupProgress
+  m_EditorClassIdentifier: Assembly-CSharp::FloatVariable
   onValueChanged: {fileID: 0}
-  InitialValue: 12
+  InitialValue: 0

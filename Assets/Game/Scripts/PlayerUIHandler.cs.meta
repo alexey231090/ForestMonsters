@@ -1,2 +1,19 @@
 fileFormatVersion: 2
 guid: 19e24f869f621d74cbf81b1548cdcdc1
+MonoImporter:
+  externalObjects: {}
+  serializedVersion: 2
+  defaultReferences:
+  - playerUIDoc: {instanceID: 0}
+  - VAR_SelectedSlot: {fileID: 11400000, guid: bba50011ae83a67459628d8b2eba44e1, type: 2}
+  - VAR_BuildFuseProgress: {fileID: 11400000, guid: 05462a4a27e60174e8bf95f2f055e167,
+      type: 2}
+  - VAR_IsBuildFuseActive: {fileID: 11400000, guid: c2fcbfec149b03a4b92cf15e08392949,
+      type: 2}
+  - VAR_PickupProgress: {fileID: 11400000, guid: 359c72d0be4a15d4286e5d230d6f827f,
+      type: 2}
+  executionOrder: 0
+  icon: {instanceID: 0}
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 

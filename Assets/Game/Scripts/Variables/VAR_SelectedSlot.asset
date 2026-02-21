@@ -10,7 +10,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 4afb78d90d3800944bc7591168f7c86c, type: 3}
-  m_Name: VAR_TrapsCount
-  m_EditorClassIdentifier: 
+  m_Name: VAR_SelectedSlot
+  m_EditorClassIdentifier: Assembly-CSharp::IntVariable
   onValueChanged: {fileID: 0}
-  InitialValue: 12
+  InitialValue: -1

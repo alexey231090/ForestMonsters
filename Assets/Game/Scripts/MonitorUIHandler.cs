@@ -33,9 +33,8 @@ public class MonitorUIHandler : SignalBinder
     
     private void RefreshUI()
     {
-        // Не обновляем UI, если монитор не активен или игрок смотрит в камеры/карту
+        // Обновляем UI всегда, когда открыт монитор, чтобы видеть баланс при покупках или наблюдениях
         if (CctvManager.instance == null || !CctvManager.instance.isMonitorActive) return;
-        if (CctvManager.instance.isWatchingCameras || CctvManager.instance.isWatchingMap) return;
         
         if (moneyText != null && VAR_Money != null)
         {

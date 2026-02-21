@@ -53,7 +53,11 @@ public class VisitorSpawner : SignalBinder
             // 2. CHECK: Are there memes in the park?
             if (ParkManager.instance == null) continue;
             
-            int memesCount = ParkManager.instance.activePlatforms.Count;
+            int memesCount = 0;
+            foreach(var platform in ParkManager.instance.activePlatforms)
+            {
+                if (platform != null && platform.isOccupied) memesCount++;
+            }
 
             if (memesCount > 0)
             {

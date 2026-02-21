@@ -4,27 +4,68 @@
 
 ---
 
-## 🔝 ПРИОРЫТЕТНЫЙ ВАРИАНТ (Через Атрибуты)
+## ✨ ТОП-1: МАГИЧЕСКИЙ ВАРИАНТ [SerializeField, Bind]
 
-Используйте этот метод во всех новых скриптах. Это самый чистый и безопасный способ, который минимизирует количество кода.
+Это самый современный и чистый способ. Он автоматически отрисовывает поле в инспекторе и подписывает метод.
 
-### 1. Подписка на Переменные `[OnChanged]`
-Автоматически вызывает метод при изменении значения в `ScriptableVariable` (например, Деньги, Здоровье).
+### 1. Как использовать
+Просто добавьте `[SerializeField, Bind]` над приватным полем. Скрипт сам найдет метод `On{ИмяПоля}Changed`.
 ```csharp
-[SerializeField, OnChanged(nameof(RefreshUI))] 
-private FloatVariable VAR_Money;
+[SerializeField, Bind] Vector3Variable VAR_PlayerPos;
 
-private void RefreshUI() { /* Обновление текста/графики */ }
+private void OnVAR_PlayerPosChanged() {
+    // Логика при изменении позиции
+}
 ```
 
-### 2. Подписка на События `[Listen]`
-Автоматически подписывает метод на `GameEvent` ассет.
+### 2. Использование с Событиями (GameEvent)
+Точно так же работает и для событий. Скрипт сам найдет метод `On{ИмяПоля}`.
 ```csharp
-[SerializeField] private GameEvent GET_onDayStarted;
+[SerializeField, Bind] GameEvent EV_OnDeath;
 
-[Listen(nameof(GET_onDayStarted))]
-private void StartNewDay() { /* Логика начала дня */ }
+private void OnEV_OnDeath() {
+    // Логика при смерти
+}
 ```
+
+### 3. Своё имя метода
+Если хотите другое название метода, передайте его в скобках:
+```csharp
+[SerializeField, Bind("Follow")] Vector3Variable VAR_PlayerPos;
+
+private void Follow() { /* Логика */ }
+```
+
+**Важно:**
+- **`[SerializeField]` обязателен!** Без него Unity не сохранит ссылку на ассет и поле будет `null` в Runtime.
+- Метод может быть `private`.
+- Не нужен `nameof(...)` ни для переменных, ни для событий.
+- Код выглядит максимально чисто.
+
+### 4. Когда НЕ нужен [SerializeField, Bind]
+
+`[SerializeField, Bind]` используется **только** для автоматического вызова метода при изменении значения. Если вам просто нужно читать/писать в переменную без реакции на изменения - используйте только `[SerializeField]`:
+
+```csharp
+// ✅ Просто читаем/пишем значение - Bind не нужен
+[SerializeField] FloatVariable VAR_Health;
+
+void TakeDamage() {
+    VAR_Health.Value -= 10;  // Просто меняем значение
+    float current = VAR_Health.Value;  // Просто читаем
+}
+
+// ✅ Нужна реакция на изменение - используем Bind
+[SerializeField, Bind] FloatVariable VAR_Health;
+
+void OnVAR_HealthChanged() {
+    UpdateHealthBar();  // Этот метод вызовется автоматически при изменении
+}
+```
+
+---
+
+## 🔝 ПРИОРЫТЕТНЫЙ ВАРИАНТ (Через Атрибуты Legacy)
 
 **⚠️ Важно для ИИ и Людей**: 
 - Скрипт **ДОЛЖЕН** наследоваться от `SignalBinder`.
@@ -44,19 +85,29 @@ private void StartNewDay() { /* Логика начала дня */ }
 
 ---
 
-## 📋 Именование (Best Practices)
+## 📋 Именование(префиксы) полей в скриптах
 
 | Префикс | Группа (Header) | Описание |
 |---|---|---|
-| `GET_` | **Subscribed Events** | Поле для ассета GameEvent |
+| `GET_` | **Subscribed Events** | Поле для чтения ассета GameEvent |
 | `VAR_` | **Variables SO** | Ссылка на ScriptableVariable |
-| `CALL_` | **Raising Events** | Вызов события через `.Raise()` |
+| `CALL_` | **Raising Events** |Поле для вызова события через `.Raise()`|
 
 ---
 
+## 📋 Именование(префиксы) SO ассетов
+
+| Префикс | Группа (Header) | Описание |
+|---|---|---|
+| `EV_` | **Game Events** | События |
+| `VAR_` | **Variables SO** | Переменные |
+| `SET_` | **Settings SO** | Настройки |
+
 ## 🤖 Инструкции для ИИ (AI Instructions)
 
-1. **Приоритет Атрибутов**: Всегда используй `[OnChanged]` и `[Listen]` для подписки на события и переменные.
-2. **Использование OnEnable**: Если скрипту нужна дополнительная логика при активации (не связанная с подписками), ты МОЖЕШЬ создавать `protected override void OnEnable()`.
-3. **Критическое правило**: При переопределении `OnEnable` или `OnDisable` ты **ОБЯЗАН** первым делом вызвать `base.OnEnable()` или `base.OnDisable()`, иначе автоматические подписки не заработают.
-4. **Наследование**: Всегда используй `public class Name : SignalBinder`.
+1. **Приоритет Атрибутов**: Используй `[Bind]` только когда нужен автоматический вызов метода при изменении переменной. Для простого чтения/записи используй только `[SerializeField]`.
+2. **Правило [Bind]**: При использовании `[Bind]` всегда добавляй `[SerializeField]`: `[SerializeField, Bind] Type VAR_Name;`.
+3. **Именование методов**: Если метод не указан явно в `[Bind]`, он **ОБЯЗАН** называться `On{ИмяПоля}Changed`.
+4. **Использование OnEnable**: Если скрипту нужна дополнительная логика при активации, ты МОЖЕШЬ создавать `protected override void OnEnable()`.
+5. **Критическое правило**: При переопределении `OnEnable` или `OnDisable` ты **ОБЯЗАН** первым делом вызвать `base.OnEnable()` или `base.OnDisable()`, иначе автоматические подписки не заработают.
+6. **Наследование**: Всегда используй `public class Name : SignalBinder`.

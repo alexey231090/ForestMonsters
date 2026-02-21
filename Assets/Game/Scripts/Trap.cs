@@ -9,8 +9,7 @@ public class Trap : MonoBehaviour
     public float pickUpDuration = 0.5f; // Скорость подъема к рукам
     public float dropDuration = 0.5f;   // Скорость опускания на землю
 
-    [Header("Variables SO")]
-    [SerializeField] private IntVariable VAR_TrapsCount;
+    [SerializeField, Bind] IntVariable VAR_TrapsCount;
 
     [Header("References")]
     public Animator animatorCell;
