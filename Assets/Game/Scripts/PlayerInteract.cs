@@ -117,6 +117,12 @@ public class PlayerInteract : MonoBehaviour
 
     void UpdateGhostLogic(Transform origin)
     {
+        if (placeCooldownTimer > 0f)
+        {
+            DestroyGhost();
+            return;
+        }
+
         int selectedIndex = VAR_SelectedSlot != null ? VAR_SelectedSlot.Value : -1;
 
         // Если ничего не выбрано - выходим
@@ -296,8 +302,8 @@ public class PlayerInteract : MonoBehaviour
         if (Physics.Raycast(origin.position, origin.forward, out hit, interactDistance, interactLayer))
         {
             // Ищем компоненты в родителе или детях, чтобы захват точно сработал
-            Trap trap = hit.collider.GetComponentInParent<Trap>();
-            if (trap == null) trap = hit.collider.GetComponentInChildren<Trap>();
+            TrapBox trap = hit.collider.GetComponentInParent<TrapBox>();
+            if (trap == null) trap = hit.collider.GetComponentInChildren<TrapBox>();
 
             SecurityCameraSetup camera = hit.collider.GetComponentInParent<SecurityCameraSetup>();
             if (camera == null) camera = hit.collider.GetComponentInChildren<SecurityCameraSetup>();

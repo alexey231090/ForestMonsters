@@ -135,7 +135,7 @@
 
 ---
 
-### 5. **Trap.cs** - Ловушка
+### 5. **TrapBox.cs** - Ловушка
 
 **Назначение:** Логика захвата врагов и обработка состояния ловушки.
 
@@ -152,7 +152,7 @@
    - `HasCatch() == true` - есть пойманный враг (`caughtEnemy`)
 
 **Связи:**
-- `TrapBox` - родительский объект (физическая коробка)
+- `TrapBox` - физическая коробка и логика ловушки
 - `activeVisual` - визуальный индикатор активности
 
 ---
@@ -391,11 +391,11 @@ PlayerInteract.HandleInteraction()
 ### **Процесс ловли врага:**
 ```
 EnemyAi (патрулирование/преследование)
-  → Заход в триггер Trap
-  → Trap.OnTriggerEnter()
+  → Заход в триггер TrapBox
+  → TrapBox.OnTriggerEnter()
     → EnemyAi.enabled = false
     → Притягивание к captureCenterPoint
-    → Trap.isUsed = true
+    → TrapBox.isUsed = true
 ```
 
 ### **Процесс размещения существа:**
@@ -440,7 +440,7 @@ Input 1/2 → PlayerInteract.ChangeItem()
 - `-1` - ничего не выбрано
 
 ### **Зависимости:**
-- `DOTween` - для анимаций (PlayerCarrier, Trap)
+- `DOTween` - для анимаций (PlayerCarrier, TrapBox)
 - `UnityEngine.AI` - для навигации врагов
 - `UI Toolkit` - для UI (PlayerUIHandler, MonitorUIHandler)
 
@@ -454,7 +454,7 @@ Input 1/2 → PlayerInteract.ChangeItem()
 | `EnemyAi` | Поведение врагов | `MoveToTarget()`, `UpdatePatrol()`, `StunByTrap()` |
 | `PlayerInteract` | Действия игрока | `UpdateGhostLogic()`, `TryPlaceItem()`, `HandleInteraction()` |
 | `PlayerCarrier` | Переноска объектов | `ProcessHold()`, `PerformPickup()`, `TryDrop()` |
-| `Trap` | Ловушка | `OnTriggerEnter()`, `HasCatch()` |
+| `TrapBox` | Ловушка | `OnTriggerEnter()`, `HasCatch()` |
 | `PlayerUIHandler` | UI инвентаря | `Show()`, `Hide()`, `SelectSlot()`, `SetFuseProgress()` |
 | `MapUIHandler` | UI карты (WASD) | `ShowUI()`, `HideUI()`, `ApplyStyles()` |
 | `MapCameraControl` | Камера карты | `SetExternalInput()`, `OnPreCull()` |

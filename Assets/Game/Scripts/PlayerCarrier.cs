@@ -18,7 +18,7 @@ public class PlayerCarrier : SignalBinder
     [SerializeField] BoolVariable VAR_IsBuildFuseActive;
 
     // Внутренние переменные
-    private Trap carriedTrap; // Объект, который мы сейчас несем
+    private TrapBox carriedTrap; // Объект, который мы сейчас несем
     private float currentHoldTimer = 0f;
 
     protected override void OnEnable()
@@ -86,8 +86,8 @@ public class PlayerCarrier : SignalBinder
     void PerformPickup(GameObject obj)
     {
         // 1. Проверяем, это ЛОВУШКА?
-        Trap trap = obj.GetComponentInParent<Trap>();
-        if (trap == null) trap = obj.GetComponentInChildren<Trap>();
+        TrapBox trap = obj.GetComponentInParent<TrapBox>();
+        if (trap == null) trap = obj.GetComponentInChildren<TrapBox>();
 
         if (trap != null)
         {
@@ -115,7 +115,7 @@ public class PlayerCarrier : SignalBinder
 
     // --- ФИЗИЧЕСКАЯ ПЕРЕНОСКА (Только для ловушек с добычей) ---
 
-    void PickUpPhysical(Trap trap)
+    void PickUpPhysical(TrapBox trap)
     {
         carriedTrap = trap;
         UpdateCarryingFlag();
@@ -151,7 +151,7 @@ public class PlayerCarrier : SignalBinder
     {
         Vector3 finalPos = floorPos - new Vector3(0, dropEmbedDepth, 0);
 
-        Trap trapToDrop = carriedTrap;
+        TrapBox trapToDrop = carriedTrap;
         Transform targetTransform = trapToDrop.trapbox != null ? trapToDrop.trapbox.transform : trapToDrop.transform;
 
         targetTransform.SetParent(null);
