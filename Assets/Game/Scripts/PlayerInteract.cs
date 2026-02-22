@@ -52,12 +52,14 @@ public class PlayerInteract : MonoBehaviour
 
     [Header("Placement Hold Settings")]
     public float placeHoldTimeRequired = 0.5f; // Время удержания для установки
+    [SerializeField] private float placeCooldownSeconds = 2.0f; // Задержка между установками
 
     // --- ВНУТРЕННИЕ ПЕРЕМЕННЫЕ ---
     private GameObject currentGhost;
     private float ghostTimer = 0f; // Текущий таймер жизни призрака
     private bool wasLookingAtGround = false;
     private float placeHoldTimer = 0f; // Таймер удержания ЛКМ для установки
+    private float placeCooldownTimer = 0f; // Таймер задержки между установками
 
     void OnEnable()
     {
@@ -105,7 +107,10 @@ public class PlayerInteract : MonoBehaviour
         }
 
         // 6. ВЗАИМОДЕЙСТВИЕ (E - только если не в режиме стройки)
-        HandleInteraction(origin);
+        if (selectedIndex == -1)
+        {
+            HandleInteraction(origin);
+        }
     }
 
     // ================== ЛОГИКА ПРИЗРАКОВ И ТАЙМЕРА ==================
@@ -336,6 +341,13 @@ public class PlayerInteract : MonoBehaviour
 
     void HandlePlacementHold(Transform origin, int selectedIndex)
     {
+        if (placeCooldownTimer > 0f)
+        {
+            placeCooldownTimer -= Time.deltaTime;
+            ResetPlaceHoldTimer();
+            return;
+        }
+
         // Если ничего не выбрано или нет призрака - сбрасываем таймер
         if (selectedIndex == -1 || currentGhost == null)
         {
@@ -361,6 +373,7 @@ public class PlayerInteract : MonoBehaviour
             {
                 TryPlaceItem(origin);
                 ResetPlaceHoldTimer();
+                placeCooldownTimer = placeCooldownSeconds;
             }
         }
         else

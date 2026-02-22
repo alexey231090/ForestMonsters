@@ -15,6 +15,7 @@ public class PlayerCarrier : SignalBinder
     [SerializeField] IntVariable VAR_CamerasCount;
     [SerializeField] FloatVariable VAR_PickupProgress;
     [SerializeField] BoolVariable VAR_IsCarrying;
+    [SerializeField] BoolVariable VAR_IsBuildFuseActive;
 
     // Внутренние переменные
     private Trap carriedTrap; // Объект, который мы сейчас несем
@@ -42,7 +43,8 @@ public class PlayerCarrier : SignalBinder
         else
         {
             // Если ничего не несем и кнопка E не нажата - сбрасываем таймер
-            if (!Input.GetKey(KeyCode.E))
+            bool isBuildModeActive = VAR_IsBuildFuseActive != null && VAR_IsBuildFuseActive.Value;
+            if (!Input.GetKey(KeyCode.E) && !isBuildModeActive)
             {
                 ResetHoldTimer();
             }
