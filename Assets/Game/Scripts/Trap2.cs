@@ -157,6 +157,8 @@ public class Trap2 : MonoBehaviour, IInteractableTrap
     {
         // Визуализация сферы в Scene View
         // Зеленая - ищет врага, Красная - готова к сдаче в парк
+        if (settings == null) return;
+
         Gizmos.color = isUsed ? settings.gizmoColorCaught : settings.gizmoColorSearching;
         Vector3 sphereCenter = transform.TransformPoint(settings.sphereOffset);
         Gizmos.DrawSphere(sphereCenter, settings.detectionRadius);
