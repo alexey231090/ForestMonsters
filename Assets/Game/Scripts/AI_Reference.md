@@ -127,41 +127,7 @@ public interface IInteractableTrap
 
 ## 📦 Описание основных скриптов
 
-### 1. **GameManager.cs** - Центральный менеджер игры
-
-**Назначение:** Singleton-менеджер, управляющий глобальным состоянием игры, экономикой и циклами день/ночь.
-
-**Ключевые компоненты:**
-
-- **Экономика:**
-  - `money` - текущие деньги игрока
-  - `capturedCreatures` - количество пойманных существ
-  - `trapsCount`, `camerasCount` - инвентарь предметов
-  - `pricePerMeme` - цена за просмотр одного "мема" (существа на платформе)
-  - `trapPrice`, `cameraPrice` - цены на предметы
-
-- **Управление днями/ночью:**
-  - `isNight` - текущая фаза (день/ночь)
-  - `dayDurationMinutes`, `nightDurationMinutes` - длительность фаз
-  - `currentPhaseTimer` - таймер текущей фазы
-  - `StartDay()`, `StartNight()` - переключение фаз
-  - Управляет освещением и туманом через `SunMovementController`
-  - `SkipCurrentPhase()` - мгновенная смена фазы через взаимодействие с кроватью
-
-**Методы покупки/использования:**
-- `BuyTrap()`, `BuyCamera()` - покупка предметов
-- `TryUseTrap()`, `TryUseCamera()` - использование предметов из инвентаря
-- `AddCreature()`, `TryRemoveCreature()` - управление пойманными существами
-- `AddMoney(float amount)` - добавление денег
-
-**Важные связи:**
-- Связан с `VisitorSpawner` и `EnemySpawner` для управления спавном
-- Хранит список `activePlatforms` (платформы с размещенными существами)
-- Связан с `SunMovementController` для управления визуалами и положением солнца
-
----
-
-### 2. **EnemyAi.cs** - AI врагов
+### 1. **EnemyAi.cs** - AI врагов
 
 **Назначение:** Управление поведением врагов (патрулирование, преследование игрока, реакция на ловушки).
 
@@ -193,7 +159,7 @@ public interface IInteractableTrap
 
 ---
 
-### 3. **PlayerInteract.cs** - Система взаимодействий игрока
+### 2. **PlayerInteract.cs** - Система взаимодействий игрока
 
 **Назначение:** Обработка всех действий игрока (строительство, взаимодействие с объектами).
 
@@ -217,7 +183,7 @@ public interface IInteractableTrap
 #### **Взаимодействие (E):**
 - **Поднятие объектов:** Удержание E на ловушке/камере (через `PlayerCarrier`)
 - **Монитор:** Открытие режима монитора (`CctvManager`)
-- **Кровать:** Пропуск текущей фазы (`GameManager.SkipCurrentPhase()`)
+- **Кровать:** Пропуск текущей фазы через `BedTrigger` → `SunMovementController.TogglePhase()`
 - **Платформа:** Размещение существа на платформе (`ParkPlatform.TryPlaceMonster()`)
 
 **SO-переменные с [Bind]:**
@@ -257,7 +223,7 @@ private void OnVAR_PickupProgressChanged() {
 
 ---
 
-### 4. **PlayerCarrier.cs** - Система переноски объектов
+### 3. **PlayerCarrier.cs** - Система переноски объектов
 
 **Назначение:** Физическая переноска ловушек с пойманными врагами.
 
@@ -299,7 +265,7 @@ void DropPhysical(Vector3 floorPos) {
 
 ---
 
-### 5. **Trap2.cs** - Ловушка (модульная реализация)
+### 4. **Trap2.cs** - Ловушка (модульная реализация)
 
 **Назначение:** Логика захвата врагов и обработка состояния ловушки.
 
@@ -378,7 +344,7 @@ public bool HasCatch() => isUsed && caughtEnemy != null;
 
 ---
 
-### 6. **CctvManager.cs** - Менеджер камер наблюдения
+### 5. **CctvManager.cs** - Менеджер камер наблюдения
 
 **Назначение:** Управление системой мониторинга (камеры безопасности, карта).
 
@@ -408,7 +374,7 @@ public bool HasCatch() => isUsed && caughtEnemy != null;
 
 ---
 
-### 7. **PlayerUIHandler.cs** - UI игрока
+### 6. **PlayerUIHandler.cs** - UI игрока
 
 **Назначение:** Управление UI через UI Toolkit (инвентарь, индикаторы).
 
@@ -426,7 +392,7 @@ public bool HasCatch() => isUsed && caughtEnemy != null;
 
 ---
 
-### 8. **MonitorUIHandler.cs** - UI монитора
+### 7. **MonitorUIHandler.cs** - UI монитора
 
 **Назначение:** Управление UI режима монитора (покупки, просмотр камер/карты).
 
@@ -441,7 +407,7 @@ public bool HasCatch() => isUsed && caughtEnemy != null;
 
 ---
 
-### 9. **EnemySpawner.cs** - Спавнер врагов
+### 8. **EnemySpawner.cs** - Спавнер врагов
 
 **Назначение:** Создание врагов ночью в фиксированных или новых случайных точках.
 
@@ -462,7 +428,7 @@ public bool HasCatch() => isUsed && caughtEnemy != null;
 
 ---
 
-### 10. **VisitorSpawner.cs** - Спавнер посетителей (виртуальный)
+### 9. **VisitorSpawner.cs** - Спавнер посетителей (виртуальный)
 
 **Назначение:** Симуляция посетителей парка днем (не физический спавн, а виртуальная логика).
 
@@ -478,7 +444,7 @@ public bool HasCatch() => isUsed && caughtEnemy != null;
 
 ---
 
-### 11. **ParkPlatform.cs** - Платформа для размещения существ
+### 10. **ParkPlatform.cs** - Платформа для размещения существ
 
 **Назначение:** Место размещения пойманных существ для заработка.
 
@@ -487,11 +453,11 @@ public bool HasCatch() => isUsed && caughtEnemy != null;
 - `PlaceMonsterDirectly()` - прямая установка монстра (используется `ParkManager` при доставке в клетке)
 
 **Регистрация:**
-- Платформа регистрирует себя в `GameManager.activePlatforms` при активации, что увеличивает доход от посетителей.
+- Платформа регистрирует себя в `ParkManager.activePlatforms` при активации, что увеличивает доход от посетителей.
 
 ---
 
-### 12. **ParkManager.cs** - Менеджер парка
+### 11. **ParkManager.cs** - Менеджер парка
 
 **Назначение:** Автоматизация приема пойманных существ.
 
@@ -502,7 +468,7 @@ public bool HasCatch() => isUsed && caughtEnemy != null;
 
 ---
 
-### 13. **SunMovementController.cs** - Контроллер движения солнца
+### 12. **SunMovementController.cs** - Контроллер движения солнца
 
 **Назначение:** Управление вращением солнца и визуальными эффектами (освещение, туман) на основе прогресса фазы.
 
@@ -522,12 +488,29 @@ public bool HasCatch() => isUsed && caughtEnemy != null;
 - `SetVisualsForDay()` / `SetVisualsForNight()` - установка визуальных параметров
 
 **Интеграция:**
-- Используется `GameManager` для обновления позиции солнца каждый кадр
+- Самодостаточный класс через SignalBinder
+- Автоматически вызывает GameEvent при смене дня/ночи
 - Связан с системой освещения и туманом Unity
 
 ---
 
-### 14. **MapUIHandler.cs** - Обработчик UI для режима карты
+### 12.1 **BedTrigger.cs** - Триггер кровати
+
+**Назначение:** Взаимодействие с кроватью для пропуска времени (день ↔ ночь).
+
+**Реализация интерфейса:** `IInteractable`
+
+**Логика работы:**
+- Игрок нажимает E на кровати
+- Вызывает `Interact()` → `CALL_requestTimeSkipEvent.Raise()`
+- `SunMovementController` слушает событие и переключает фазу
+
+**Интеграция:**
+- Связан с `SunMovementController` через GameEvent `CALL_requestTimeSkipEvent`
+
+---
+
+### 13. **MapUIHandler.cs** - Обработчик UI для режима карты
 
 **Назначение:** Управление интерфейсом карты с кнопками WASD для перемещения камеры.
 
@@ -553,7 +536,7 @@ public bool HasCatch() => isUsed && caughtEnemy != null;
 
 ---
 
-### 15. **MapCameraControl.cs** - Контроллер камеры для режима карты
+### 14. **MapCameraControl.cs** - Контроллер камеры для режима карты
 
 **Назначение:** Управление ортографической камерой в режиме карты с возможностью перемещения и масштабирования.
 
@@ -583,15 +566,16 @@ public bool HasCatch() => isUsed && caughtEnemy != null;
 
 ### **Цикл день/ночь:**
 ```
-GameManager.Update()
+SunMovementController.Update()
   → HandleTimeCycle()
     → Расчет прогресса фазы
-    → sunController.UpdateSunPosition(progress, isNight)
-    → Проверка окончания фазы → SkipCurrentPhase()
+    → UpdateSunPosition(progress, isNight)
+    → Проверка окончания фазы → TogglePhase()
   → StartDay() / StartNight()
     → isNight = false/true
-    → VisitorSpawner.StartNewDay() / StopSpawning()
-    → EnemySpawner.ClearEnemies() / SpawnEnemies()
+    → Вызывает GameEvent: call_onDayStarted / call_onNightStarted
+    → VisitorSpawner.StartNewDay() / StopSpawning() (через [Listen])
+    → EnemySpawner.ClearEnemies() / SpawnEnemies() (через [Bind])
 ```
 
 ### **Процесс ловли врага (модульный):**
@@ -648,7 +632,6 @@ Input 1/2 → VAR_SelectedSlot.Value = index
 ## 🔑 Важные паттерны и соглашения
 
 ### **Singleton-паттерн:**
-- `GameManager.instance`
 - `CctvManager.instance`
 - `ParkManager.instance`
 
@@ -712,7 +695,7 @@ Input 1/2 → VAR_SelectedSlot.Value = index
 
 | Задача | Скрипт/Метод |
 |--------|-------------|
-| Управление день/ночь | `GameManager.StartDay()`, `StartNight()` |
+| Управление день/ночь | `SunMovementController.TogglePhase()`, `StartDay()`, `StartNight()` |
 | Спавн врагов | `EnemySpawner.SpawnEnemies()` |
 | Доставка в парк | `ParkManager.TryDeliverMonster()` |
 | Логика патрулирования | `EnemyAi.UpdatePatrol()` |
@@ -740,7 +723,7 @@ Input 1/2 → VAR_SelectedSlot.Value = index
 
 ---
 
-**Версия документа:** 2.0 (Актуально)  
-**Последнее обновление:** 25.02.2026  
-**Автор:** AI Assistant для проекта ForestMonsters  
+**Версия документа:** 3.0 (Актуально - удалены GameManager, TrapBox, Trap; добавлен BedTrigger)
+**Последнее обновление:** 25.02.2026
+**Автор:** AI Assistant для проекта ForestMonsters
 **Статус:** ✅ Поддерживается и обновляется
