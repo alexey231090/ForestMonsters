@@ -19,24 +19,51 @@ public class TrapBox : MonoBehaviour
     public ParticleSystem captureParticles;
     public GameObject activeVisual;
     public TrapBox trapbox; // Ссылка на родительский объект (сама коробка)
+    public Collider mainPhysicalCollider; // Физический коллайдер клетки (без триггера)
+    public Collider catchTriggerCollider; // Триггерный коллайдер для ловли врага
 
     private bool isUsed = false;
     private bool isDelivered = false; // Флаг для защиты от двойной доставки
     private GameObject caughtEnemy;
-    private Collider myCollider;
+    private Transform trapRoot;
 
     void Start()
     {
         if (activeVisual != null) activeVisual.SetActive(false);
         if (animatorCell == null) animatorCell = GetComponentInChildren<Animator>();
         if (trapbox == null) trapbox = GetComponentInParent<TrapBox>();
+        trapRoot = transform.parent != null ? transform.parent : transform;
 
-        // Получаем коллайдер триггера, чтобы отключать его при переноске
-        myCollider = GetComponent<Collider>();
+        // Настройка основного физического коллайдера
+        if (mainPhysicalCollider != null)
+        {
+            mainPhysicalCollider.isTrigger = false;
+            mainPhysicalCollider.enabled = false; // Выключен, пока никто не пойман
+        }
+
+        // Настройка триггера ловушки
+        if (catchTriggerCollider != null)
+        {
+            catchTriggerCollider.isTrigger = true;
+            catchTriggerCollider.enabled = true;
+        }
+        else
+        {
+            Debug.LogWarning("[TRAP] Catch Trigger Collider is not assigned in Inspector!", this);
+        }
+
+        // В Unity триггеры/коллизии вызывают события только если хотя бы на одном из объектов есть Rigidbody.
+        // У врагов может не быть Rigidbody (например, только NavMeshAgent), поэтому обеспечиваем его на ловушке.
+        var rb = GetComponent<Rigidbody>();
+        if (rb == null) rb = gameObject.AddComponent<Rigidbody>();
+        rb.isKinematic = true;
+        rb.useGravity = false;
     }
 
     void OnTriggerEnter(Collider other)
     {
+        Debug.Log($"[TRAP] Trigger entered by: {other.name} with tag: {other.tag}", this);
+
         // Проверяем доставку в парк
         if (other.CompareTag("ParkTrigger"))
         {
@@ -49,7 +76,7 @@ public class TrapBox : MonoBehaviour
 
                     if (VAR_TrapsCount != null) VAR_TrapsCount.ApplyChange(1);
 
-                    Destroy(transform.parent.gameObject);
+                    Destroy(trapRoot != null ? trapRoot.gameObject : gameObject);
                 }
             }
             return;
@@ -82,7 +109,7 @@ public class TrapBox : MonoBehaviour
                 if (animatorCell != null) animatorCell.SetBool("CellOpenClose", true);
 
                 // Включаем физический коллайдер на коробке при поимке
-                if (trapbox.GetComponent<BoxCollider>()) trapbox.GetComponent<BoxCollider>().enabled = true;
+                if (mainPhysicalCollider != null) mainPhysicalCollider.enabled = true;
 
                 caughtEnemy = other.gameObject;
                 isUsed = true;
@@ -99,23 +126,26 @@ public class TrapBox : MonoBehaviour
 
     public void AnimatePickUp(Transform holdParent)
     {
-        // Переключаем ОСНОВНОЙ коллайдер коробки в режим триггера
-        var boxColl = trapbox.GetComponent<Collider>();
-        if (boxColl != null) boxColl.isTrigger = true;
+        // Отключаем триггер ловли на время переноски, чтобы не ловить врагов "в руках".
+        if (catchTriggerCollider != null) catchTriggerCollider.enabled = false;
 
-        transform.parent.SetParent(holdParent);
-        transform.parent.DOLocalMove(Vector3.zero, pickUpDuration);
-        transform.parent.DOLocalRotate(Vector3.zero, pickUpDuration);
+        if (trapRoot == null) trapRoot = transform;
+        trapRoot.SetParent(holdParent);
+        trapRoot.DOLocalMove(Vector3.zero, pickUpDuration);
+        trapRoot.DOLocalRotate(Vector3.zero, pickUpDuration);
     }
 
     public void AnimateDrop(Vector3 targetPosition, Quaternion targetRotation)
     {
-        transform.parent.SetParent(null);
-        transform.parent.DOMove(targetPosition, dropDuration).SetEase(Ease.OutBounce).OnComplete(() =>
+        if (trapRoot == null) trapRoot = transform;
+        trapRoot.SetParent(null);
+        trapRoot.DOMove(targetPosition, dropDuration).SetEase(Ease.OutBounce).OnComplete(() =>
         {
-            var boxColl = trapbox.GetComponent<Collider>();
-            if (boxColl != null) boxColl.isTrigger = false;
+            if (catchTriggerCollider != null)
+            {
+                catchTriggerCollider.enabled = true;
+            }
         });
-        transform.parent.DORotateQuaternion(targetRotation, dropDuration);
+        trapRoot.DORotateQuaternion(targetRotation, dropDuration);
     }
 }

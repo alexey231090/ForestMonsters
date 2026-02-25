@@ -18,7 +18,7 @@ public class PlayerCarrier : SignalBinder
     [SerializeField] BoolVariable VAR_IsBuildFuseActive;
 
     // Внутренние переменные
-    private TrapBox carriedTrap; // Объект, который мы сейчас несем
+    private Trap2 carriedTrap; // Объект, который мы сейчас несем
     private float currentHoldTimer = 0f;
 
     protected override void OnEnable()
@@ -86,8 +86,8 @@ public class PlayerCarrier : SignalBinder
     void PerformPickup(GameObject obj)
     {
         // 1. Проверяем, это ЛОВУШКА?
-        TrapBox trap = obj.GetComponentInParent<TrapBox>();
-        if (trap == null) trap = obj.GetComponentInChildren<TrapBox>();
+        Trap2 trap = obj.GetComponentInParent<Trap2>();
+        if (trap == null) trap = obj.GetComponentInChildren<Trap2>();
 
         if (trap != null)
         {
@@ -95,8 +95,7 @@ public class PlayerCarrier : SignalBinder
             else
             {
                 if (VAR_TrapsCount != null) VAR_TrapsCount.ApplyChange(1);
-                if (trap.trapbox != null) Destroy(trap.trapbox.gameObject);
-                else Destroy(trap.gameObject);
+                Destroy(trap.gameObject);
             }
             return;
         }
@@ -115,21 +114,13 @@ public class PlayerCarrier : SignalBinder
 
     // --- ФИЗИЧЕСКАЯ ПЕРЕНОСКА (Только для ловушек с добычей) ---
 
-    void PickUpPhysical(TrapBox trap)
+    void PickUpPhysical(Trap2 trap)
     {
         carriedTrap = trap;
         UpdateCarryingFlag();
 
-        Collider[] cols = trap.GetComponentsInChildren<Collider>();
-        foreach (var c in cols) c.enabled = false;
-
-        // Привязываем к рукам
-        Transform targetTransform = trap.trapbox != null ? trap.trapbox.transform : trap.transform;
-        targetTransform.SetParent(holdPoint);
-
-        // Анимация полета в руки
-        targetTransform.DOLocalMove(Vector3.zero, 0.5f);
-        targetTransform.DOLocalRotate(Vector3.zero, 0.5f);
+        // Используем метод из Trap2 для анимации и отключения триггеров
+        trap.OnPickUp(holdPoint);
 
         Debug.Log("Клетка с монстром взята!");
     }
@@ -151,24 +142,21 @@ public class PlayerCarrier : SignalBinder
     {
         Vector3 finalPos = floorPos - new Vector3(0, dropEmbedDepth, 0);
 
-        TrapBox trapToDrop = carriedTrap;
-        Transform targetTransform = trapToDrop.trapbox != null ? trapToDrop.trapbox.transform : trapToDrop.transform;
-
-        targetTransform.SetParent(null);
+        Trap2 trapToDrop = carriedTrap;
+        trapToDrop.transform.SetParent(null);
 
         // Анимация падения
-        targetTransform.DOMove(finalPos, 0.5f).SetEase(Ease.OutBounce).OnComplete(() =>
+        trapToDrop.transform.DOMove(finalPos, 0.5f).SetEase(Ease.OutBounce).OnComplete(() =>
         {
             if (trapToDrop != null)
             {
-                Collider[] cols = trapToDrop.GetComponentsInChildren<Collider>();
-                foreach (var c in cols) c.enabled = true;
+                trapToDrop.OnDrop();
             }
         });
 
         // Поворот по Y игрока
         Quaternion targetRot = Quaternion.Euler(0, transform.eulerAngles.y, 0);
-        targetTransform.DORotateQuaternion(targetRot, 0.5f);
+        trapToDrop.transform.DORotateQuaternion(targetRot, 0.5f);
 
         carriedTrap = null; // Руки свободны
         UpdateCarryingFlag();

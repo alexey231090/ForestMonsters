@@ -302,8 +302,8 @@ public class PlayerInteract : MonoBehaviour
         if (Physics.Raycast(origin.position, origin.forward, out hit, interactDistance, interactLayer))
         {
             // Ищем компоненты в родителе или детях, чтобы захват точно сработал
-            TrapBox trap = hit.collider.GetComponentInParent<TrapBox>();
-            if (trap == null) trap = hit.collider.GetComponentInChildren<TrapBox>();
+            Trap2 trap = hit.collider.GetComponentInParent<Trap2>();
+            if (trap == null) trap = hit.collider.GetComponentInChildren<Trap2>();
 
             SecurityCameraSetup camera = hit.collider.GetComponentInParent<SecurityCameraSetup>();
             if (camera == null) camera = hit.collider.GetComponentInChildren<SecurityCameraSetup>();

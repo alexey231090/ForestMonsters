@@ -380,7 +380,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 78f1d2e04e845f6429d331ca5ae98b51, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  VAR_CapturedCreatures: {fileID: 0}
+  VAR_CapturedCreatures: {fileID: 11400000, guid: 2b199f54f3501e045826c7800906ea4c,
+    type: 2}
   monsterModel: {fileID: 1707128776461195059}
   isOccupied: 0
 --- !u!1 &2018445130810584635
@@ -737,7 +738,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 78f1d2e04e845f6429d331ca5ae98b51, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  VAR_CapturedCreatures: {fileID: 0}
+  VAR_CapturedCreatures: {fileID: 11400000, guid: 2b199f54f3501e045826c7800906ea4c,
+    type: 2}
   monsterModel: {fileID: 2268152331205550180}
   isOccupied: 0
 --- !u!1 &5359161110884784483
@@ -871,7 +873,11 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   VAR_Money: {fileID: 11400000, guid: ede8e290731facf48948a131ce83664e, type: 2}
-  activePlatforms: []
+  activePlatforms:
+  - {fileID: 6557719308239664779}
+  - {fileID: 8412970879475790982}
+  - {fileID: 6379486629582724709}
+  - {fileID: 3126473388971530704}
   pricePerMeme: 1.5
 --- !u!1 &6228149108375296730
 GameObject:
@@ -1113,7 +1119,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 78f1d2e04e845f6429d331ca5ae98b51, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  VAR_CapturedCreatures: {fileID: 0}
+  VAR_CapturedCreatures: {fileID: 11400000, guid: 2b199f54f3501e045826c7800906ea4c,
+    type: 2}
   monsterModel: {fileID: 6228149108375296730}
   isOccupied: 0
 --- !u!1 &7536854824827778727
@@ -1242,6 +1249,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 78f1d2e04e845f6429d331ca5ae98b51, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  VAR_CapturedCreatures: {fileID: 0}
+  VAR_CapturedCreatures: {fileID: 11400000, guid: 2b199f54f3501e045826c7800906ea4c,
+    type: 2}
   monsterModel: {fileID: 2018445130810584635}
   isOccupied: 0

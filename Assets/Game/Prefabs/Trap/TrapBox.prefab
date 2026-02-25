@@ -5002,10 +5002,11 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 4656169428271308904}
+  - component: {fileID: 8594881026648686734}
   - component: {fileID: 2898688127004692324}
-  - component: {fileID: 6013991786925113002}
   - component: {fileID: 7828515064047543141}
   - component: {fileID: 5634409083895889272}
+  - component: {fileID: 6865305732127317791}
   m_Layer: 0
   m_Name: TrapBox
   m_TagString: Untagged
@@ -5030,15 +5031,7 @@ Transform:
   - {fileID: 5809060554690668042}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!33 &2898688127004692324
-MeshFilter:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 6030652623916111981}
-  m_Mesh: {fileID: 10202, guid: 0000000000000000e000000000000000, type: 0}
---- !u!114 &6013991786925113002
+--- !u!114 &8594881026648686734
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -5047,23 +5040,29 @@ MonoBehaviour:
   m_GameObject: {fileID: 6030652623916111981}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 7e4aef8ce3aa2e74aad2c0c71f927b80, type: 3}
+  m_Script: {fileID: 11500000, guid: ec9a213b35e858240904d37293d47a4c, type: 3}
   m_Name: 
-  m_EditorClassIdentifier: 
-  description: "TrapBox - \u043A\u043E\u043B\u0430\u0439\u0434\u0435\u0440 \u043A\u043B\u0435\u0442\u043A\u0438,
-    Trap - \u0441\u0430\u043C\u0430 \u043C\u0435\u0445\u0430\u043D\u0438\u043A\u0430,
-    CapturePoint - \u043C\u0435\u0441\u0442\u043E \u043F\u043E\u044F\u0432\u043B\u0435\u043D\u0438\u044F
-    \u0432 \u043A\u043B\u0435\u0442\u043A\u0435,CellOpen - \u041C\u0435\u0448\u044C
-    \u043A\u043B\u0435\u0442\u043A\u0438 \u0438 \u0410\u043D\u0438\u043C\u0430\u0442\u043E\u0440."
-  attractionDuration: 1
-  pickUpDuration: 0.5
-  dropDuration: 0.5
-  VAR_TrapsCount: {fileID: 0}
-  animatorCell: {fileID: 0}
-  captureCenterPoint: {fileID: 0}
-  captureParticles: {fileID: 0}
-  activeVisual: {fileID: 0}
-  trapbox: {fileID: 0}
+  m_EditorClassIdentifier: Assembly-CSharp::Trap2
+  physicalCollider: {fileID: 5634409083895889272}
+  detectionRadius: 3.46
+  sphereOffset: {x: 0, y: -0.25, z: 0}
+  detectionLayer:
+    serializedVersion: 2
+    m_Bits: 1536
+  checkInterval: 0.3
+  capturePoint: {fileID: 4765035152909711748}
+  animatorCell: {fileID: 2952875994961942222}
+  captureParticles: {fileID: 790054390232598105}
+  attractionSpeed: 0.5
+  VAR_TrapsCount: {fileID: 11400000, guid: dd924ae082b055c45bdaccf9f60d310e, type: 2}
+--- !u!33 &2898688127004692324
+MeshFilter:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6030652623916111981}
+  m_Mesh: {fileID: 10202, guid: 0000000000000000e000000000000000, type: 0}
 --- !u!23 &7828515064047543141
 MeshRenderer:
   m_ObjectHideFlags: 0
@@ -5134,6 +5133,33 @@ BoxCollider:
   serializedVersion: 3
   m_Size: {x: 1, y: 1, z: 1}
   m_Center: {x: 0, y: 0, z: 0}
+--- !u!54 &6865305732127317791
+Rigidbody:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6030652623916111981}
+  serializedVersion: 5
+  m_Mass: 1
+  m_LinearDamping: 0
+  m_AngularDamping: 0.05
+  m_CenterOfMass: {x: 0, y: 0, z: 0}
+  m_InertiaTensor: {x: 1, y: 1, z: 1}
+  m_InertiaRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ImplicitCom: 1
+  m_ImplicitTensor: 1
+  m_UseGravity: 1
+  m_IsKinematic: 0
+  m_Interpolate: 0
+  m_Constraints: 0
+  m_CollisionDetection: 0
 --- !u!1 &8962407524159769469
 GameObject:
   m_ObjectHideFlags: 0
@@ -5535,6 +5561,7 @@ PrefabInstance:
       objectReference: {fileID: 4765035152909711748}
     m_RemovedComponents:
     - {fileID: 9120127017690105623, guid: 20dc3765b35ef2a42a75bc53ce6f6d34, type: 3}
+    - {fileID: 3942155535329617451, guid: 20dc3765b35ef2a42a75bc53ce6f6d34, type: 3}
     m_RemovedGameObjects: []
     m_AddedGameObjects:
     - targetCorrespondingSourceObject: {fileID: 5149151057949659088, guid: 20dc3765b35ef2a42a75bc53ce6f6d34,

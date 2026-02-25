@@ -46,10 +46,10 @@ MonoBehaviour:
     value: 1
   shutterAngle:
     overrideState: 1
-    value: 270
+    value: 105
   sampleCount:
     overrideState: 1
-    value: 10
+    value: 22
 --- !u!114 &-3282214629543748512
 MonoBehaviour:
   m_ObjectHideFlags: 3
@@ -1489,7 +1489,7 @@ MonoBehaviour:
     value: 1
   intensity:
     overrideState: 1
-    value: 0.45
+    value: 0.8
   color:
     overrideState: 1
     value: {r: 0, g: 0, b: 0, a: 1}
@@ -1507,7 +1507,10 @@ MonoBehaviour:
     value: -12
   thicknessModifier:
     overrideState: 1
-    value: 6.46
+    value: 3.84
+  zBias:
+    overrideState: 0
+    value: 0.0001
   directLightingStrength:
     overrideState: 0
     value: 0
@@ -1616,14 +1619,14 @@ MonoBehaviour:
     value: 1
   spectralLut:
     overrideState: 1
-    value: {fileID: 0}
+    value: {fileID: 2800000, guid: 240eeb88c5e280f4ebdb66044dff8745, type: 3}
     defaultState: 1
   intensity:
     overrideState: 1
-    value: 0.13
+    value: 0.293
   fastMode:
     overrideState: 1
-    value: 0
+    value: 1
 --- !u!114 &8277053138620810607
 MonoBehaviour:
   m_ObjectHideFlags: 3

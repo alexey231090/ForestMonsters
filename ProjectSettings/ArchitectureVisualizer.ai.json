@@ -1,3 +1,26 @@
 {
-  "items": []
+  "items": [
+    {
+      "pathName": "Ловушка 2.0 (Поимка и Доставка)",
+      "description": "Логика работы новой ловушки: триггер -> поимка -> перенос игроком -> доставка в парк.",
+      "steps": [
+        {
+          "scriptName": "Trap2",
+          "variableNames": [
+            "VAR_TrapsCount",
+            "isUsed",
+            "isDelivered"
+          ],
+          "comment": "Основная логика ловушки на корневом объекте."
+        },
+        {
+          "scriptName": "PlayerCarrier",
+          "variableNames": [
+            "carriedTrap"
+          ],
+          "comment": "Перенос пойманной ловушки к парку."
+        }
+      ]
+    }
+  ]
 }
