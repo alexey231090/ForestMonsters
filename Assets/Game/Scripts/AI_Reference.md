@@ -305,17 +305,41 @@ void DropPhysical(Vector3 floorPos) {
 
 **Реализация интерфейса:** `IInteractableTrap`
 
+**SO Настройки:**
+- `TrapSettings settings` - ScriptableObject ассет с настройками ловушки
+- **Файл настроек:** `Assets/Game/Scripts/Data/SO/SET_TrapSettings.asset`
+
+**Параметры TrapSettings:**
+```csharp
+[Header("Настройки Сферы Обнаружения")]
+public float detectionRadius = 1.0f;      // Радиус обнаружения
+public Vector3 sphereOffset = Vector3.up * 0.5f;  // Смещение сферы
+public LayerMask detectionLayer;           // Слои для обнаружения
+public float checkInterval = 0.1f;         // Интервал проверки (сек)
+
+[Header("Настройки Захвата")]
+public float attractionSpeed = 0.5f;       // Скорость притягивания врага
+
+[Header("Настройки Переноски")]
+public float pickUpDuration = 0.3f;        // Время анимации поднятия
+public float dropDuration = 0.5f;          // Время анимации установки
+
+[Header("Визуал")]
+public Color gizmoColorSearching = Color(0, 1, 0, 0.3);  // Цвет когда ищет
+public Color gizmoColorCaught = Color(1, 0, 0, 0.3);     // Цвет когда поймал
+```
+
 **Работа ловушки:**
 
 1. **Обнаружение через сферу:**
-   - `Physics.OverlapSphere()` в радиусе `detectionRadius`
-   - Проверка с интервалом `checkInterval` (оптимизация)
-   - Слои обнаружения через `detectionLayer`
+   - `Physics.OverlapSphere()` в радиусе `settings.detectionRadius`
+   - Проверка с интервалом `settings.checkInterval` (оптимизация)
+   - Слои обнаружения через `settings.detectionLayer`
 
 2. **Захват врага:**
    - Проверка тега "Enemy" и флага `!enemyAI.IsCaught`
    - Отключает `EnemyAi` и `NavMeshAgent` врага
-   - Притягивает врага к `capturePoint` через DOTween
+   - Притягивает врага к `capturePoint` через DOTween со скоростью `settings.attractionSpeed`
    - Включает анимацию (`animatorCell`) и частицы (`captureParticles`)
    - Включает физический коллайдер
 
@@ -332,8 +356,8 @@ public bool CanBePickedUp => isActive && !isDelivered;
 void IInteractableTrap.OnPickUp(Transform hand) {
     isActive = false; // Отключаем проверку сферы
     transform.SetParent(hand);
-    transform.DOLocalMove(Vector3.zero, 0.3f);
-    transform.DOLocalRotate(Vector3.zero, 0.3f);
+    transform.DOLocalMove(Vector3.zero, settings.pickUpDuration);
+    transform.DOLocalRotate(Vector3.zero, settings.pickUpDuration);
 }
 
 void IInteractableTrap.OnDrop() {
@@ -350,7 +374,7 @@ public bool HasCatch() => isUsed && caughtEnemy != null;
 - `isDelivered` - доставлена ли в парк
 
 **Визуализация:**
-- `OnDrawGizmos()` рисует сферу обнаружения (зеленая - ищет, красная - с добычей)
+- `OnDrawGizmos()` рисует сферу обнаружения с цветами из `settings.gizmoColorSearching` / `settings.gizmoColorCaught`
 
 ---
 

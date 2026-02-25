@@ -8,21 +8,16 @@ public class Trap2 : MonoBehaviour, IInteractableTrap
     [Header("Коллайдеры (Перетащить из иерархии)")]
     [Tooltip("Обычный физический коллайдер КЛЕТКИ. Должен быть БЕЗ галочки isTrigger.")]
     public Collider physicalCollider;
-    
-    [Header("Настройки Сферы Обнаружения")]
-    public float detectionRadius = 1.0f;
-    public Vector3 sphereOffset = Vector3.up * 0.5f;
-    public LayerMask detectionLayer;
-    [Tooltip("Как часто проверять сферу (в секундах). 0.1 - хороший баланс.")]
-    public float checkInterval = 0.1f;
 
     [Header("Точки и Визуал")]
     public Transform capturePoint;
     public Animator animatorCell;
     public ParticleSystem captureParticles;
 
-    [Header("Настройки")]
-    public float attractionSpeed = 0.5f;
+    [Header("Настройки (SO)")]
+    [SerializeField] TrapSettings settings;
+
+    [Header("Variables SO")]
     [SerializeField, Bind] private IntVariable VAR_TrapsCount;
 
     private bool isUsed = false;
@@ -66,9 +61,9 @@ public class Trap2 : MonoBehaviour, IInteractableTrap
 
     private void CheckOverlap()
     {
-        Vector3 sphereCenter = transform.TransformPoint(sphereOffset);
+        Vector3 sphereCenter = transform.TransformPoint(settings.sphereOffset);
         // Находим все коллайдеры в радиусе сферы на заданных слоях
-        Collider[] hitColliders = Physics.OverlapSphere(sphereCenter, detectionRadius, detectionLayer);
+        Collider[] hitColliders = Physics.OverlapSphere(sphereCenter, settings.detectionRadius, settings.detectionLayer);
 
         foreach (var hitCollider in hitColliders)
         {
@@ -111,8 +106,8 @@ public class Trap2 : MonoBehaviour, IInteractableTrap
         // Анимация затягивания в центр
         if (capturePoint != null)
         {
-            enemyCollider.transform.DOMove(capturePoint.position, attractionSpeed);
-            enemyCollider.transform.DORotateQuaternion(capturePoint.rotation, attractionSpeed)
+            enemyCollider.transform.DOMove(capturePoint.position, settings.attractionSpeed);
+            enemyCollider.transform.DORotateQuaternion(capturePoint.rotation, settings.attractionSpeed)
                 .OnComplete(() => enemyCollider.transform.SetParent(capturePoint));
         }
 
@@ -162,11 +157,11 @@ public class Trap2 : MonoBehaviour, IInteractableTrap
     {
         // Визуализация сферы в Scene View
         // Зеленая - ищет врага, Красная - готова к сдаче в парк
-        Gizmos.color = isUsed ? new Color(1, 0, 0, 0.3f) : new Color(0, 1, 0, 0.3f);
-        Vector3 sphereCenter = transform.TransformPoint(sphereOffset);
-        Gizmos.DrawSphere(sphereCenter, detectionRadius);
-        
-        Gizmos.color = isUsed ? Color.red : Color.green;
-        Gizmos.DrawWireSphere(sphereCenter, detectionRadius);
+        Gizmos.color = isUsed ? settings.gizmoColorCaught : settings.gizmoColorSearching;
+        Vector3 sphereCenter = transform.TransformPoint(settings.sphereOffset);
+        Gizmos.DrawSphere(sphereCenter, settings.detectionRadius);
+
+        Gizmos.color = isUsed ? settings.gizmoColorCaught : settings.gizmoColorSearching;
+        Gizmos.DrawWireSphere(sphereCenter, settings.detectionRadius);
     }
 }

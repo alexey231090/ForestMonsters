@@ -1,0 +1,25 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 7b8c5d3f4b2e1c04f9d8e7a6b5c4d3e3, type: 3}
+  m_Name: SET_TrapSettings
+  m_EditorClassIdentifier: 
+  detectionRadius: 1
+  sphereOffset: {x: 0, y: 0.5, z: 0}
+  detectionLayer:
+    serializedVersion: 2
+    m_Bits: 0
+  checkInterval: 0.1
+  attractionSpeed: 0.5
+  pickUpDuration: 0.3
+  dropDuration: 0.5
+  gizmoColorSearching: {r: 0, g: 1, b: 0, a: 0.3}
+  gizmoColorCaught: {r: 1, g: 0, b: 0, a: 0.3}
