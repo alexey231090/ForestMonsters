@@ -1,7 +1,7 @@
 using UnityEngine;
 
 [RequireComponent(typeof(PlayerCarrier))]
-public class PlayerInteract : MonoBehaviour
+public class PlayerInteract : SignalBinder
 {
     [Header("Description")]
     [TextArea(2, 5)] public string description = "Интеракция: Установка (ЛКМ), Призраки с автоотключением, Взаимодействие (E).";
@@ -44,11 +44,11 @@ public class PlayerInteract : MonoBehaviour
     [Header("Variables SO")]
     [SerializeField] IntVariable VAR_TrapsCount;
     [SerializeField] IntVariable VAR_CamerasCount;
-    [SerializeField] IntVariable VAR_SelectedSlot;
-    [SerializeField] FloatVariable VAR_BuildFuseProgress;
-    [SerializeField] BoolVariable VAR_IsBuildFuseActive;
+    [SerializeField, Bind] IntVariable VAR_SelectedSlot;
+    [SerializeField, Bind] FloatVariable VAR_BuildFuseProgress;
+    [SerializeField, Bind] BoolVariable VAR_IsBuildFuseActive;
     [SerializeField] BoolVariable VAR_IsCarrying;
-    [SerializeField] FloatVariable VAR_PickupProgress; // Для бара при установке
+    [SerializeField, Bind] FloatVariable VAR_PickupProgress;
 
     [Header("Placement Hold Settings")]
     public float placeHoldTimeRequired = 0.5f; // Время удержания для установки
@@ -63,11 +63,40 @@ public class PlayerInteract : MonoBehaviour
 
     void OnEnable()
     {
+        base.OnEnable();
         carrier = GetComponent<PlayerCarrier>();
-        
+
         // Initial state sync
         if (VAR_SelectedSlot != null) VAR_SelectedSlot.Value = -1;
         if (VAR_IsBuildFuseActive != null) VAR_IsBuildFuseActive.Value = false;
+    }
+
+    // ================== AUTO-REACTION METHODS (via [Bind]) ==================
+
+    private void OnVAR_SelectedSlotChanged()
+    {
+        ghostTimer = ghostTimeout;
+        DestroyGhost();
+
+        if (VAR_IsBuildFuseActive != null) VAR_IsBuildFuseActive.Value = VAR_SelectedSlot.Value != -1;
+        if (VAR_BuildFuseProgress != null) VAR_BuildFuseProgress.Value = 1f;
+
+        wasLookingAtGround = true;
+    }
+
+    private void OnVAR_IsBuildFuseActiveChanged()
+    {
+        // Можно добавить дополнительную логику при изменении режима стройки
+    }
+
+    private void OnVAR_BuildFuseProgressChanged()
+    {
+        // UI обновляется автоматически через SO
+    }
+
+    private void OnVAR_PickupProgressChanged()
+    {
+        // UI обновляется автоматически через SO
     }
 
     void Update()
@@ -126,7 +155,7 @@ public class PlayerInteract : MonoBehaviour
         int selectedIndex = VAR_SelectedSlot != null ? VAR_SelectedSlot.Value : -1;
 
         // Если ничего не выбрано - выходим
-        if (selectedIndex == -1) 
+        if (selectedIndex == -1)
         {
             DestroyGhost();
             return;
@@ -137,15 +166,15 @@ public class PlayerInteract : MonoBehaviour
         if (selectedIndex == 0 && VAR_TrapsCount != null && VAR_TrapsCount.Value > 0) hasItem = true;
         if (selectedIndex == 1 && VAR_CamerasCount != null && VAR_CamerasCount.Value > 0) hasItem = true;
 
-        if (!hasItem) 
-        { 
+        if (!hasItem)
+        {
             DisableBuildMode();
-            return; 
+            return;
         }
 
         RaycastHit hit;
         bool isLooking = Physics.Raycast(origin.position, origin.forward, out hit, buildDistance, groundLayer);
-        
+
         // 2. Ищем землю
         if (isLooking)
         {
@@ -204,20 +233,13 @@ public class PlayerInteract : MonoBehaviour
     void ChangeItem(int index)
     {
         if (VAR_SelectedSlot != null) VAR_SelectedSlot.Value = index;
-        ghostTimer = ghostTimeout; // При смене предмета таймер обновляется
-        DestroyGhost();
-
-        if (VAR_IsBuildFuseActive != null) VAR_IsBuildFuseActive.Value = true;
-        if (VAR_BuildFuseProgress != null) VAR_BuildFuseProgress.Value = 1f;
-        
-        wasLookingAtGround = true;
+        // OnVAR_SelectedSlotChanged() вызывается автоматически благодаря [Bind]
     }
 
     void DisableBuildMode()
     {
         if (VAR_SelectedSlot != null) VAR_SelectedSlot.Value = -1;
-        if (VAR_IsBuildFuseActive != null) VAR_IsBuildFuseActive.Value = false;
-        DestroyGhost();
+        // OnVAR_SelectedSlotChanged() вызывается автоматически благодаря [Bind]
     }
 
     void DestroyGhost()
@@ -301,21 +323,32 @@ public class PlayerInteract : MonoBehaviour
 
         if (Physics.Raycast(origin.position, origin.forward, out hit, interactDistance, interactLayer))
         {
-            // Ищем компоненты в родителе или детях, чтобы захват точно сработал
-            Trap2 trap = hit.collider.GetComponentInParent<Trap2>();
-            if (trap == null) trap = hit.collider.GetComponentInChildren<Trap2>();
+            // Ищем компоненты ловушек через интерфейс для модульности
+            IInteractableTrap trap = hit.collider.GetComponentInParent<IInteractableTrap>();
+            if (trap == null) trap = hit.collider.GetComponentInChildren<IInteractableTrap>();
 
-            SecurityCameraSetup camera = hit.collider.GetComponentInParent<SecurityCameraSetup>();
-            if (camera == null) camera = hit.collider.GetComponentInChildren<SecurityCameraSetup>();
-
-            if (trap != null || camera != null)
+            if (trap != null && trap.CanBePickedUp)
             {
                 lookingAtPickupable = true;
-                if (Input.GetKey(KeyCode.E)) 
+                if (Input.GetKey(KeyCode.E))
                 {
                     carrier.ProcessHold(hit.collider.gameObject);
                 }
-                return; 
+                return;
+            }
+
+            // Проверяем камеру (отдельно, т.к. это не ловушка)
+            SecurityCameraSetup camera = hit.collider.GetComponentInParent<SecurityCameraSetup>();
+            if (camera == null) camera = hit.collider.GetComponentInChildren<SecurityCameraSetup>();
+
+            if (camera != null)
+            {
+                lookingAtPickupable = true;
+                if (Input.GetKey(KeyCode.E))
+                {
+                    carrier.ProcessHold(hit.collider.gameObject);
+                }
+                return;
             }
             else
             {

@@ -1,23 +1,138 @@
-# Документация для AI: ForestMonsters Game Scripts
-//Внимание//Переходим на систему GameEvent,теперь все события должны быть реализованы через GameEvent.Этот Reference устарел и используется только для ознакомления с старой кодовой базой.
+# 📚 Документация для AI: ForestMonsters Game Scripts
+
 > **Назначение:** Этот документ создан для быстрой ориентации AI-ассистента в кодовой базе проекта ForestMonsters. Содержит описание архитектуры, основных систем, классов и их взаимодействий.
+>
+> **Статус:** ✅ АКТУАЛЬНО - Документ обновляется и поддерживается в актуальном состоянии
 
 ---
 
 ## 📋 Обзор проекта
 
-**Тип игры:** Unity-проект в жанре tycoon/management с элементами выживания  
+**Тип игры:** Unity-проект в жанре tycoon/management с элементами выживания
+
 **Основная механика:** Игрок ловит врагов в ловушки ночью, размещает их на платформах днем, зарабатывает деньги от посетителей парка.
+
+**Архитектурный стиль:** Модульная система с использованием интерфейсов и событийной архитектуры (GameEvent System)
 
 ---
 
 ## 🏗️ Архитектура и основные системы
+
+### 📡 GameEvent System (Приоритетная система связи)
+
+**Файл документации:** `Assets/Game/Scripts/Core/GameEventSystem.md`
+
+Система связи компонентов через ScriptableObject-сигналы и динамические переменные.
+
+#### **Ключевые компоненты:**
+
+| Компонент | Назначение |
+|-----------|-----------|
+| `SignalBinder` | Базовый класс для автоматической подписки на события через атрибуты |
+| `[Bind]` | Атрибут для автоматической подписки на изменения SO-переменных |
+| `[SerializeField, Bind]` | Комбинация для авто-отрисовки в инспекторе и авто-подписки |
+| `GameEvent` | ScriptableObject-событие для вызова из любого места |
+| `GameEventListener` | Компонент для прослушивания событий (если нельзя наследовать SignalBinder) |
+| `ScriptableVariable` | Базовый класс для SO-переменных (IntVariable, FloatVariable, BoolVariable) |
+
+#### **Магический вариант использования:**
+
+```csharp
+// Автоматическая подписка на изменение переменной
+[SerializeField, Bind] IntVariable VAR_TrapsCount;
+
+// Метод вызывается автоматически при изменении значения
+// Имя метода: On{ИмяПоля}Changed()
+private void OnVAR_TrapsCountChanged() {
+    UpdateUI(); // Логика при изменении количества ловушек
+}
+
+// Для событий (GameEvent)
+// Имя метода: On{ИмяПоля}()
+[SerializeField, Bind] GameEvent EV_OnDeath;
+
+// Метод вызывается автоматически при вызове события
+private void OnEV_OnDeath() {
+    // Логика при смерти
+}
+```
+
+#### **Своё имя метода (кастомизация):**
+
+Если вы хотите использовать своё название метода вместо стандартного `On{ИмяПоля}Changed()`, передайте имя метода в атрибут `[Bind]`:
+
+```csharp
+// Для переменных - указываем имя метода без параметров
+[SerializeField, Bind("OnTrapCountChanged")] IntVariable VAR_TrapsCount;
+
+private void OnTrapCountChanged() {
+    UpdateUI(); // Кастомное имя метода
+}
+
+// Для событий - аналогично
+[SerializeField, Bind("HandleDeath")] GameEvent EV_OnDeath;
+
+private void HandleDeath() {
+    // Кастомное имя метода для события
+}
+```
+
+**Важно:**
+- Метод должен быть `void` и **без параметров**
+- Метод может быть `private`, `protected` или `public`
+- `[SerializeField]` обязателен для сохранения ссылки в инспекторе
+
+#### **Именование полей в скриптах:**
+
+| Префикс | Группа | Описание |
+|---------|--------|----------|
+| `GET_` | **Subscribed Events** | Поле для чтения ассета GameEvent |
+| `VAR_` | **Variables SO** | Ссылка на ScriptableVariable |
+| `CALL_` | **Raising Events** | Поле для вызова события через `.Raise()` |
+
+#### **Именование SO-ассетов:**
+
+| Префикс | Группа | Описание |
+|---------|--------|----------|
+| `EV_` | **Game Events** | События (EV_OnTrapPickedUp, EV_OnEnemyCaught) |
+| `VAR_` | **Variables SO** | Переменные (VAR_TrapsCount, VAR_Health) |
+| `SET_` | **Settings SO** | Настройки (SET_GameSettings) |
+
+---
+
+### 🔌 Интерфейсная архитектура (Модульность)
+
+**Принцип:** Все взаимодействия между системами происходят через интерфейсы, что обеспечивает слабую связанность и возможность легкой замены реализаций.
+
+#### **IInteractableTrap** - Интерфейс для интерактивных ловушек
+
+**Файл:** `Assets/Game/Scripts/Core/IInteractableTrap.cs`
+
+```csharp
+public interface IInteractableTrap
+{
+    bool CanBePickedUp { get; }      // Можно ли поднять ловушку
+    void OnPickUp(Transform hand);   // Вызывается при поднятии
+    void OnDrop();                   // Вызывается при отпускании
+    bool HasCatch();                 // Есть ли пойманный враг
+}
+```
+
+**Преимущества:**
+- `PlayerInteract` и `PlayerCarrier` не зависят от конкретной реализации `Trap2`
+- Любая ловушка, реализующая интерфейс, будет работать с системой игрока
+- Легко добавлять новые типы ловушек без изменения кода игрока
+
+---
+
+## 📦 Описание основных скриптов
 
 ### 1. **GameManager.cs** - Центральный менеджер игры
 
 **Назначение:** Singleton-менеджер, управляющий глобальным состоянием игры, экономикой и циклами день/ночь.
 
 **Ключевые компоненты:**
+
 - **Экономика:**
   - `money` - текущие деньги игрока
   - `capturedCreatures` - количество пойманных существ
@@ -33,11 +148,11 @@
   - Управляет освещением и туманом через `SunMovementController`
   - `SkipCurrentPhase()` - мгновенная смена фазы через взаимодействие с кроватью
 
-- **Методы покупки/использования:**
-  - `BuyTrap()`, `BuyCamera()` - покупка предметов
-  - `TryUseTrap()`, `TryUseCamera()` - использование предметов из инвентаря
-  - `AddCreature()`, `TryRemoveCreature()` - управление пойманными существами
-  - `AddMoney(float amount)` - добавление денег
+**Методы покупки/использования:**
+- `BuyTrap()`, `BuyCamera()` - покупка предметов
+- `TryUseTrap()`, `TryUseCamera()` - использование предметов из инвентаря
+- `AddCreature()`, `TryRemoveCreature()` - управление пойманными существами
+- `AddMoney(float amount)` - добавление денег
 
 **Важные связи:**
 - Связан с `VisitorSpawner` и `EnemySpawner` для управления спавном
@@ -82,6 +197,8 @@
 
 **Назначение:** Обработка всех действий игрока (строительство, взаимодействие с объектами).
 
+**Наследование:** `SignalBinder` (для работы с `[Bind]` атрибутами)
+
 **Основные режимы:**
 
 #### **Режим строительства:**
@@ -92,7 +209,7 @@
   - **Таймер автоотключения:** Если игрок не смотрит на землю 5 секунд (`ghostTimeout`) - режим строительства отключается
   - **Фитиль в UI:** Визуальный индикатор времени до автоотключения
 
-- **Установка:** ЛКМ устанавливает предмет (если есть в инвентаре)
+- **Установка:** ЛКМ с удержанием (`placeHoldTimeRequired`) устанавливает предмет
 
 #### **Режим переноски:**
 - Если `PlayerCarrier.IsCarrying() == true` - режим строительства отключается
@@ -100,13 +217,42 @@
 #### **Взаимодействие (E):**
 - **Поднятие объектов:** Удержание E на ловушке/камере (через `PlayerCarrier`)
 - **Монитор:** Открытие режима монитора (`CctvManager`)
-- **Кровать:** Пропуск текущей фазы (`GameManager.SkipCurrentPhase()`) - мгновенно переключает между днём и ночью
+- **Кровать:** Пропуск текущей фазы (`GameManager.SkipCurrentPhase()`)
 - **Платформа:** Размещение существа на платформе (`ParkPlatform.TryPlaceMonster()`)
+
+**SO-переменные с [Bind]:**
+```csharp
+[SerializeField, Bind] IntVariable VAR_SelectedSlot;
+[SerializeField, Bind] FloatVariable VAR_BuildFuseProgress;
+[SerializeField, Bind] BoolVariable VAR_IsBuildFuseActive;
+[SerializeField, Bind] FloatVariable VAR_PickupProgress;
+```
+
+**Auto-reaction методы (вызываются автоматически):**
+```csharp
+private void OnVAR_SelectedSlotChanged() {
+    // Реакция на смену предмета
+    ghostTimer = ghostTimeout;
+    DestroyGhost();
+}
+
+private void OnVAR_BuildFuseProgressChanged() {
+    // UI обновляется автоматически через SO
+}
+
+private void OnVAR_IsBuildFuseActiveChanged() {
+    // Реакция на изменение режима стройки
+}
+
+private void OnVAR_PickupProgressChanged() {
+    // UI обновляется автоматически через SO
+}
+```
 
 **Ключевые методы:**
 - `UpdateGhostLogic()` - управление призраками и таймером
 - `TryPlaceItem()` - установка предмета на землю
-- `HandleInteraction()` - обработка взаимодействий через E
+- `HandleInteraction()` - обработка взаимодействий через E (использует `IInteractableTrap`)
 - `ChangeItem()`, `DisableBuildMode()` - управление режимами
 
 ---
@@ -115,7 +261,10 @@
 
 **Назначение:** Физическая переноска ловушек с пойманными врагами.
 
+**Наследование:** `SignalBinder`
+
 **Логика работы:**
+
 1. **Поднятие:** Удержание E на объекте → `ProcessHold()` → `PerformPickup()`
    - Если ловушка пустая → возврат в инвентарь (`trapsCount++`)
    - Если ловушка с добычей → физическая переноска (`PickUpPhysical()`)
@@ -129,31 +278,79 @@
    - Луч вниз от `holdPoint` ищет землю
    - Объект анимированно падает с утоплением (`dropEmbedDepth`)
 
+**Использование интерфейса:**
+```csharp
+private IInteractableTrap carriedTrap; // Поле использует интерфейс
+
+void PickUpPhysical(IInteractableTrap trap) {
+    carriedTrap = trap;
+    trap.OnPickUp(holdPoint); // Вызов метода интерфейса
+}
+
+void DropPhysical(Vector3 floorPos) {
+    IInteractableTrap trapToDrop = carriedTrap;
+    trapToDrop.OnDrop(); // Вызов метода интерфейса
+}
+```
+
 **Зависимости:**
 - Использует `DOTween` для анимаций
 - Работает совместно с `PlayerInteract`
 
 ---
 
-### 5. **TrapBox.cs** - Ловушка
+### 5. **Trap2.cs** - Ловушка (модульная реализация)
 
 **Назначение:** Логика захвата врагов и обработка состояния ловушки.
 
+**Реализация интерфейса:** `IInteractableTrap`
+
 **Работа ловушки:**
-1. **Активация:** `OnTriggerEnter` с тегом "Enemy"
-2. **Захват:**
+
+1. **Обнаружение через сферу:**
+   - `Physics.OverlapSphere()` в радиусе `detectionRadius`
+   - Проверка с интервалом `checkInterval` (оптимизация)
+   - Слои обнаружения через `detectionLayer`
+
+2. **Захват врага:**
+   - Проверка тега "Enemy" и флага `!enemyAI.IsCaught`
    - Отключает `EnemyAi` и `NavMeshAgent` врага
-   - Притягивает врага к `captureCenterPoint` через DOTween
+   - Притягивает врага к `capturePoint` через DOTween
    - Включает анимацию (`animatorCell`) и частицы (`captureParticles`)
-   - Устанавливает флаг `isUsed = true`
+   - Включает физический коллайдер
 
-3. **Состояния:**
-   - `isUsed == false` - пустая ловушка
-   - `HasCatch() == true` - есть пойманный враг (`caughtEnemy`)
+3. **Доставка в парк:**
+   - Проверка тега "ParkTrigger"
+   - Вызов `ParkManager.TryDeliverMonster()`
+   - Возврат ловушки в инвентарь (`VAR_TrapsCount.ApplyChange(1)`)
+   - Удаление ловушки
 
-**Связи:**
-- `TrapBox` - физическая коробка и логика ловушки
-- `activeVisual` - визуальный индикатор активности
+**Реализация IInteractableTrap:**
+```csharp
+public bool CanBePickedUp => isActive && !isDelivered;
+
+void IInteractableTrap.OnPickUp(Transform hand) {
+    isActive = false; // Отключаем проверку сферы
+    transform.SetParent(hand);
+    transform.DOLocalMove(Vector3.zero, 0.3f);
+    transform.DOLocalRotate(Vector3.zero, 0.3f);
+}
+
+void IInteractableTrap.OnDrop() {
+    transform.SetParent(null);
+    isActive = true; // Включаем проверку сферы
+}
+
+public bool HasCatch() => isUsed && caughtEnemy != null;
+```
+
+**Состояния:**
+- `isActive` - активна ли проверка сферы
+- `isUsed` - пойман ли враг
+- `isDelivered` - доставлена ли в парк
+
+**Визуализация:**
+- `OnDrawGizmos()` рисует сферу обнаружения (зеленая - ищет, красная - с добычей)
 
 ---
 
@@ -162,6 +359,7 @@
 **Назначение:** Управление системой мониторинга (камеры безопасности, карта).
 
 **Режимы работы:**
+
 1. **Режим монитора** (`isMonitorActive`):
    - Отключает управление игроком (`playerController.enabled = false`)
    - Показывает UI через `MonitorUIHandler`
@@ -223,17 +421,20 @@
 
 **Назначение:** Создание врагов ночью в фиксированных или новых случайных точках.
 
-**Логика спавна (Цикл жизни):**
-1. **Фиксированные точки**: После первой ночи выбранные точки спавна закрепляются за врагами.
-2. **Спавн по окружности**: Враги спавнятся строго на окружности радиуса `spawnRadius`, что оставляет центр точки спавна пустым и предотвращает "кучкование".
-3. **Обработка пойманных**:
-   - При наступлении дня (`ClearEnemies`) пойманные враги (`IsCaught == true`) **НЕ удаляются**.
-   - Точки спавна, на которых были пойманы враги, считаются "вакантными" и перераспределяются (выбираются новые случайные) на следующую ночь.
-   - Непойманные враги удаляются утром, но за ними сохраняется их старая точка спавна.
+**Логика спавна:**
+
+1. **Фиксированные точки:** После первой ночи выбранные точки спавна закрепляются за врагами.
+
+2. **Спавн по окружности:** Враги спавнятся строго на окружности радиуса `spawnRadius`, что оставляет центр точки спавна пустым и предотвращает "кучкование".
+
+3. **Обработка пойманных:**
+   - При наступлении дня (`ClearEnemies`) пойманные враги (`IsCaught == true`) **НЕ удаляются**
+   - Точки спавна, на которых были пойманы враги, считаются "вакантными" и перераспределяются на следующую ночь
+   - Непойманные враги удаляются утром, но за ними сохраняется их старая точка спавна
 
 **Методы:**
-- `SpawnEnemies()` - добирает недостающие точки до `enemiesPerNight` и создает монстров.
-- `ClearEnemies()` - удаляет только свободных монстров, освобождая точки пойманных.
+- `SpawnEnemies()` - добирает недостающие точки до `enemiesPerNight` и создает монстров
+- `ClearEnemies()` - удаляет только свободных монстров, освобождая точки пойманных
 
 ---
 
@@ -258,8 +459,8 @@
 **Назначение:** Место размещения пойманных существ для заработка.
 
 **Механика:**
-- `TryPlaceMonster()` - вызывается при взаимодействии с E.
-- `PlaceMonsterDirectly()` - прямая установка монстра (используется `ParkManager` при доставке в клетке).
+- `TryPlaceMonster()` - вызывается при взаимодействии с E
+- `PlaceMonsterDirectly()` - прямая установка монстра (используется `ParkManager` при доставке в клетке)
 
 **Регистрация:**
 - Платформа регистрирует себя в `GameManager.activePlatforms` при активации, что увеличивает доход от посетителей.
@@ -271,53 +472,55 @@
 **Назначение:** Автоматизация приема пойманных существ.
 
 **Логика:**
-- Хранит список всех `ParkPlatform`.
-- `TryDeliverMonster()` - ищет первую свободную платформу и размещает на ней монстра.
-- Вызывается из `Trap.cs` при касании триггера с тегом `ParkTrigger`.
+- Хранит список всех `ParkPlatform`
+- `TryDeliverMonster()` - ищет первую свободную платформу и размещает на ней монстра
+- Вызывается из `Trap2.cs` при касании триггера с тегом `ParkTrigger`
 
 ---
-### 12. **SunMovementController.cs** - Контроллер движения солнца
+
+### 13. **SunMovementController.cs** - Контроллер движения солнца
 
 **Назначение:** Управление вращением солнца и визуальными эффектами (освещение, туман) на основе прогресса фазы.
 
 **Ключевые компоненты:**
+
 - **Параметры вращения:**
-  - `sunDirectionY` - поворот солнца по горизонту (ось Y), позволяет настроить, с какой стороны будет восходить солнце
-  - `sunTrajectoryTilt` - наклон траектории солнца (ось Z), позволяет сделать путь солнца под углом, а не вертикальным
+  - `sunDirectionY` - поворот солнца по горизонту (ось Y)
+  - `sunTrajectoryTilt` - наклон траектории солнца (ось Z)
 
 - **Визуальные параметры:**
   - `sunLight` - ссылка на компонент света солнца
   - `dayFog`, `nightFog` - цвета тумана для дня и ночи
-  - `dayIntensity`, `nightIntensity` - интенсивность освещения для дня и ночи
+  - `dayIntensity`, `nightIntensity` - интенсивность освещения
 
-- **Методы управления:**
-  - `UpdateSunPosition(float progress, bool isNight)` - обновление позиции солнца на основе прогресса фазы (0.0-1.0) и флага фазы
-  - `SetVisualsForDay()` - установка визуальных параметров для дня
-  - `SetVisualsForNight()` - установка визуальных параметров для ночи
+**Методы управления:**
+- `UpdateSunPosition(float progress, bool isNight)` - обновление позиции солнца на основе прогресса фазы (0.0-1.0)
+- `SetVisualsForDay()` / `SetVisualsForNight()` - установка визуальных параметров
 
 **Интеграция:**
 - Используется `GameManager` для обновления позиции солнца каждый кадр
 - Связан с системой освещения и туманом Unity
 
 ---
-### 13. **MapUIHandler.cs** - Обработчик UI для режима карты
+
+### 14. **MapUIHandler.cs** - Обработчик UI для режима карты
 
 **Назначение:** Управление интерфейсом карты с кнопками WASD для перемещения камеры.
 
 **Ключевые компоненты:**
+
 - **Зависимости:**
-  - `mapUIDoc` - ссылка на документ UI Toolkit для интерфейса карты
-  - `mapCameraControl` - ссылка на контроллер камеры карты для передачи ввода
+  - `mapUIDoc` - ссылка на документ UI Toolkit
+  - `mapCameraControl` - ссылка на контроллер камеры карты
 
 - **Настройки (UI Customization):**
-  - `controlsScale` - масштаб кнопок WASD в UI
-  - `bottomOffset`, `rightOffset` - положение контейнера кнопок на экране
+  - `controlsScale` - масштаб кнопок WASD
+  - `bottomOffset`, `rightOffset` - положение контейнера кнопок
 
-- **Методы управления:**
-  - `ShowUI()` - отображение интерфейса карты
-  - `HideUI()` - скрытие интерфейса карты и сброс ввода
-  - `BindUI(VisualElement root)` - привязка элементов и кэширование кнопок
-  - `UpdateButtonHighlight(Button, bool)` - принудительная подсветка кнопок через класс `.control-btn--active`
+**Методы управления:**
+- `ShowUI()` / `HideUI()` - отображение/скрытие интерфейса
+- `BindUI(VisualElement root)` - привязка элементов и кэширование кнопок
+- `UpdateButtonHighlight(Button, bool)` - подсветка кнопок через класс `.control-btn--active`
 
 **Интеграция:**
 - Использует UI Toolkit для построения интерфейса
@@ -325,25 +528,25 @@
 - Связан с `MapCameraControl` для передачи ввода от кнопок
 
 ---
-### 14. **MapCameraControl.cs** - Контроллер камеры для режима карты
+
+### 15. **MapCameraControl.cs** - Контроллер камеры для режима карты
 
 **Назначение:** Управление ортографической камерой в режиме карты с возможностью перемещения и масштабирования.
 
 **Ключевые компоненты:**
+
 - **Параметры управления:**
   - `panSpeed` - скорость перемещения камеры
   - `zoomSpeed` - скорость масштабирования
   - `minZoom`, `maxZoom` - минимальное и максимальное значения масштаба
 
 - **Визуал (Map Visuals):**
-  - `OnPreCull()` - временно отключает тени (`shadowDistance = 0`), туман и выставляет `ambientLight = mapAmbientColor` для этой камеры
+  - `OnPreCull()` - временно отключает тени, туман и выставляет `ambientLight`
   - `OnPostRender()` - восстанавливает настройки графики сцены
-  - `sunLight` - ссылка на Directional Light для изменения интенсивности
-  - `mapSunIntensity` - яркость солнца специально для режима карты
 
-- **Методы управления:**
-  - `SetExternalInput(Vector2 input)` - установка ввода от UI кнопок (WASD)
-  - `Start()` - инициализация начальной позиции камеры
+**Методы управления:**
+- `SetExternalInput(Vector2 input)` - установка ввода от UI кнопок (WASD)
+- `Start()` - инициализация начальной позиции камеры
 
 **Интеграция:**
 - Поддерживает управление мышью (перетаскивание), клавиатурой (WASD/стрелки) и UI кнопками
@@ -351,72 +554,70 @@
 - Ограничивает перемещение камеры в заданных границах
 
 ---
+
 ## 🔄 Потоки данных и взаимодействия
 
 ### **Цикл день/ночь:**
 ```
 GameManager.Update()
   → HandleTimeCycle()
-    → Расчет прогресса фазы на основе таймера и длительности фазы
-    → Вызов sunController.UpdateSunPosition(progress, isNight)
-    → Проверка окончания фазы и вызов SkipCurrentPhase() при необходимости
+    → Расчет прогресса фазы
+    → sunController.UpdateSunPosition(progress, isNight)
+    → Проверка окончания фазы → SkipCurrentPhase()
   → StartDay() / StartNight()
-    → Установка isNight = false/true
-    → Сброс таймера фазы
-    → Вызов sunController.SetVisualsForDay/Night()
+    → isNight = false/true
     → VisitorSpawner.StartNewDay() / StopSpawning()
     → EnemySpawner.ClearEnemies() / SpawnEnemies()
 ```
 
-### **Управление солнцем:**
-```
-GameManager.HandleTimeCycle()
-  → Расчет прогресса фазы (0.0-1.0)
-  → Вызов sunController.UpdateSunPosition(progress, isNight)
-    → Рассчет угла X в зависимости от фазы (день: 0-180°, ночь: 180-360°)
-    → Применение вращения с учетом sunDirectionY и sunTrajectoryTilt
-```
-
-### **Взаимодействие с кроватью (E):**
-```
-PlayerInteract.HandleInteraction()
-  → Обнаружение BedTrigger
-  → GameManager.SkipCurrentPhase()
-    → Переключение фазы (ночь→день или день→ночь)
-    → Телепортация солнца в соответствующую позицию
-    → Вызов StartDay() или StartNight()
-    → Установка защиты от "дребезга" фазы
-```
-
-### **Процесс ловли врага:**
+### **Процесс ловли врага (модульный):**
 ```
 EnemyAi (патрулирование/преследование)
-  → Заход в триггер TrapBox
-  → TrapBox.OnTriggerEnter()
-    → EnemyAi.enabled = false
-    → Притягивание к captureCenterPoint
-    → TrapBox.isUsed = true
+  → Вход в сферу обнаружения Trap2
+  → Trap2.CheckOverlap() находит врага
+  → Trap2.TryCatchEnemy()
+    → enemyAI.IsCaught = true
+    → enemyAI.enabled = false
+    → DOMove к capturePoint
+    → physicalCollider.enabled = true
 ```
 
-### **Процесс размещения существа:**
+### **Поднятие ловушки игроком (через интерфейс):**
 ```
-PlayerInteract (взаимодействие E на ParkPlatform)
-  → ParkPlatform.TryPlaceMonster()
-    → GameManager.TryRemoveCreature()
-    → monsterModel.SetActive(true)
-    → GameManager.activePlatforms.Add()
-```
-
-### **Система строительства:**
-```
-Input 1/2 → PlayerInteract.ChangeItem()
-  → Создание ghost через UpdateGhostLogic()
-  → Raycast на groundLayer
-  → ЛКМ → TryPlaceItem()
-    → GameManager.TryUseTrap/Camera()
-    → Instantiate префаба
+PlayerInteract.HandleInteraction()
+  → Raycast на interactLayer
+  → IInteractableTrap trap = GetComponent<IInteractableTrap>()
+  → if (trap != null && trap.CanBePickedUp)
+    → PlayerCarrier.ProcessHold()
+      → PlayerCarrier.PerformPickup()
+        → if (trap.HasCatch()) → PickUpPhysical(trap)
+          → trap.OnPickUp(holdPoint)
 ```
 
+### **Сброс ловушки (через интерфейс):**
+```
+Input E → PlayerCarrier.TryDrop()
+  → Raycast вниз от holdPoint
+  → DropPhysical()
+    → trapTransform.SetParent(null)
+    → DOMove с Ease.OutBounce
+    → trap.OnDrop() (восстанавливает isActive)
+```
+
+### **Система строительства (с [Bind]):**
+```
+Input 1/2 → VAR_SelectedSlot.Value = index
+  → [Bind] вызывает OnVAR_SelectedSlotChanged()
+    → ghostTimer = ghostTimeout
+    → DestroyGhost()
+    → VAR_IsBuildFuseActive.Value = true
+    → VAR_BuildFuseProgress.Value = 1f
+  → UpdateGhostLogic() создает/обновляет призрака
+  → ЛКМ (удержание) → HandlePlacementHold()
+    → placeHoldTimer += Time.deltaTime
+    → VAR_PickupProgress.Value = progress
+    → placeHoldTimer >= placeHoldTimeRequired → TryPlaceItem()
+```
 
 ---
 
@@ -425,14 +626,17 @@ Input 1/2 → PlayerInteract.ChangeItem()
 ### **Singleton-паттерн:**
 - `GameManager.instance`
 - `CctvManager.instance`
+- `ParkManager.instance`
 
 ### **Использование тегов:**
 - `"Enemy"` - враги
 - `"Player"` - игрок
+- `"ParkTrigger"` - триггер доставки в парк
 
 ### **Layer-маски:**
 - `interactLayer` - объекты взаимодействия (ловушки, камеры)
 - `groundLayer` - поверхность для строительства
+- `detectionLayer` - слои для обнаружения ловушкой
 
 ### **Индексы предметов:**
 - `0` - ловушка
@@ -440,88 +644,79 @@ Input 1/2 → PlayerInteract.ChangeItem()
 - `-1` - ничего не выбрано
 
 ### **Зависимости:**
-- `DOTween` - для анимаций (PlayerCarrier, TrapBox)
+- `DOTween` - для анимаций (PlayerCarrier, Trap2)
 - `UnityEngine.AI` - для навигации врагов
-- `UI Toolkit` - для UI (PlayerUIHandler, MonitorUIHandler)
-
----
-
-## 📝 Быстрая справка по классам
-
-| Класс | Назначение | Ключевые методы |
-|-------|-----------|----------------|
-| `GameManager` | Глобальное состояние, экономика | `BuyTrap()`, `StartDay()`, `StartNight()`, `AddMoney()` |
-| `EnemyAi` | Поведение врагов | `MoveToTarget()`, `UpdatePatrol()`, `StunByTrap()` |
-| `PlayerInteract` | Действия игрока | `UpdateGhostLogic()`, `TryPlaceItem()`, `HandleInteraction()` |
-| `PlayerCarrier` | Переноска объектов | `ProcessHold()`, `PerformPickup()`, `TryDrop()` |
-| `TrapBox` | Ловушка | `OnTriggerEnter()`, `HasCatch()` |
-| `PlayerUIHandler` | UI инвентаря | `Show()`, `Hide()`, `SelectSlot()`, `SetFuseProgress()` |
-| `MapUIHandler` | UI карты (WASD) | `ShowUI()`, `HideUI()`, `ApplyStyles()` |
-| `MapCameraControl` | Камера карты | `SetExternalInput()`, `OnPreCull()` |
-| `ParkPlatform` | Платформа размещения | `TryPlaceMonster()` |
-| `CameraSensor` | Детектор врагов | `OnTriggerEnter()` |
+- `UI Toolkit` - для UI (PlayerUIHandler, MonitorUIHandler, MapUIHandler)
 
 ---
 
 ## ⚠️ Важные замечания для AI
 
+### 1. **Модульность через интерфейсы:**
+   - Всегда используйте `IInteractableTrap` вместо прямого обращения к `Trap2`
+   - Это позволяет добавлять новые типы ловушек без изменения кода игрока
 
-1. **При работе с UI:**
-   - `PlayerUIHandler` использует UI Toolkit (не старый UI)
-   - Фитиль анимируется по периметру (Top→Right→Bottom→Left)
+### 2. **GameEvent System (приоритет):**
+   - Для связи между системами используйте `[Bind]` атрибуты
+   - Наследуйте скрипты от `SignalBinder` для работы авто-подписки
+   - Всегда вызывайте `base.OnEnable()` при переопределении `OnEnable()`
 
-2. **При изменении экономики:**
-   - Все покупки/использования проходят через `GameManager`
-   - Учитывайте связь между `activePlatforms` и доходом от посетителей
+### 3. **UI Toolkit жизненный цикл:**
+   - При выключении `UIDocument.enabled = false` элементы теряют актуальность
+   - Всегда используйте `Show()` / `BindUI()` после повторного включения
 
-3. **При работе с камерами:**
-   - Камеры автоматически регистрируются через `RegisterCamera()`
-   - Все камеры отключаются при выходе из режима
-
-4. **Особенности строительства:**
+### 4. **Особенности строительства:**
    - Режим строительства автоматически отключается при переноске
    - Таймер автоотключения сбрасывается при взгляде на землю
+   - ЛКМ с удержанием требуется для установки (`placeHoldTimeRequired`)
 
-5. **Система спавна монстров:**
-   - Спавн монстров происходит как при взаимодействии с кроватью (E), так и при естественной смене фазы
-   - В `StartNight()` вызывается `enemySpawner.SpawnEnemies()` для спавна монстров
-   - В `StartDay()` вызывается `enemySpawner.ClearEnemies()` для удаления монстров
-   - Фаза дня/ночи теперь управляется через таймер в GameManager, а не через ротацию солнца
-   - Солнце теперь вращается плавно от 0° до 360° в зависимости от прогресса фазы
+### 5. **Система спавна монстров:**
+   - Спавн происходит при `StartNight()` и при смене фазы через кровать
+   - Пойманные враги сохраняют свои точки спавна
 
-6. **Особенности рендеринга карты:**
-   - `MapCameraControl` использует `OnPreCull`/`OnPostRender` для создания "светлой" карты без теней.
-   - Это меняет глобальные настройки `QualitySettings` и `RenderSettings` только на один кадр.
+### 6. **Рендеринг карты:**
+   - `MapCameraControl.OnPreCull()` меняет глобальные настройки на один кадр
+   - Это создает эффект "светлой карты" без теней
 
-7. **Жизненный цикл UI Toolkit:**
-   - При выключении `UIDocument.enabled = false` элементы могут терять актуальность.
-   - Всегда используйте методы `Show()` (или `BindUI()`) для обновления ссылок на `VisualElement` после повторного включения.
-
-
----
-
-8. **Система поимки и доставки:**
-   - Пойманные враги имеют флаг `IsCaught`.
-   - Ловушка с монстром при касании `ParkTrigger` автоматически отправляет его на платформу через `ParkManager`.
+### 7. **Флаг IsCaught:**
+   - Враги с `IsCaught = true` не могут быть пойманы другой ловушкой
+   - Проверяйте этот флаг перед захватом
 
 ---
 
 ## 🔍 Поиск по функциональности
 
-**Если нужно найти:**
-- **Управление день/ночь** → `GameManager.StartDay()`, `StartNight()`
-- **Спавн врагов** → `EnemySpawner.SpawnEnemies()`
-- **Доставка в парк** → `ParkManager.TryDeliverMonster()`
-- **Логика патрулирования** → `EnemyAi.UpdatePatrol()`
-- **Установка предметов** → `PlayerInteract.TryPlaceItem()`
-- **Переноска объектов** → `PlayerCarrier.PerformPickup()`
-- **Захват врага** → `Trap.OnTriggerEnter()`
-- **UI инвентаря** → `PlayerUIHandler`
-- **Режим монитора** → `CctvManager.EnterMonitorMode()`
-- **Размещение на платформе** → `ParkPlatform.TryPlaceMonster()`
+| Задача | Скрипт/Метод |
+|--------|-------------|
+| Управление день/ночь | `GameManager.StartDay()`, `StartNight()` |
+| Спавн врагов | `EnemySpawner.SpawnEnemies()` |
+| Доставка в парк | `ParkManager.TryDeliverMonster()` |
+| Логика патрулирования | `EnemyAi.UpdatePatrol()` |
+| Установка предметов | `PlayerInteract.TryPlaceItem()` |
+| Переноска объектов | `PlayerCarrier.PerformPickup()`, `trap.OnPickUp()` |
+| Захват врага | `Trap2.TryCatchEnemy()` |
+| UI инвентаря | `PlayerUIHandler` |
+| Режим монитора | `CctvManager.EnterMonitorMode()` |
+| Размещение на платформе | `ParkPlatform.TryPlaceMonster()` |
+| Авто-реакция на SO | `[SerializeField, Bind]` + `On{ИмяПоля}Changed()` |
+| Модульная ловушка | `IInteractableTrap` интерфейс |
 
 ---
 
-**Версия документа:** 1.4
-**Последнее обновление:** 13.02.2026
-**Автор:** AI Assistant для проекта ForestMonsters
+## 📖 Глоссарий терминов
+
+| Термин | Значение |
+|--------|----------|
+| **Ghost** | Полупрозрачный префаб для предпросмотра места установки |
+| **Fuse** | Визуальный индикатор таймера автоотключения режима строительства |
+| **SignalBinder** | Базовый класс для автоматической подписки на события |
+| **SO Variable** | ScriptableObject-переменная для обмена данными между системами |
+| **IInteractableTrap** | Интерфейс для всех интерактивных ловушек |
+| **OverlapSphere** | Метод обнаружения врагов в радиусе ловушки |
+
+---
+
+**Версия документа:** 2.0 (Актуально)  
+**Последнее обновление:** 25.02.2026  
+**Автор:** AI Assistant для проекта ForestMonsters  
+**Статус:** ✅ Поддерживается и обновляется

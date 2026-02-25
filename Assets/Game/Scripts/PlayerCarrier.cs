@@ -18,7 +18,7 @@ public class PlayerCarrier : SignalBinder
     [SerializeField] BoolVariable VAR_IsBuildFuseActive;
 
     // Внутренние переменные
-    private Trap2 carriedTrap; // Объект, который мы сейчас несем
+    private IInteractableTrap carriedTrap; // Объект, который мы сейчас несем
     private float currentHoldTimer = 0f;
 
     protected override void OnEnable()
@@ -85,9 +85,9 @@ public class PlayerCarrier : SignalBinder
     // Логика: Что делать с объектом (Взять в руки или В инвентарь)
     void PerformPickup(GameObject obj)
     {
-        // 1. Проверяем, это ЛОВУШКА?
-        Trap2 trap = obj.GetComponentInParent<Trap2>();
-        if (trap == null) trap = obj.GetComponentInChildren<Trap2>();
+        // 1. Проверяем, это ЛОВУШКА? (через интерфейс для модульности)
+        IInteractableTrap trap = obj.GetComponentInParent<IInteractableTrap>();
+        if (trap == null) trap = obj.GetComponentInChildren<IInteractableTrap>();
 
         if (trap != null)
         {
@@ -95,7 +95,7 @@ public class PlayerCarrier : SignalBinder
             else
             {
                 if (VAR_TrapsCount != null) VAR_TrapsCount.ApplyChange(1);
-                Destroy(trap.gameObject);
+                Destroy(obj);
             }
             return;
         }
@@ -114,12 +114,12 @@ public class PlayerCarrier : SignalBinder
 
     // --- ФИЗИЧЕСКАЯ ПЕРЕНОСКА (Только для ловушек с добычей) ---
 
-    void PickUpPhysical(Trap2 trap)
+    void PickUpPhysical(IInteractableTrap trap)
     {
         carriedTrap = trap;
         UpdateCarryingFlag();
 
-        // Используем метод из Trap2 для анимации и отключения триггеров
+        // Используем метод из интерфейса для анимации и отключения триггеров
         trap.OnPickUp(holdPoint);
 
         Debug.Log("Клетка с монстром взята!");
@@ -142,11 +142,14 @@ public class PlayerCarrier : SignalBinder
     {
         Vector3 finalPos = floorPos - new Vector3(0, dropEmbedDepth, 0);
 
-        Trap2 trapToDrop = carriedTrap;
-        trapToDrop.transform.SetParent(null);
+        IInteractableTrap trapToDrop = carriedTrap;
+        MonoBehaviour trapMono = trapToDrop as MonoBehaviour;
+        Transform trapTransform = trapMono.transform;
+        
+        trapTransform.SetParent(null);
 
         // Анимация падения
-        trapToDrop.transform.DOMove(finalPos, 0.5f).SetEase(Ease.OutBounce).OnComplete(() =>
+        trapTransform.DOMove(finalPos, 0.5f).SetEase(Ease.OutBounce).OnComplete(() =>
         {
             if (trapToDrop != null)
             {
@@ -156,7 +159,7 @@ public class PlayerCarrier : SignalBinder
 
         // Поворот по Y игрока
         Quaternion targetRot = Quaternion.Euler(0, transform.eulerAngles.y, 0);
-        trapToDrop.transform.DORotateQuaternion(targetRot, 0.5f);
+        trapTransform.DORotateQuaternion(targetRot, 0.5f);
 
         carriedTrap = null; // Руки свободны
         UpdateCarryingFlag();

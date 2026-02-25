@@ -3,7 +3,7 @@ using UnityEngine.AI;
 using DG.Tweening;
 
 [RequireComponent(typeof(Rigidbody))]
-public class Trap2 : MonoBehaviour
+public class Trap2 : MonoBehaviour, IInteractableTrap
 {
     [Header("Коллайдеры (Перетащить из иерархии)")]
     [Tooltip("Обычный физический коллайдер КЛЕТКИ. Должен быть БЕЗ галочки isTrigger.")]
@@ -31,6 +31,9 @@ public class Trap2 : MonoBehaviour
     private GameObject caughtEnemy;
     private Rigidbody rb;
     private float nextCheckTime;
+
+    // IInteractableTrap implementation
+    public bool CanBePickedUp => isActive && !isDelivered;
 
     void Awake()
     {
@@ -141,7 +144,7 @@ public class Trap2 : MonoBehaviour
     // Методы для скрипта игрока
     public bool HasCatch() => isUsed && caughtEnemy != null;
 
-    public void OnPickUp(Transform hand)
+    void IInteractableTrap.OnPickUp(Transform hand)
     {
         isActive = false; // Отключаем проверку сферы при переносе
         transform.SetParent(hand);
@@ -149,7 +152,7 @@ public class Trap2 : MonoBehaviour
         transform.DOLocalRotate(Vector3.zero, 0.3f);
     }
 
-    public void OnDrop()
+    void IInteractableTrap.OnDrop()
     {
         transform.SetParent(null);
         isActive = true; // Включаем проверку сферы обратно
