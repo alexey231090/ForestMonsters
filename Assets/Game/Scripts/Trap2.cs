@@ -52,6 +52,8 @@ public class Trap2 : MonoBehaviour, IInteractableTrap
         if (!isActive || isDelivered) return;
 
         // Оптимизированная проверка по таймеру
+        if (settings == null) return;
+
         if (Time.time >= nextCheckTime)
         {
             CheckOverlap();
@@ -61,6 +63,8 @@ public class Trap2 : MonoBehaviour, IInteractableTrap
 
     private void CheckOverlap()
     {
+        if (settings == null) return;
+
         Vector3 sphereCenter = transform.TransformPoint(settings.sphereOffset);
         // Находим все коллайдеры в радиусе сферы на заданных слоях
         Collider[] hitColliders = Physics.OverlapSphere(sphereCenter, settings.detectionRadius, settings.detectionLayer);
@@ -104,7 +108,7 @@ public class Trap2 : MonoBehaviour, IInteractableTrap
         if (enemyCollider.TryGetComponent<Rigidbody>(out var enemyRb)) enemyRb.isKinematic = true;
 
         // Анимация затягивания в центр
-        if (capturePoint != null)
+        if (capturePoint != null && settings != null)
         {
             enemyCollider.transform.DOMove(capturePoint.position, settings.attractionSpeed);
             enemyCollider.transform.DORotateQuaternion(capturePoint.rotation, settings.attractionSpeed)
