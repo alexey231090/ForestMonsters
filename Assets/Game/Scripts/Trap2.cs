@@ -55,7 +55,7 @@ public class Trap2 : MonoBehaviour, IInteractableTrap
         if (Time.time >= nextCheckTime)
         {
             CheckOverlap();
-            nextCheckTime = Time.time + checkInterval;
+            nextCheckTime = Time.time + settings.checkInterval;
         }
     }
 
