@@ -11,7 +11,7 @@ GameObject:
   - component: {fileID: 1282114683915406887}
   - component: {fileID: 6754181473834534373}
   - component: {fileID: 3352457749144274766}
-  m_Layer: 0
+  m_Layer: 11
   m_Name: Tree Leaf Cluster_LOD2
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -61,6 +61,8 @@ MeshRenderer:
   m_RayTracingAccelStructBuildFlagsOverride: 0
   m_RayTracingAccelStructBuildFlags: 1
   m_SmallMeshCulling: 1
+  m_ForceMeshLod: -1
+  m_MeshLodSelectionBias: 0
   m_RenderingLayerMask: 1
   m_RendererPriority: 0
   m_Materials:
@@ -82,9 +84,11 @@ MeshRenderer:
   m_AutoUVMaxDistance: 0.5
   m_AutoUVMaxAngle: 89
   m_LightmapParameters: {fileID: 0}
+  m_GlobalIlluminationMeshLod: 0
   m_SortingLayerID: 0
   m_SortingLayer: 0
   m_SortingOrder: 0
+  m_MaskInteraction: 0
   m_AdditionalVertexStreams: {fileID: 0}
 --- !u!1 &1015978918672635642
 GameObject:
@@ -96,7 +100,7 @@ GameObject:
   m_Component:
   - component: {fileID: 1065871000081440999}
   - component: {fileID: 4988177914328300665}
-  m_Layer: 0
+  m_Layer: 11
   m_Name: colider
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -136,7 +140,7 @@ GameObject:
   m_Component:
   - component: {fileID: 6087336866484580642}
   - component: {fileID: 205534789448286749}
-  m_Layer: 0
+  m_Layer: 11
   m_Name: Tree Trunnk
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -200,7 +204,7 @@ GameObject:
   - component: {fileID: 6699974822594816562}
   - component: {fileID: 2870104143297110454}
   - component: {fileID: 962187953309305339}
-  m_Layer: 0
+  m_Layer: 11
   m_Name: Tree Trunk_LOD0
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -250,6 +254,8 @@ MeshRenderer:
   m_RayTracingAccelStructBuildFlagsOverride: 0
   m_RayTracingAccelStructBuildFlags: 1
   m_SmallMeshCulling: 1
+  m_ForceMeshLod: -1
+  m_MeshLodSelectionBias: 0
   m_RenderingLayerMask: 1
   m_RendererPriority: 0
   m_Materials:
@@ -271,9 +277,11 @@ MeshRenderer:
   m_AutoUVMaxDistance: 0.5
   m_AutoUVMaxAngle: 89
   m_LightmapParameters: {fileID: 0}
+  m_GlobalIlluminationMeshLod: 0
   m_SortingLayerID: 0
   m_SortingLayer: 0
   m_SortingOrder: 0
+  m_MaskInteraction: 0
   m_AdditionalVertexStreams: {fileID: 0}
 --- !u!1 &8166259606089146289
 GameObject:
@@ -285,7 +293,7 @@ GameObject:
   m_Component:
   - component: {fileID: 3657503087989385127}
   - component: {fileID: 8505215357713513513}
-  m_Layer: 0
+  m_Layer: 11
   m_Name: Tree Leaf Cluster
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -345,7 +353,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 5441955986946876011}
-  m_Layer: 0
+  m_Layer: 11
   m_Name: treeBig
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -362,7 +370,7 @@ Transform:
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: -0, w: -1}
   m_LocalPosition: {x: 534.71967, y: 0.19000006, z: 186.18939}
-  m_LocalScale: {x: 4.0942273, y: 9.516947, z: 4.0942273}
+  m_LocalScale: {x: 2.014193, y: 3.0520196, z: 2.014193}
   m_ConstrainProportionsScale: 0
   m_Children:
   - {fileID: 3657503087989385127}
@@ -380,7 +388,7 @@ GameObject:
   - component: {fileID: 4766081038908530357}
   - component: {fileID: 6067766969667243849}
   - component: {fileID: 1427723772056411430}
-  m_Layer: 0
+  m_Layer: 11
   m_Name: colider
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -444,7 +452,7 @@ GameObject:
   - component: {fileID: 4255136470174350235}
   - component: {fileID: 8372051572835965023}
   - component: {fileID: 4125236340988607943}
-  m_Layer: 0
+  m_Layer: 11
   m_Name: Tree Trunk_LOD2
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -494,6 +502,8 @@ MeshRenderer:
   m_RayTracingAccelStructBuildFlagsOverride: 0
   m_RayTracingAccelStructBuildFlags: 1
   m_SmallMeshCulling: 1
+  m_ForceMeshLod: -1
+  m_MeshLodSelectionBias: 0
   m_RenderingLayerMask: 1
   m_RendererPriority: 0
   m_Materials:
@@ -515,9 +525,11 @@ MeshRenderer:
   m_AutoUVMaxDistance: 0.5
   m_AutoUVMaxAngle: 89
   m_LightmapParameters: {fileID: 0}
+  m_GlobalIlluminationMeshLod: 0
   m_SortingLayerID: 0
   m_SortingLayer: 0
   m_SortingOrder: 0
+  m_MaskInteraction: 0
   m_AdditionalVertexStreams: {fileID: 0}
 --- !u!1 &9095976354249817197
 GameObject:
@@ -530,7 +542,7 @@ GameObject:
   - component: {fileID: 7380070584127569087}
   - component: {fileID: 8437408118512083424}
   - component: {fileID: 4361513462138185737}
-  m_Layer: 0
+  m_Layer: 11
   m_Name: Tree Trunk_LOD1
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -580,6 +592,8 @@ MeshRenderer:
   m_RayTracingAccelStructBuildFlagsOverride: 0
   m_RayTracingAccelStructBuildFlags: 1
   m_SmallMeshCulling: 1
+  m_ForceMeshLod: -1
+  m_MeshLodSelectionBias: 0
   m_RenderingLayerMask: 1
   m_RendererPriority: 0
   m_Materials:
@@ -601,7 +615,9 @@ MeshRenderer:
   m_AutoUVMaxDistance: 0.5
   m_AutoUVMaxAngle: 89
   m_LightmapParameters: {fileID: 0}
+  m_GlobalIlluminationMeshLod: 0
   m_SortingLayerID: 0
   m_SortingLayer: 0
   m_SortingOrder: 0
+  m_MaskInteraction: 0
   m_AdditionalVertexStreams: {fileID: 0}

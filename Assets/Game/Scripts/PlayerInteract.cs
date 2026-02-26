@@ -13,6 +13,7 @@ public class PlayerInteract : SignalBinder
     
     public LayerMask interactLayer; // Слой предметов (ловушки, мониторы)
     public LayerMask groundLayer;   // Слой для СТРОИТЕЛЬСТВА (земля/пол)
+    public LayerMask treeLayer;     // Слой для установки камер (деревья)
 
     [Header("Prefabs (Real)")]
     public GameObject trapPrefab;
@@ -172,10 +173,11 @@ public class PlayerInteract : SignalBinder
             return;
         }
 
+        // 2. Ищем землю/дерево в зависимости от слота
+        LayerMask targetLayer = (selectedIndex == 0) ? groundLayer : treeLayer;
         RaycastHit hit;
-        bool isLooking = Physics.Raycast(origin.position, origin.forward, out hit, buildDistance, groundLayer);
+        bool isLooking = Physics.Raycast(origin.position, origin.forward, out hit, buildDistance, targetLayer);
 
-        // 2. Ищем землю
         if (isLooking)
         {
             // --- МЫ СМОТРИМ НА ЗЕМЛЮ ---
@@ -259,13 +261,15 @@ public class PlayerInteract : SignalBinder
         if (currentGhost == null) return;
 
         RaycastHit hit;
-        if (Physics.Raycast(origin.position, origin.forward, out hit, buildDistance, groundLayer))
+        int selectedIndex = VAR_SelectedSlot != null ? VAR_SelectedSlot.Value : -1;
+        LayerMask targetLayer = (selectedIndex == 0) ? groundLayer : treeLayer;
+
+        if (Physics.Raycast(origin.position, origin.forward, out hit, buildDistance, targetLayer))
         {
             bool canPlace = false;
             GameObject objectToSpawn = null;
             float currentRealDepth = 0f;
 
-            int selectedIndex = VAR_SelectedSlot != null ? VAR_SelectedSlot.Value : -1;
 
             if (selectedIndex == 0)
             {
@@ -394,11 +398,12 @@ public class PlayerInteract : SignalBinder
             return;
         }
 
-        // Проверяем что мы смотрим на землю
+        // Проверяем что мы смотрим на нужный слой (земля или дерево)
+        LayerMask targetLayer = (selectedIndex == 0) ? groundLayer : treeLayer;
         RaycastHit hit;
-        bool isLookingAtGround = Physics.Raycast(origin.position, origin.forward, out hit, buildDistance, groundLayer);
+        bool isLookingAtTarget = Physics.Raycast(origin.position, origin.forward, out hit, buildDistance, targetLayer);
 
-        if (isLookingAtGround && Input.GetMouseButton(0)) // ЛКМ зажата
+        if (isLookingAtTarget && Input.GetMouseButton(0)) // ЛКМ зажата
         {
             // Увеличиваем таймер
             placeHoldTimer += Time.deltaTime;

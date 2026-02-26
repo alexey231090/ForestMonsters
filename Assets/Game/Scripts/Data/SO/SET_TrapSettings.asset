@@ -12,14 +12,14 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 7b8c5d3f4b2e1c04f9d8e7a6b5c4d3e3, type: 3}
   m_Name: SET_TrapSettings
   m_EditorClassIdentifier: 
-  detectionRadius: 1
-  sphereOffset: {x: 0, y: 0.5, z: 0}
+  detectionRadius: 3.12
+  sphereOffset: {x: 0, y: -0.52, z: 0}
   detectionLayer:
     serializedVersion: 2
-    m_Bits: 0
-  checkInterval: 0.1
+    m_Bits: 1536
+  checkInterval: 0.3
   attractionSpeed: 0.5
-  pickUpDuration: 0.3
-  dropDuration: 0.5
+  pickUpDuration: 0.607
+  dropDuration: 0.476
   gizmoColorSearching: {r: 0, g: 1, b: 0, a: 0.3}
   gizmoColorCaught: {r: 1, g: 0, b: 0, a: 0.3}

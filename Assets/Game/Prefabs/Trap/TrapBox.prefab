@@ -5044,16 +5044,10 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Trap2
   physicalCollider: {fileID: 5634409083895889272}
-  detectionRadius: 3.46
-  sphereOffset: {x: 0, y: -0.25, z: 0}
-  detectionLayer:
-    serializedVersion: 2
-    m_Bits: 1536
-  checkInterval: 0.3
   capturePoint: {fileID: 4765035152909711748}
   animatorCell: {fileID: 2952875994961942222}
   captureParticles: {fileID: 790054390232598105}
-  attractionSpeed: 0.5
+  settings: {fileID: 11400000, guid: 9c8d5e3f4b2e1c04f9d8e7a6b5c4d3e4, type: 2}
   VAR_TrapsCount: {fileID: 11400000, guid: dd924ae082b055c45bdaccf9f60d310e, type: 2}
 --- !u!33 &2898688127004692324
 MeshFilter:

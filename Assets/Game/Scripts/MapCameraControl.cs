@@ -60,7 +60,7 @@ public class MapCameraControl : MonoBehaviour
         h += Input.GetAxis("Horizontal");
         v += Input.GetAxis("Vertical");
 
-        // В) UI Кнопки (из MapUIHandler)
+        // В) UI Кнопки (из MapUIHandler).
         h += externalInput.x;
         v += externalInput.y;
 

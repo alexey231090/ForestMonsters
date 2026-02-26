@@ -8,7 +8,7 @@ public class GameManager : SignalBinder
 
 
 
-    [Header("Subscribed Events")]
+    [Header("Subscribed Events")
     [SerializeField] private GameEvent GET_onDayStarted;
     [SerializeField] private GameEvent GET_onNightStarted;
 
