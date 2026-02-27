@@ -19,4 +19,12 @@ public class SecurityCameraSetup : MonoBehaviour
             if (myCam == null) Debug.LogWarning(" SecurityCamera  Camera!");
         }
     }
+    void OnDestroy()
+    {
+        Camera myCam = GetComponentInChildren<Camera>();
+        if (myCam != null && CctvManager.instance != null)
+        {
+            CctvManager.instance.UnregisterCamera(myCam);
+        }
+    }
 }

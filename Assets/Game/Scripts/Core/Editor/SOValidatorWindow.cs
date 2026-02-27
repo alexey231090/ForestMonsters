@@ -1,4 +1,4 @@
-using UnityEditor;
+﻿using UnityEditor;
 using UnityEngine;
 using System;
 using System.Collections.Generic;
@@ -7,9 +7,9 @@ using System.Linq;
 
 public class SOValidatorWindow : EditorWindow
 {
-    private enum Tab { Validator, SettingsExplorer }
+    private enum Tab { Validator, SettingsExplorer, FolderColours }
     private Tab _currentTab = Tab.Validator;
-    private string[] _tabNames = { "🔍 Валидатор", "⚙️ Настройки Проекта" };
+    private string[] _tabNames = { "🔍 Валидатор", "⚙️ Настройки Проекта", "🎨 Папки" };
 
     // --- Валидатор Данные ---
     private class ValidationError
@@ -25,6 +25,7 @@ public class SOValidatorWindow : EditorWindow
     // --- Обозреватель Настроек Данные ---
     private List<ScriptableObject> _foundSettings = new List<ScriptableObject>();
     private Vector2 _scrollPosSettings;
+    private Vector2 _folderScrollPos;
     private string _settingsSearch = "";
     
     // Фильтры
@@ -92,6 +93,105 @@ public class SOValidatorWindow : EditorWindow
             case Tab.SettingsExplorer:
                 DrawSettingsExplorer();
                 break;
+            case Tab.FolderColours:
+                DrawFolderColorsTab();
+                break;
+        }
+    }
+
+    // ================== Вкладка: ОКРАСКА ПАПОК ==================
+
+    private void DrawFolderColorsTab()
+    {
+        var entries = FolderColorizer.GetEntries();
+
+        EditorGUILayout.HelpBox("🎨 Щёлкните '+ Добавить папку', выберите цвет и нажмите '✅ Применить'.", MessageType.None);
+        EditorGUILayout.Space(4);
+
+        // Кнопка добавить папку
+        EditorGUILayout.BeginHorizontal();
+        if (GUILayout.Button("+ Добавить папку", GUILayout.Height(30)))
+        {
+            string selected = EditorUtility.OpenFolderPanel("Выберите папку", Application.dataPath, "");
+            if (!string.IsNullOrEmpty(selected))
+            {
+                // Конвертируем абсолютный путь в относительный (Assets/...)
+                if (selected.StartsWith(Application.dataPath))
+                    selected = "Assets" + selected.Substring(Application.dataPath.Length);
+
+                FolderColorizer.AddFolder(selected);
+            }
+        }
+        if (GUILayout.Button("✅ Применить", GUILayout.Height(30), GUILayout.Width(110)))
+        {
+            FolderColorizer.SaveData();
+        }
+        EditorGUILayout.EndHorizontal();
+
+        EditorGUILayout.Space(8);
+
+        if (entries.Count == 0)
+        {
+            EditorGUILayout.HelpBox("Папок пока нет. Добавьте первую!", MessageType.None);
+            return;
+        }
+
+        _folderScrollPos = EditorGUILayout.BeginScrollView(_folderScrollPos);
+
+        int toRemove = -1;
+        for (int i = 0; i < entries.Count; i++)
+        {
+            var entry = entries[i];
+            string folderPath = FolderColorizer.GuidToPath(entry.guid);
+            Color entryColor = FolderColorizer.GetColor(entry);
+
+            // Карточка папки
+            EditorGUILayout.BeginVertical(EditorStyles.helpBox);
+
+            // Цветная полоска сверху
+            Rect headerRect = GUILayoutUtility.GetRect(0, 5, GUILayout.ExpandWidth(true));
+            Color prevColor = GUI.color;
+            GUI.color = new Color(entryColor.r, entryColor.g, entryColor.b, 1f);
+            GUI.DrawTexture(headerRect, EditorGUIUtility.whiteTexture);
+            GUI.color = prevColor;
+
+            EditorGUILayout.Space(2);
+
+            // Строка: иконка + путь + кнопка Ping
+            EditorGUILayout.BeginHorizontal();
+            GUILayout.Label("📁", GUILayout.Width(20));
+            EditorGUILayout.LabelField(string.IsNullOrEmpty(folderPath) ? entry.guid + " (?)" : folderPath, EditorStyles.boldLabel);
+            if (GUILayout.Button("Ping", GUILayout.Width(45)))
+            {
+                var obj = AssetDatabase.LoadAssetAtPath<UnityEngine.Object>(folderPath);
+                if (obj != null) EditorGUIUtility.PingObject(obj);
+            }
+            if (GUILayout.Button("❌", GUILayout.Width(28)))
+                toRemove = i;
+            EditorGUILayout.EndHorizontal();
+
+            // Строка: цвет + ярлык
+            EditorGUILayout.BeginHorizontal();
+            Color newColor = EditorGUILayout.ColorField("Цвет", entryColor, GUILayout.Width(200));
+            if (newColor != entryColor)
+                FolderColorizer.SetColor(i, newColor);
+
+            string newLabel = EditorGUILayout.TextField("Ярлык", entry.label);
+            if (newLabel != entry.label)
+                FolderColorizer.SetLabel(i, newLabel);
+            EditorGUILayout.EndHorizontal();
+
+            EditorGUILayout.Space(2);
+            EditorGUILayout.EndVertical();
+            EditorGUILayout.Space(3);
+        }
+
+        EditorGUILayout.EndScrollView();
+
+        if (toRemove >= 0)
+        {
+            FolderColorizer.RemoveAt(toRemove);
+            FolderColorizer.SaveData();
         }
     }
 
@@ -302,7 +402,7 @@ public class SOValidatorWindow : EditorWindow
     {
         EditorGUILayout.BeginHorizontal();
         EditorGUILayout.LabelField(label, GUILayout.Width(130));
-        EditorGUILayout.LabelField(string.IsNullOrEmpty(path) ? "Не выбрана" : path, EditorStyles.wordWrappedLabel);
+        path = EditorGUILayout.TextField(path);
         if (GUILayout.Button("Выбрать", GUILayout.Width(70)))
         {
             string absPath = EditorUtility.OpenFolderPanel("Выберите папку", Application.dataPath, "");

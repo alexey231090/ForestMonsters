@@ -53,10 +53,20 @@ public class CctvManager : MonoBehaviour
 
     public void RegisterCamera(Camera newCam)
     {
+        if (newCam == null || securityCameras.Contains(newCam)) return;
+        
         newCam.enabled = false;
         var listener = newCam.GetComponent<AudioListener>();
         if (listener) listener.enabled = false;
         securityCameras.Add(newCam);
+    }
+
+    public void UnregisterCamera(Camera cam)
+    {
+        if (securityCameras.Contains(cam))
+        {
+            securityCameras.Remove(cam);
+        }
     }
 
     void Update()
@@ -162,11 +172,20 @@ public class CctvManager : MonoBehaviour
         lastExitTime = Time.time; // Запоминаем время выхода
     }
 
-   public void ActivateCamera(int index)
+    public void ActivateCamera(int index)
     {
+        // Очищаем список от null-ссылок (уничтоженных камер)
+        securityCameras.RemoveAll(c => c == null);
+        
+        if (securityCameras.Count == 0) return;
+        
+        // Корректируем индекс если он вышел за пределы после очистки
+        if (index >= securityCameras.Count) index = 0;
+        if (index < 0) index = securityCameras.Count - 1;
+
         for (int i = 0; i < securityCameras.Count; i++)
         {
-            if (securityCameras[i] != null) securityCameras[i].enabled = (i == index);
+            securityCameras[i].enabled = (i == index);
         }
     }
 
