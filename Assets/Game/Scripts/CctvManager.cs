@@ -26,6 +26,8 @@ public class CctvManager : MonoBehaviour
     [Header("Events")]
     public GameEvent onMonitorEntered;
     public GameEvent onMonitorExited;
+    public GameEvent onMapEntered;   // Добавлено
+    public GameEvent onMapExited;    // Добавлено
 
     public bool isMonitorActive = false;
 
@@ -129,9 +131,17 @@ public class CctvManager : MonoBehaviour
         if (menu && uiHandler != null) uiHandler.ShowUI();
         else if (uiHandler != null) uiHandler.HideUI();
         
-        // Управление Map UI
-        if (map && mapUIHandler != null) mapUIHandler.ShowUI();
-        else if (mapUIHandler != null) mapUIHandler.HideUI();
+        // Управление Map UI и событиями света
+        if (map)
+        {
+            if (mapUIHandler != null) mapUIHandler.ShowUI();
+            if (onMapEntered != null) onMapEntered.Raise();
+        }
+        else
+        {
+            if (mapUIHandler != null) mapUIHandler.HideUI();
+            if (onMapExited != null) onMapExited.Raise();
+        }
 
         if (playerCamera) playerCamera.enabled = menu;
         if (cctvViewUI) cctvViewUI.SetActive(cams);

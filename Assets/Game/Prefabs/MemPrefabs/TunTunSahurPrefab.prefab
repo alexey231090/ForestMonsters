@@ -67,10 +67,12 @@ MeshRenderer:
   m_RayTracingAccelStructBuildFlagsOverride: 0
   m_RayTracingAccelStructBuildFlags: 1
   m_SmallMeshCulling: 1
+  m_ForceMeshLod: -1
+  m_MeshLodSelectionBias: 0
   m_RenderingLayerMask: 1
   m_RendererPriority: 0
   m_Materials:
-  - {fileID: 2100000, guid: 3e1cad44212c70a4aadb318f871a5ab7, type: 2}
+  - {fileID: 2100000, guid: 9a5cbac1ea98a96428063cba7e1dd954, type: 2}
   m_StaticBatchInfo:
     firstSubMesh: 0
     subMeshCount: 0
@@ -88,9 +90,11 @@ MeshRenderer:
   m_AutoUVMaxDistance: 0.5
   m_AutoUVMaxAngle: 89
   m_LightmapParameters: {fileID: 0}
+  m_GlobalIlluminationMeshLod: 0
   m_SortingLayerID: 0
   m_SortingLayer: 0
   m_SortingOrder: 0
+  m_MaskInteraction: 0
   m_AdditionalVertexStreams: {fileID: 0}
 --- !u!136 &1348078968173616730
 CapsuleCollider:
@@ -278,6 +282,11 @@ PrefabInstance:
       propertyPath: m_Name
       value: TunTunSahur
       objectReference: {fileID: 0}
+    - target: {fileID: 5103199689723515289, guid: 8eca1f86168694a4f928a904c9f62a44,
+        type: 3}
+      propertyPath: 'm_Materials.Array.data[0]'
+      value: 
+      objectReference: {fileID: 2100000, guid: 67ba1fee6d8dd8f4f803bf602cb6f3aa, type: 2}
     - target: {fileID: 5866666021909216657, guid: 8eca1f86168694a4f928a904c9f62a44,
         type: 3}
       propertyPath: m_Controller
@@ -387,7 +396,7 @@ PrefabInstance:
         type: 3}
       propertyPath: 'm_Materials.Array.data[0]'
       value: 
-      objectReference: {fileID: 2100000, guid: 081df246b420bcb4e83852eb9d505793, type: 2}
+      objectReference: {fileID: 2100000, guid: 9a5cbac1ea98a96428063cba7e1dd954, type: 2}
     - target: {fileID: 919132149155446097, guid: 9ccd3d42ad0879e4da7a594030224301,
         type: 3}
       propertyPath: m_Name

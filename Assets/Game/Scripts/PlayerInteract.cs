@@ -8,7 +8,9 @@ public class PlayerInteract : SignalBinder
 
     [Header("Settings")]
     public float interactDistance = 4f;     // Дистанция для E (кнопок)
-    public float buildDistance = 10f;       // Дистанция для СТРОИТЕЛЬСТВА
+    public float buildDistance = 10f;       // Дистанция для СТРОИТЕЛЬСТВА ловушек
+    public float cameraBuildDistance = 15f; // Дистанция для СТРОИТЕЛЬСТВА камер
+    public bool cameraLookAtPlayer = true;  // Поворачивать ли камеру к игроку при установке
     public float ghostTimeout = 5.0f;       // Время до исчезновения призрака (если не смотреть на землю)
     
     public LayerMask interactLayer; // Слой предметов (ловушки, мониторы)
@@ -175,8 +177,9 @@ public class PlayerInteract : SignalBinder
 
         // 2. Ищем землю/дерево в зависимости от слота
         LayerMask targetLayer = (selectedIndex == 0) ? groundLayer : treeLayer;
+        float currentBuildDist = (selectedIndex == 0) ? buildDistance : cameraBuildDistance;
         RaycastHit hit;
-        bool isLooking = Physics.Raycast(origin.position, origin.forward, out hit, buildDistance, targetLayer);
+        bool isLooking = Physics.Raycast(origin.position, origin.forward, out hit, currentBuildDist, targetLayer);
 
         if (isLooking)
         {
@@ -202,9 +205,18 @@ public class PlayerInteract : SignalBinder
 
             if (selectedIndex == 1) // Поворот камеры
             {
-                Vector3 lookPos = transform.position - hit.point;
-                lookPos.y = 0;
-                if (lookPos != Vector3.zero) rotation = Quaternion.LookRotation(lookPos);
+                if (cameraLookAtPlayer)
+                {
+                    Vector3 lookPos = origin.position - hit.point;
+                    // lookPos.y = 0; // Раскомментируйте, если нужно вращение только по горизонтали
+                    if (lookPos != Vector3.zero) rotation = Quaternion.LookRotation(lookPos);
+                }
+                else
+                {
+                    Vector3 lookPos = transform.position - hit.point;
+                    lookPos.y = 0;
+                    if (lookPos != Vector3.zero) rotation = Quaternion.LookRotation(lookPos);
+                }
             }
 
             Vector3 position = hit.point + (hit.normal * ghostHeightAdjust);
@@ -263,8 +275,9 @@ public class PlayerInteract : SignalBinder
         RaycastHit hit;
         int selectedIndex = VAR_SelectedSlot != null ? VAR_SelectedSlot.Value : -1;
         LayerMask targetLayer = (selectedIndex == 0) ? groundLayer : treeLayer;
+        float currentBuildDist = (selectedIndex == 0) ? buildDistance : cameraBuildDistance;
 
-        if (Physics.Raycast(origin.position, origin.forward, out hit, buildDistance, targetLayer))
+        if (Physics.Raycast(origin.position, origin.forward, out hit, currentBuildDist, targetLayer))
         {
             bool canPlace = false;
             GameObject objectToSpawn = null;
@@ -297,9 +310,18 @@ public class PlayerInteract : SignalBinder
                 Quaternion rotation = Quaternion.FromToRotation(Vector3.up, hit.normal);
                 if (selectedIndex == 1)
                 {
-                    Vector3 lookPos = transform.position - hit.point;
-                    lookPos.y = 0;
-                    if (lookPos != Vector3.zero) rotation = Quaternion.LookRotation(lookPos);
+                    if (cameraLookAtPlayer)
+                    {
+                        Vector3 lookPos = origin.position - hit.point;
+                        // lookPos.y = 0; // Раскомментируйте, если нужно вращение только по горизонтали
+                        if (lookPos != Vector3.zero) rotation = Quaternion.LookRotation(lookPos);
+                    }
+                    else
+                    {
+                        Vector3 lookPos = transform.position - hit.point;
+                        lookPos.y = 0;
+                        if (lookPos != Vector3.zero) rotation = Quaternion.LookRotation(lookPos);
+                    }
                 }
 
                 Vector3 position = hit.point - hit.normal * currentRealDepth;
@@ -400,8 +422,9 @@ public class PlayerInteract : SignalBinder
 
         // Проверяем что мы смотрим на нужный слой (земля или дерево)
         LayerMask targetLayer = (selectedIndex == 0) ? groundLayer : treeLayer;
+        float currentBuildDist = (selectedIndex == 0) ? buildDistance : cameraBuildDistance;
         RaycastHit hit;
-        bool isLookingAtTarget = Physics.Raycast(origin.position, origin.forward, out hit, buildDistance, targetLayer);
+        bool isLookingAtTarget = Physics.Raycast(origin.position, origin.forward, out hit, currentBuildDist, targetLayer);
 
         if (isLookingAtTarget && Input.GetMouseButton(0)) // ЛКМ зажата
         {
