@@ -137,6 +137,7 @@ public interface IInteractableTrap
 3. **Оглушение** (`trapStunned`) - временная остановка после активации ловушки
 
 **Ключевые параметры:**
+- `monsterData` - ассет `StringVariable`, определяющий вид монстра (используется для отображения модели в парке)
 - `activationRadius` - радиус обнаружения цели (начинает преследование)
 - `disengageDistance` - дистанция отключения преследования
 - `patrolRadius` - радиус патрулирования от начальной точки
@@ -320,7 +321,8 @@ public Color gizmoColorCaught = Color(1, 0, 0, 0.3);     // Цвет когда 
 
 3. **Доставка в парк:**
    - Проверка тега "ParkTrigger"
-   - Вызов `ParkManager.TryDeliverMonster()`
+   - Вызов `ParkManager.TryDeliverMonster(caughtMonsterData)`
+   - Передает `StringVariable` пойманного монстра для выбора модели на платформе
    - Возврат ловушки в инвентарь (`VAR_TrapsCount.ApplyChange(1)`)
    - Удаление ловушки
 
@@ -455,14 +457,16 @@ public bool HasCatch() => isUsed && caughtEnemy != null;
 
 ### 10. **ParkPlatform.cs** - Платформа для размещения существ
 
-**Назначение:** Место размещения пойманных существ для заработка.
+**Назначение:** Место размещения пойманных существ с динамическим отображением моделей.
 
 **Механика:**
-- `TryPlaceMonster()` - вызывается при взаимодействии с E
-- `PlaceMonsterDirectly()` - прямая установка монстра (используется `ParkManager` при доставке в клетке)
+- `TryPlaceMonster()` - вызывается при взаимодействии с E (включает модель по умолчанию)
+- `PlaceMonsterDirectly(StringVariable)` - установка монстра из ловушки.
+  - Сопоставляет полученный `StringVariable` со списком `monsterModels` (по ссылке или значению `Value`).
+  - Включает нужный 3D-объект, остальные отключает.
 
-**Регистрация:**
-- Платформа регистрирует себя в `ParkManager.activePlatforms` при активации, что увеличивает доход от посетителей.
+**Настройки:**
+- `monsterModels` - список маппинга (`StringVariable data` -> `GameObject model`).
 
 ---
 
@@ -472,8 +476,8 @@ public bool HasCatch() => isUsed && caughtEnemy != null;
 
 **Логика:**
 - Хранит список всех `ParkPlatform`
-- `TryDeliverMonster()` - ищет первую свободную платформу и размещает на ней монстра
-- Вызывается из `Trap2.cs` при касании триггера с тегом `ParkTrigger`
+- `TryDeliverMonster(StringVariable)` - ищет первую свободную платформу и вызывает на ней `PlaceMonsterDirectly(data)`.
+- Вызывается из `Trap2.cs` или `TrapBox.cs` при касании триггера `ParkTrigger`.
 
 ---
 
@@ -588,6 +592,7 @@ EnemyAi (патрулирование/преследование)
   → Trap2.TryCatchEnemy()
     → enemyAI.IsCaught = true
     → enemyAI.enabled = false
+    → trap.caughtMonsterData = enemyAI.monsterData; // Сохранение типа
     → DOMove к capturePoint
     → physicalCollider.enabled = true
 ```
@@ -727,7 +732,7 @@ Input 1/2 → VAR_SelectedSlot.Value = index
 
 ---
 
-**Версия документа:** 3.2 (Обновлена система спавна и освещение карты)
-**Последнее обновление:** 28.02.2026
+**Версия документа:** 3.3 (Динамические модели монстров через StringVariable)
+**Последнее обновление:** 02.03.2026
 **Автор:** AI Assistant для проекта ForestMonsters
 **Статус:** ✅ Поддерживается и обновляется

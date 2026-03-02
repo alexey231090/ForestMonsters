@@ -25,6 +25,7 @@ public class TrapBox : MonoBehaviour
     private bool isUsed = false;
     private bool isDelivered = false; // Флаг для защиты от двойной доставки
     private GameObject caughtEnemy;
+    private StringVariable caughtMonsterData; // Данные о виде пойманного монстра
     private Transform trapRoot;
 
     void Start()
@@ -69,7 +70,7 @@ public class TrapBox : MonoBehaviour
         {
             if (HasCatch() && !isDelivered)
             {
-                if (ParkManager.instance != null && ParkManager.instance.TryDeliverMonster())
+                if (ParkManager.instance != null && ParkManager.instance.TryDeliverMonster(caughtMonsterData))
                 {
                     isDelivered = true; // Мгновенно блокируем повторный вход
                     Debug.Log("[TRAP] Monster delivered! Returning trap to inventory.");
@@ -110,6 +111,9 @@ public class TrapBox : MonoBehaviour
 
                 // Включаем физический коллайдер на коробке при поимке
                 if (mainPhysicalCollider != null) mainPhysicalCollider.enabled = true;
+
+                // Запоминаем данные о монстре
+                caughtMonsterData = enemyAI.monsterData;
 
                 caughtEnemy = other.gameObject;
                 isUsed = true;

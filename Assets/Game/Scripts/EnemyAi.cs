@@ -5,6 +5,9 @@ public class EnemyAi : MonoBehaviour
 {
     [Header("Description")]
     [TextArea(2,5)] public string description = "AI врага: патрулирование и преследование цели по NavMesh; учитывает оглушение ловушкой.";
+
+    [Header("SO Assets")]
+    public StringVariable monsterData; // Данные о виде монстра (через StringVariable)
 	[Header("Targeting")]
 	[SerializeField] private Transform target; // за кем следить (корабль игрока)
 	[SerializeField] private float activationRadius = 40f; // радиус активации слежения

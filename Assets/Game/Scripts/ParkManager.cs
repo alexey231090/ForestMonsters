@@ -33,15 +33,15 @@ public class ParkManager : MonoBehaviour
         }
     }
 
-    public bool TryDeliverMonster()
+    public bool TryDeliverMonster(StringVariable monsterData)
     {
         // Ищем первую свободную платформу
         foreach (var platform in activePlatforms)
         {
             if (platform != null && !platform.isOccupied)
             {
-                platform.PlaceMonsterDirectly();
-                Debug.Log($"[PARK] Monster placed on platform.: {platform.name}");
+                platform.PlaceMonsterDirectly(monsterData);
+                Debug.Log($"[PARK] Monster {monsterData?.name} placed on platform: {platform.name}");
                 return true;
             }
         }

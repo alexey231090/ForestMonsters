@@ -24,6 +24,7 @@ public class Trap2 : MonoBehaviour, IInteractableTrap
     private bool isDelivered = false;
     private bool isActive = true;
     private GameObject caughtEnemy;
+    private StringVariable caughtMonsterData; // Данные о пойманном виде
     private Rigidbody rb;
     private float nextCheckTime;
 
@@ -107,6 +108,9 @@ public class Trap2 : MonoBehaviour, IInteractableTrap
         if (enemyCollider.TryGetComponent<NavMeshAgent>(out var agent)) agent.enabled = false;
         if (enemyCollider.TryGetComponent<Rigidbody>(out var enemyRb)) enemyRb.isKinematic = true;
 
+        // Запоминаем данные о монстре
+        caughtMonsterData = enemyAI.monsterData;
+
         // Анимация затягивания в центр
         if (capturePoint != null && settings != null)
         {
@@ -128,7 +132,7 @@ public class Trap2 : MonoBehaviour, IInteractableTrap
 
     private void DeliverToPark()
     {
-        if (ParkManager.instance != null && ParkManager.instance.TryDeliverMonster())
+        if (ParkManager.instance != null && ParkManager.instance.TryDeliverMonster(caughtMonsterData))
         {
             isDelivered = true;
             Debug.Log("<color=blue>[Trap2]</color> Монстр доставлен в парк!");
