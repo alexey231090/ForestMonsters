@@ -1,6 +1,7 @@
 using UnityEngine;
 using UnityEngine.AI;
 using DG.Tweening;
+using Game.Interfaces;
 
 public class TrapBox : MonoBehaviour
 {
@@ -137,6 +138,12 @@ public class TrapBox : MonoBehaviour
         trapRoot.SetParent(holdParent);
         trapRoot.DOLocalMove(Vector3.zero, pickUpDuration);
         trapRoot.DOLocalRotate(Vector3.zero, pickUpDuration);
+
+        // Включаем эффект призрака
+        if (caughtEnemy != null && caughtEnemy.TryGetComponent<IGhostable>(out var ghostable))
+        {
+            ghostable.SetGhostMode(true);
+        }
     }
 
     public void AnimateDrop(Vector3 targetPosition, Quaternion targetRotation)
@@ -148,6 +155,12 @@ public class TrapBox : MonoBehaviour
             if (catchTriggerCollider != null)
             {
                 catchTriggerCollider.enabled = true;
+            }
+
+            // Выключаем эффект призрака
+            if (caughtEnemy != null && caughtEnemy.TryGetComponent<IGhostable>(out var ghostable))
+            {
+                ghostable.SetGhostMode(false);
             }
         });
         trapRoot.DORotateQuaternion(targetRotation, dropDuration);

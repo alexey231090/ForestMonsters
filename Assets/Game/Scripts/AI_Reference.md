@@ -22,7 +22,10 @@
 
 **Файл документации:** `Assets/Game/Scripts/Core/GameEventSystem.md`
 
-Система связи компонентов через ScriptableObject-сигналы и динамические переменные.
+Система связи компонентов через ScriptableObject-сигналы, динамические переменные и интерфейсы.
+
+> [!IMPORTANT]
+> Все системные ScriptableObject (Variable, Event, Settings) **ОБЯЗАНЫ** создаваться через контекстное меню в разделе **Architecture**.
 
 #### **Ключевые компоненты:**
 
@@ -96,7 +99,7 @@ private void HandleDeath() {
 |---------|--------|----------|
 | `EV_` | **Game Events** | События (EV_OnTrapPickedUp, EV_OnEnemyCaught) |
 | `VAR_` | **Variables SO** | Переменные (VAR_TrapsCount, VAR_Health) |
-| `SET_` | **Settings SO** | Настройки (SET_GameSettings) |
+| `SET_` | **Settings SO** | Настройки (SET_GameSettings, SET_MonsterGhostEffects) |
 
 ---
 
@@ -115,6 +118,17 @@ public interface IInteractableTrap
     void OnPickUp(Transform hand);   // Вызывается при поднятии
     void OnDrop();                   // Вызывается при отпускании
     bool HasCatch();                 // Есть ли пойманный враг
+}
+```
+
+#### **IGhostable** - Интерфейс для эффекта призрака у монстров
+
+**Файл:** `Assets/Game/Scripts/Inteface/IGhostable.cs`
+
+```csharp
+public interface IGhostable
+{
+    void SetGhostMode(bool active); // Переключение материала на MonsterGhostEffect
 }
 ```
 
@@ -471,6 +485,22 @@ public bool HasCatch() => isUsed && caughtEnemy != null;
 ---
 
 ### 11. **ParkManager.cs** - Менеджер парка
+...
+---
+
+### 11.1 **MonsterGhostHandler.cs** - Обработчик эффекта призрака
+
+**Назначение:** Применение визуального эффекта (шейдер `MonsterGhostEffect`) к монстру при переноске.
+
+**Реализация:** `IGhostable`
+
+**Функционал:**
+- `SetGhostMode(true)`: Сохраняет оригинальные материалы всех дочерних рендереров и заменяет их на `ghostMaterial` из настроек.
+- `SetGhostMode(false)`: Возвращает оригинальные материалы.
+
+**Настройки (SO):**
+- `GhostSettings settings` — содержит ссылку на материал призрака.
+- Создается через: `Architecture -> Settings -> Ghost Effects`.
 
 **Назначение:** Автоматизация приема пойманных существ.
 
@@ -605,8 +635,10 @@ PlayerInteract.HandleInteraction()
   → if (trap != null && trap.CanBePickedUp)
     → PlayerCarrier.ProcessHold()
       → PlayerCarrier.PerformPickup()
-        → if (trap.HasCatch()) → PickUpPhysical(trap)
-          → trap.OnPickUp(holdPoint)
+        → if (trap.HasCatch()) 
+          → PickUpPhysical(trap)
+            → trap.OnPickUp(holdPoint)
+            → trap.caughtEnemy.SetGhostMode(true) // Монстр становится призраком
 ```
 
 ### **Сброс ловушки (через интерфейс):**
@@ -680,6 +712,10 @@ Input 1/2 → VAR_SelectedSlot.Value = index
    - При выключении `UIDocument.enabled = false` элементы теряют актуальность
    - Всегда используйте `Show()` / `BindUI()` после повторного включения
 
+### 3.1 **Interface vs SO-Signals (Правило выбора):**
+   - **Interface**: Используй для прямого взаимодействия (Ловушка → Монстр внутри). Это быстрее и точнее.
+   - **SO-Signals**: Используй для глобальных оповещений (Смерть игрока, Смена фазы).
+
 ### 4. **Особенности строительства:**
    - Режим строительства автоматически отключается при переноске
    - Таймер автоотключения сбрасывается при взгляде на целевой слой (`groundLayer` для ловушек, `treeLayer` для камер)
@@ -728,11 +764,13 @@ Input 1/2 → VAR_SelectedSlot.Value = index
 | **SignalBinder** | Базовый класс для автоматической подписки на события |
 | **SO Variable** | ScriptableObject-переменная для обмена данными между системами |
 | **IInteractableTrap** | Интерфейс для всех интерактивных ловушек |
+| **IGhostable** | Интерфейс для управления визуальным состоянием монстра |
+| **Ghost Mode** | Режим прозрачности монстра при переноске игроком |
 | **OverlapSphere** | Метод обнаружения врагов в радиусе ловушки |
 
 ---
 
-**Версия документа:** 3.3 (Динамические модели монстров через StringVariable)
+**Версия документа:** 3.4 (Ghost Mode для монстров через IGhostable)
 **Последнее обновление:** 02.03.2026
 **Автор:** AI Assistant для проекта ForestMonsters
 **Статус:** ✅ Поддерживается и обновляется

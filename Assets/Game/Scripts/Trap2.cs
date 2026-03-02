@@ -1,6 +1,7 @@
 using UnityEngine;
 using UnityEngine.AI;
 using DG.Tweening;
+using Game.Interfaces;
 
 [RequireComponent(typeof(Rigidbody))]
 public class Trap2 : MonoBehaviour, IInteractableTrap
@@ -153,12 +154,24 @@ public class Trap2 : MonoBehaviour, IInteractableTrap
         transform.SetParent(hand);
         transform.DOLocalMove(Vector3.zero, 0.3f);
         transform.DOLocalRotate(Vector3.zero, 0.3f);
+
+        // Применяем эффект призрака к монстру
+        if (caughtEnemy != null && caughtEnemy.TryGetComponent<IGhostable>(out var ghostable))
+        {
+            ghostable.SetGhostMode(true);
+        }
     }
 
     void IInteractableTrap.OnDrop()
     {
         transform.SetParent(null);
         isActive = true; // Включаем проверку сферы обратно
+
+        // Убираем эффект призрака
+        if (caughtEnemy != null && caughtEnemy.TryGetComponent<IGhostable>(out var ghostable))
+        {
+            ghostable.SetGhostMode(false);
+        }
     }
 
     private void OnDrawGizmos()

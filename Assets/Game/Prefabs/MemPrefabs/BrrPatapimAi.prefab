@@ -16,6 +16,7 @@ GameObject:
   - component: {fileID: 6230508625024244730}
   - component: {fileID: 4979828090327795029}
   - component: {fileID: 7002052395082060378}
+  - component: {fileID: 7360389246620713474}
   m_Layer: 9
   m_Name: BrrPatapimAi
   m_TagString: Enemy
@@ -205,6 +206,19 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 985eaf5f29e7ec54b800cb6dd5d3c895, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+--- !u!114 &7360389246620713474
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 400254436993818677}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 5bcd801c86214da40b2fb06d6aa266be, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::MonsterGhostHandler
+  settings: {fileID: 11400000, guid: 648ae8e9ee7f4de4ba4c9109fc6873c7, type: 2}
 --- !u!1001 &1127745750179464187
 PrefabInstance:
   m_ObjectHideFlags: 0

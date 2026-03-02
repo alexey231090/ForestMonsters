@@ -16,6 +16,7 @@ GameObject:
   - component: {fileID: 7868050593011480928}
   - component: {fileID: 5706555979309570475}
   - component: {fileID: 6847999462113886850}
+  - component: {fileID: 440983655351093185}
   m_Layer: 9
   m_Name: UdinDinDinAi
   m_TagString: Enemy
@@ -205,6 +206,19 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 985eaf5f29e7ec54b800cb6dd5d3c895, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+--- !u!114 &440983655351093185
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3255496038830541628}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 5bcd801c86214da40b2fb06d6aa266be, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::MonsterGhostHandler
+  settings: {fileID: 11400000, guid: 648ae8e9ee7f4de4ba4c9109fc6873c7, type: 2}
 --- !u!1001 &6757727033686161225
 PrefabInstance:
   m_ObjectHideFlags: 0
