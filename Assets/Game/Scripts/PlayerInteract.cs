@@ -7,7 +7,7 @@ public class PlayerInteract : SignalBinder
     [TextArea(2, 5)] public string description = "Интеракция: Установка (ЛКМ), Призраки с автоотключением, Взаимодействие (E).";
 
     [Header("Settings")]
-    public float interactDistance = 4f;     // Дистанция для E (кнопок)
+    public float interactDistance = 8f;     // Дистанция для E (кнопок)
     public float buildDistance = 10f;       // Дистанция для СТРОИТЕЛЬСТВА ловушек
     public float cameraBuildDistance = 15f; // Дистанция для СТРОИТЕЛЬСТВА камер
     public bool cameraLookAtPlayer = true;  // Поворачивать ли камеру к игроку при установке

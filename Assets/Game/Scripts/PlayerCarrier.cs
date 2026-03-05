@@ -1,7 +1,8 @@
 using UnityEngine;
 using UnityEngine.UI;
 using DG.Tweening;
-    
+using Game.Interfaces;
+
 public class PlayerCarrier : SignalBinder 
 {
     [Header("Carry Settings")]
@@ -56,19 +57,15 @@ public class PlayerCarrier : SignalBinder
         return carriedTrap != null;
     }
 
-    // Вызывается из PlayerInteract каждый кадр, пока мы смотрим на объект и держим E
     public void ProcessHold(GameObject targetObj)
     {
         if (IsCarrying()) return; // Уже заняты руки
 
-        // Увеличиваем таймер
         currentHoldTimer += Time.deltaTime;
         
-        // Обновляем SO переменную для UI
         if (VAR_PickupProgress != null)
             VAR_PickupProgress.Value = currentHoldTimer / holdTimeRequired;
 
-        // Если удержали нужное время
         if (currentHoldTimer >= holdTimeRequired)
         {
             PerformPickup(targetObj);
@@ -82,20 +79,46 @@ public class PlayerCarrier : SignalBinder
         if (VAR_PickupProgress != null) VAR_PickupProgress.Value = 0;
     }
 
-    // Логика: Что делать с объектом (Взять в руки или В инвентарь)
     void PerformPickup(GameObject obj)
     {
-        // 1. Проверяем, это ЛОВУШКА? (через интерфейс для модульности)
+        // 1. Проверяем, это ЛОВУШКА?
         IInteractableTrap trap = obj.GetComponentInParent<IInteractableTrap>();
         if (trap == null) trap = obj.GetComponentInChildren<IInteractableTrap>();
 
         if (trap != null)
         {
-            if (trap.HasCatch()) PickUpPhysical(trap);
+            if (trap.HasCatch())
+            {
+                PickUpPhysical(trap);
+            }
             else
             {
                 if (VAR_TrapsCount != null) VAR_TrapsCount.ApplyChange(1);
-                Destroy(obj);
+                
+                // Пытаемся найти самый верхний объект с компонентом ловушки, чтобы удалить всё целиком
+                GameObject rootToDestroy = null;
+                if (trap is MonoBehaviour trapMono)
+                {
+                    rootToDestroy = trapMono.gameObject;
+                    
+                    // Рекурсивно поднимаемся вверх, пока родители тоже являются ловушками
+                    // Это решит проблему, если ловушка вложена в другую ловушку/коробку
+                    Transform parent = rootToDestroy.transform.parent;
+                    while (parent != null && parent.GetComponent<IInteractableTrap>() != null)
+                    {
+                        rootToDestroy = parent.gameObject;
+                        parent = parent.parent;
+                    }
+                }
+
+                if (rootToDestroy != null)
+                {
+                    Destroy(rootToDestroy);
+                }
+                else
+                {
+                    Destroy(obj);
+                }
             }
             return;
         }
@@ -112,16 +135,11 @@ public class PlayerCarrier : SignalBinder
         }
     }
 
-    // --- ФИЗИЧЕСКАЯ ПЕРЕНОСКА (Только для ловушек с добычей) ---
-
     void PickUpPhysical(IInteractableTrap trap)
     {
         carriedTrap = trap;
         UpdateCarryingFlag();
-
-        // Используем метод из интерфейса для анимации и отключения триггеров
         trap.OnPickUp(holdPoint);
-
         Debug.Log("Клетка с монстром взята!");
     }
 
@@ -141,27 +159,23 @@ public class PlayerCarrier : SignalBinder
     void DropPhysical(Vector3 floorPos)
     {
         Vector3 finalPos = floorPos - new Vector3(0, dropEmbedDepth, 0);
-
         IInteractableTrap trapToDrop = carriedTrap;
-        MonoBehaviour trapMono = trapToDrop as MonoBehaviour;
-        Transform trapTransform = trapMono.transform;
         
-        trapTransform.SetParent(null);
-
-        // Анимация падения
-        trapTransform.DOMove(finalPos, 0.5f).SetEase(Ease.OutBounce).OnComplete(() =>
+        if (trapToDrop is MonoBehaviour trapMono)
         {
-            if (trapToDrop != null)
+            Transform trapTransform = trapMono.transform;
+            trapTransform.SetParent(null);
+
+            trapTransform.DOMove(finalPos, 0.5f).SetEase(Ease.OutBounce).OnComplete(() =>
             {
                 trapToDrop.OnDrop();
-            }
-        });
+            });
 
-        // Поворот по Y игрока
-        Quaternion targetRot = Quaternion.Euler(0, transform.eulerAngles.y, 0);
-        trapTransform.DORotateQuaternion(targetRot, 0.5f);
+            Quaternion targetRot = Quaternion.Euler(0, transform.eulerAngles.y, 0);
+            trapTransform.DORotateQuaternion(targetRot, 0.5f);
+        }
 
-        carriedTrap = null; // Руки свободны
+        carriedTrap = null;
         UpdateCarryingFlag();
         Debug.Log("Клетка поставлена!");
     }
@@ -171,4 +185,3 @@ public class PlayerCarrier : SignalBinder
         if (VAR_IsCarrying != null) VAR_IsCarrying.Value = carriedTrap != null;
     }
 }
-

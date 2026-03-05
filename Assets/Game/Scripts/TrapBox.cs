@@ -3,7 +3,7 @@ using UnityEngine.AI;
 using DG.Tweening;
 using Game.Interfaces;
 
-public class TrapBox : MonoBehaviour
+public class TrapBox : MonoBehaviour, IInteractableTrap
 {
     [TextArea(5, 5)] public string description = "TrapBox - колайдер клетки, логика ловушки и доставка.";
 
@@ -28,6 +28,9 @@ public class TrapBox : MonoBehaviour
     private GameObject caughtEnemy;
     private StringVariable caughtMonsterData; // Данные о виде пойманного монстра
     private Transform trapRoot;
+
+    // IInteractableTrap Implementation
+    public bool CanBePickedUp => !isDelivered; // Можно поднять если не доставлена
 
     void Start()
     {
@@ -127,15 +130,15 @@ public class TrapBox : MonoBehaviour
         return isUsed && caughtEnemy != null;
     }
 
-    // --- ЛОГИКА ПЕРЕНОСКИ ---
+    // --- ЛОГИКА ПЕРЕНОСКИ (IInteractableTrap) ---
 
-    public void AnimatePickUp(Transform holdParent)
+    public void OnPickUp(Transform hand)
     {
-        // Отключаем триггер ловли на время переноски, чтобы не ловить врагов "в руках".
+        // Отключаем триггер ловли на время переноски
         if (catchTriggerCollider != null) catchTriggerCollider.enabled = false;
 
         if (trapRoot == null) trapRoot = transform;
-        trapRoot.SetParent(holdParent);
+        trapRoot.SetParent(hand);
         trapRoot.DOLocalMove(Vector3.zero, pickUpDuration);
         trapRoot.DOLocalRotate(Vector3.zero, pickUpDuration);
 
@@ -146,22 +149,29 @@ public class TrapBox : MonoBehaviour
         }
     }
 
+    public void OnDrop()
+    {
+        // Вызывается ПОСЛЕ того как PlayerCarrier анимированно поставил объект
+        if (catchTriggerCollider != null)
+        {
+            catchTriggerCollider.enabled = true;
+        }
+
+        // Выключаем эффект призрака
+        if (caughtEnemy != null && caughtEnemy.TryGetComponent<IGhostable>(out var ghostable))
+        {
+            ghostable.SetGhostMode(false);
+        }
+    }
+
+    // Старый метод оставлен для обратной совместимости, если нужен прямой зазов
     public void AnimateDrop(Vector3 targetPosition, Quaternion targetRotation)
     {
         if (trapRoot == null) trapRoot = transform;
         trapRoot.SetParent(null);
         trapRoot.DOMove(targetPosition, dropDuration).SetEase(Ease.OutBounce).OnComplete(() =>
         {
-            if (catchTriggerCollider != null)
-            {
-                catchTriggerCollider.enabled = true;
-            }
-
-            // Выключаем эффект призрака
-            if (caughtEnemy != null && caughtEnemy.TryGetComponent<IGhostable>(out var ghostable))
-            {
-                ghostable.SetGhostMode(false);
-            }
+            OnDrop();
         });
         trapRoot.DORotateQuaternion(targetRotation, dropDuration);
     }

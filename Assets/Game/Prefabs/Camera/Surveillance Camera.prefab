@@ -367,7 +367,7 @@ GameObject:
   - component: {fileID: 6946208019652690194}
   - component: {fileID: 7839659336072236908}
   - component: {fileID: 2555813102684769150}
-  m_Layer: 0
+  m_Layer: 12
   m_Name: Surveillance Camera
   m_TagString: Untagged
   m_Icon: {fileID: 0}
