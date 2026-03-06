@@ -26,3 +26,4 @@ MonoBehaviour:
   cameraGhostOffset: 0
   trapDustOffset: 0.1
   cameraDustOffset: 0.1
+  highlightMaterial: {fileID: 2100000, guid: 9e4ddce1888431a4c98cda6585c9b6ca, type: 2}

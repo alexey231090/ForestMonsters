@@ -28,4 +28,6 @@ public class PlayerInteractSettings : ScriptableObject
     [Header("VFX Offsets")]
     public float trapDustOffset = 0.1f;
     public float cameraDustOffset = 0.1f;
+    [Header("Visuals")]
+    public Material highlightMaterial;
 }

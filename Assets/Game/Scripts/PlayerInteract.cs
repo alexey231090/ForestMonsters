@@ -50,6 +50,15 @@ public class PlayerInteract : SignalBinder
     private bool wasLookingAtGround = false;
     private float placeHoldTimer = 0f; // Таймер удержания ЛКМ для установки
     private float placeCooldownTimer = 0f; // Таймер задержки между установками
+    
+    // --- HIGHLIGHTING ---
+    private GameObject lastHighlightedObject;
+    private struct HighlightData
+    {
+        public Renderer renderer;
+        public Material[] originalMaterials;
+    }
+    private System.Collections.Generic.List<HighlightData> currentHighlights = new System.Collections.Generic.List<HighlightData>();
 
     void OnEnable()
     {
@@ -102,6 +111,7 @@ public class PlayerInteract : SignalBinder
         bool isCarrying = VAR_IsCarrying != null && VAR_IsCarrying.Value;
         if (isCarrying)
         {
+            ClearHighlight();
             DisableBuildMode(); // Выключаем режим стройки при переноске
             return; 
         }
@@ -125,10 +135,24 @@ public class PlayerInteract : SignalBinder
             return; // Прерываем выполнение Update, чтобы не вызвать HandleInteraction
         }
 
-        // 6. ВЗАИМОДЕЙСТВИЕ (E - только если не в режиме стройки)
+        // 6. ВЗАИМОДЕЙСТВИЕ И ПОДСВЕТКА (E - только если не в режиме стройки)
         if (selectedIndex == -1 && settings != null)
         {
-            HandleInteraction(origin);
+            GameObject interactable = FindInteractable(origin);
+            UpdateHighlight(interactable);
+            
+            if (interactable != null)
+            {
+                HandleInteraction(origin, interactable);
+            }
+            else
+            {
+                carrier.ResetHoldTimer();
+            }
+        }
+        else
+        {
+            ClearHighlight();
         }
     }
 
@@ -327,65 +351,138 @@ public class PlayerInteract : SignalBinder
         }
     }
 
-    // ================== ЛОГИКА ВЗАИМОДЕЙСТВИЯ (E) ==================
+    // ================== ЛОГИКА ПОДСВЕТКИ И ПОИСКА ==================
 
-    void HandleInteraction(Transform origin)
+    GameObject FindInteractable(Transform origin)
     {
         RaycastHit hit;
-        bool lookingAtPickupable = false;
 
-        // 1. Сначала проверяем КАМЕРЫ (своя дистанция и слой)
+        // 1. КАМЕРЫ
         if (Physics.Raycast(origin.position, origin.forward, out hit, settings.cameraInteractDistance, cameraLayer))
         {
             SecurityCameraSetup camera = hit.collider.GetComponentInParent<SecurityCameraSetup>();
             if (camera == null) camera = hit.collider.GetComponentInChildren<SecurityCameraSetup>();
-
-            if (camera != null)
-            {
-                lookingAtPickupable = true;
-                if (Input.GetKey(KeyCode.E))
-                {
-                    carrier.ProcessHold(hit.collider.gameObject);
-                }
-                return;
-            }
+            if (camera != null) return camera.gameObject;
         }
 
-        // 2. Проверяем остальное (interactLayer и обычная дистанция)
+        // 2. ОСТАЛЬНОЕ
         if (Physics.Raycast(origin.position, origin.forward, out hit, settings.interactDistance, interactLayer))
         {
-            // Ищем компоненты ловушек через интерфейс для модульности
+            // Проверка ловушек
             IInteractableTrap trap = hit.collider.GetComponentInParent<IInteractableTrap>();
             if (trap == null) trap = hit.collider.GetComponentInChildren<IInteractableTrap>();
+            if (trap != null && trap.CanBePickedUp) return ((MonoBehaviour)trap).gameObject;
 
-            if (trap != null && trap.CanBePickedUp)
+            // Проверка интерфейса (ищем в родителях, чтобы найти корень объекта)
+            IInteractable interactable = hit.collider.GetComponentInParent<IInteractable>();
+            if (interactable != null) return ((MonoBehaviour)interactable).gameObject;
+
+            // Проверка монитора
+            MonitorTrigger monitor = hit.collider.GetComponentInParent<MonitorTrigger>();
+            if (monitor != null) return monitor.gameObject;
+        }
+
+        return null;
+    }
+
+    void UpdateHighlight(GameObject target)
+    {
+        if (target == lastHighlightedObject) return;
+
+        ClearHighlight();
+
+        if (target == null || settings.highlightMaterial == null) return;
+
+        Renderer[] renderers = target.GetComponentsInChildren<Renderer>();
+        if (renderers.Length > 0)
+        {
+            lastHighlightedObject = target;
+
+            foreach (Renderer rend in renderers)
             {
-                lookingAtPickupable = true;
-                if (Input.GetKey(KeyCode.E))
+                HighlightData data = new HighlightData();
+                data.renderer = rend;
+                data.originalMaterials = rend.sharedMaterials;
+
+                Material[] newMaterials = new Material[data.originalMaterials.Length + 1];
+                for (int i = 0; i < data.originalMaterials.Length; i++)
                 {
-                    carrier.ProcessHold(hit.collider.gameObject);
+                    newMaterials[i] = data.originalMaterials[i];
                 }
-                return;
+                newMaterials[newMaterials.Length - 1] = settings.highlightMaterial;
+
+                rend.sharedMaterials = newMaterials;
+                currentHighlights.Add(data);
             }
+        }
+    }
 
-            if (Input.GetKeyDown(KeyCode.E))
+    void ClearHighlight()
+    {
+        foreach (HighlightData data in currentHighlights)
+        {
+            if (data.renderer != null)
             {
-                IInteractable interactable = hit.collider.GetComponent<IInteractable>();
-                if (interactable != null)
+                // Берем текущие материалы (могли измениться другими скриптами)
+                Material[] currentMats = data.renderer.sharedMaterials;
+                
+                // Если последний материал — это наш контур, удаляем только его
+                if (currentMats.Length > 0 && currentMats[currentMats.Length - 1] == settings.highlightMaterial)
                 {
-                    interactable.Interact();
-                    return;
-                }
-
-                MonitorTrigger monitor = hit.collider.GetComponent<MonitorTrigger>();
-                if (monitor != null && CctvManager.instance != null && !CctvManager.instance.isMonitorActive)
-                {
-                    CctvManager.instance.EnterMonitorMode(); return;
+                    Material[] restoredMats = new Material[currentMats.Length - 1];
+                    for (int i = 0; i < restoredMats.Length; i++)
+                    {
+                        restoredMats[i] = currentMats[i];
+                    }
+                    data.renderer.sharedMaterials = restoredMats;
                 }
             }
         }
 
-        if (!lookingAtPickupable) carrier.ResetHoldTimer();
+        currentHighlights.Clear();
+        lastHighlightedObject = null;
+    }
+
+    // ================== ЛОГИКА ВЗАИМОДЕЙСТВИЯ (E) ==================
+
+    void HandleInteraction(Transform origin, GameObject interactable)
+    {
+        // Камера или ловушка (удержание E для поднятия)
+        SecurityCameraSetup camera = interactable.GetComponentInParent<SecurityCameraSetup>();
+        if (camera == null) camera = interactable.GetComponentInChildren<SecurityCameraSetup>();
+
+        IInteractableTrap trap = interactable.GetComponentInParent<IInteractableTrap>();
+        if (trap == null) trap = interactable.GetComponentInChildren<IInteractableTrap>();
+
+        if (camera != null || (trap != null && trap.CanBePickedUp))
+        {
+            if (Input.GetKey(KeyCode.E))
+            {
+                carrier.ProcessHold(interactable);
+            }
+            else
+            {
+                carrier.ResetHoldTimer();
+            }
+            return;
+        }
+
+        // Обычные интеракты (нажатие E)
+        if (Input.GetKeyDown(KeyCode.E))
+        {
+            IInteractable interact = interactable.GetComponent<IInteractable>();
+            if (interact != null)
+            {
+                interact.Interact();
+                return;
+            }
+
+            MonitorTrigger monitor = interactable.GetComponent<MonitorTrigger>();
+            if (monitor != null && CctvManager.instance != null && !CctvManager.instance.isMonitorActive)
+            {
+                CctvManager.instance.EnterMonitorMode();
+            }
+        }
     }
 
     // ================== ЛОГИКА УДЕРЖАНИЯ ЛКМ ДЛЯ УСТАНОВКИ ==================

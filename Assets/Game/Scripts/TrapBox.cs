@@ -14,6 +14,10 @@ public class TrapBox : MonoBehaviour, IInteractableTrap
 
     [SerializeField, Bind] IntVariable VAR_TrapsCount;
 
+    [Header("Catch Positioning")]
+    [Tooltip("Custom vertical offset to fine-tune monster position in the cage")]
+    public float catchVisualOffset = 0f;
+
     [Header("References")]
     public Animator animatorCell;
     public Transform captureCenterPoint;
@@ -105,7 +109,10 @@ public class TrapBox : MonoBehaviour, IInteractableTrap
 
                 if (captureCenterPoint != null)
                 {
-                    other.transform.DOMove(captureCenterPoint.position, attractionDuration);
+                    // Самый простой и надежный способ: центр + оффсет
+                    Vector3 targetPos = captureCenterPoint.position + (Vector3.up * catchVisualOffset);
+
+                    other.transform.DOMove(targetPos, attractionDuration);
                     other.transform.DORotateQuaternion(captureCenterPoint.rotation, attractionDuration)
                         .OnComplete(() => other.transform.SetParent(captureCenterPoint));
                 }
