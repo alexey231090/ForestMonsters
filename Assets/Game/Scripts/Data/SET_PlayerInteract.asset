@@ -12,15 +12,15 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: cf49788264c91614a96d2769596ef481, type: 3}
   m_Name: SET_PlayerInteract
   m_EditorClassIdentifier: Assembly-CSharp::PlayerInteractSettings
-  interactDistance: 8
-  cameraInteractDistance: 11
+  interactDistance: 6
+  cameraInteractDistance: 9
   buildDistance: 10
-  cameraBuildDistance: 10
+  cameraBuildDistance: 8
   placeHoldTimeRequired: 0.5
   placeCooldownSeconds: 2
   ghostTimeout: 5
   cameraLookAtPlayer: 1
-  trapEmbedDepth: 0
+  trapEmbedDepth: -1.1
   cameraEmbedDepth: 0
   trapGhostOffset: 0
   cameraGhostOffset: 0
