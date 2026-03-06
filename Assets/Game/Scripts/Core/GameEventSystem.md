@@ -1,4 +1,6 @@
-# 📡 ARCHITECTURE BIBLE: GAME EVENT SYSTEM
+# 📡 ARCHITECTURE BIBLE: GAME EVENT SYSTEM 
+
+AI агент должен придерживатся этой библии при написании кода.
 
 Система связи компонентов через ScriptableObject-сигналы, динамические переменные и интерфейсы.
 
@@ -111,7 +113,7 @@ void OnVAR_HealthChanged() {
 | `VAR_` | **Variables SO** | Переменные |
 | `SET_` | **Settings SO** | Настройки |
 
-## 🤖 Инструкции для ИИ (AI Instructions)
+## 🤖 Важные инструкции для ИИ (AI Instructions)
 
 1. **Приоритет Атрибутов**: Используй `[Bind]` только когда нужен автоматический вызов метода при изменении переменной. Для простого чтения/записи используй только `[SerializeField]`.
 2. **Правило [Bind]**: При использовании `[Bind]` всегда добавляй `[SerializeField]`: `[SerializeField, Bind] Type VAR_Name;`.
@@ -119,6 +121,10 @@ void OnVAR_HealthChanged() {
 4. **Использование OnEnable**: Если скрипту нужна дополнительная логика при активации, ты МОЖЕШЬ создавать `protected override void OnEnable()`.
 5. **Критическое правило**: При переопределении `OnEnable` или `OnDisable` ты **ОБЯЗАН** первым делом вызвать `base.OnEnable()` или `base.OnDisable()`, иначе автоматические подписки не заработают.
 6. **Наследование**: Всегда используй `public class Name : SignalBinder`.
+7. **Архитектурные Ассеты**: 
+    - **Architecture** — ЭТО ТОЛЬКО ПУНКТ КОНТЕКСТНОГО МЕНЮ (**Create -> Architecture**), а не название папки!
+    - В коде ScriptableObject **ОБЯЗАТЕЛЬНО** прописывай: `[CreateAssetMenu(menuName = "Architecture/...")]`.
+    - **ЗАПРЕЩЕНО** создавать новые папки с названием "Architecture". Все ассеты должны храниться в существующих папках проекта (`Scripts/Events`, `Scripts/Variables`, `Scripts/Data` и т.д.).
 
 ---
 
