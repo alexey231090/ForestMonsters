@@ -2823,6 +2823,12 @@ PrefabInstance:
       objectReference: {fileID: 1532638415}
     - target: {fileID: 7143720155793013764, guid: a01c7516e659bdf4b9897ab54df69b69,
         type: 3}
+      propertyPath: settings
+      value: 
+      objectReference: {fileID: 11400000, guid: 4e439005a5889484599e6d6680fb3570,
+        type: 2}
+    - target: {fileID: 7143720155793013764, guid: a01c7516e659bdf4b9897ab54df69b69,
+        type: 3}
       propertyPath: cctvManager
       value: 
       objectReference: {fileID: 884477781}
@@ -2854,6 +2860,11 @@ PrefabInstance:
       value: 
       objectReference: {fileID: 11400000, guid: 359c72d0be4a15d4286e5d230d6f827f,
         type: 2}
+    - target: {fileID: 7143720155793013764, guid: a01c7516e659bdf4b9897ab54df69b69,
+        type: 3}
+      propertyPath: cameraLayer.m_Bits
+      value: 4096
+      objectReference: {fileID: 0}
     - target: {fileID: 7143720155793013764, guid: a01c7516e659bdf4b9897ab54df69b69,
         type: 3}
       propertyPath: interactLayer.m_Bits

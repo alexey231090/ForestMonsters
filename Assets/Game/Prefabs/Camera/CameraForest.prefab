@@ -12,7 +12,7 @@ GameObject:
   - component: {fileID: 6035514425064811517}
   - component: {fileID: 576848024458555916}
   - component: {fileID: 1377500444266866886}
-  m_Layer: 0
+  m_Layer: 12
   m_Name: Cube
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -110,8 +110,8 @@ BoxCollider:
   m_ProvidesContacts: 0
   m_Enabled: 1
   serializedVersion: 3
-  m_Size: {x: 1, y: 1, z: 1}
-  m_Center: {x: 0, y: 0, z: 0}
+  m_Size: {x: 3.6990497, y: 1.0752108, z: 2.6941204}
+  m_Center: {x: -0.020910837, y: 0.03761194, z: 0.84708005}
 --- !u!1 &2533245765704126874
 GameObject:
   m_ObjectHideFlags: 0
@@ -124,7 +124,7 @@ GameObject:
   - component: {fileID: 3637808356321288147}
   - component: {fileID: 3455969434693555999}
   - component: {fileID: 1701496150021613762}
-  m_Layer: 0
+  m_Layer: 12
   m_Name: Base
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -237,7 +237,7 @@ GameObject:
   - component: {fileID: 6393212105825692571}
   - component: {fileID: 9121496661601094266}
   - component: {fileID: 6632296126278133062}
-  m_Layer: 0
+  m_Layer: 12
   m_Name: CameraVeiu
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -368,7 +368,7 @@ GameObject:
   - component: {fileID: 7839659336072236908}
   - component: {fileID: 2555813102684769150}
   m_Layer: 12
-  m_Name: Surveillance Camera
+  m_Name: CameraForest
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -493,7 +493,7 @@ GameObject:
   - component: {fileID: 6433313668370413374}
   - component: {fileID: 2580678235112197729}
   - component: {fileID: 6013655572875410428}
-  m_Layer: 0
+  m_Layer: 12
   m_Name: Camera
   m_TagString: Untagged
   m_Icon: {fileID: 0}

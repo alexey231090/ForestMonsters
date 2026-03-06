@@ -6,14 +6,12 @@ public class PlayerInteract : SignalBinder
     [Header("Description")]
     [TextArea(2, 5)] public string description = "Интеракция: Установка (ЛКМ), Призраки с автоотключением, Взаимодействие (E).";
 
-    [Header("Settings")]
-    public float interactDistance = 8f;     // Дистанция для E (кнопок)
-    public float buildDistance = 10f;       // Дистанция для СТРОИТЕЛЬСТВА ловушек
-    public float cameraBuildDistance = 15f; // Дистанция для СТРОИТЕЛЬСТВА камер
-    public bool cameraLookAtPlayer = true;  // Поворачивать ли камеру к игроку при установке
-    public float ghostTimeout = 5.0f;       // Время до исчезновения призрака (если не смотреть на землю)
-    
+    [Header("Settings Asset")]
+    public PlayerInteractSettings settings;
+
+    [Header("Layers")]
     public LayerMask interactLayer; // Слой предметов (ловушки, мониторы)
+    public LayerMask cameraLayer;   // Слой камер (ОТДЕЛЬНАЯ ДИСТАНЦИЯ)
     public LayerMask groundLayer;   // Слой для СТРОИТЕЛЬСТВА (земля/пол)
     public LayerMask treeLayer;     // Слой для установки камер (деревья)
 
@@ -34,16 +32,6 @@ public class PlayerInteract : SignalBinder
     
     private PlayerCarrier carrier;
 
-    [Header("Placement Offsets")]
-    public float trapEmbedDepth = 0f;
-    public float cameraEmbedDepth = 0f;
-    public float trapGhostOffset = 0f;
-    public float cameraGhostOffset = 0f;
-
-    [Header("VFX Offsets")]
-    public float trapDustOffset = 0.1f;
-    public float cameraDustOffset = 0.1f;
-
     [Header("Variables SO")]
     [SerializeField] IntVariable VAR_TrapsCount;
     [SerializeField] IntVariable VAR_CamerasCount;
@@ -54,8 +42,7 @@ public class PlayerInteract : SignalBinder
     [SerializeField, Bind] FloatVariable VAR_PickupProgress;
 
     [Header("Placement Hold Settings")]
-    public float placeHoldTimeRequired = 0.5f; // Время удержания для установки
-    [SerializeField] private float placeCooldownSeconds = 2.0f; // Задержка между установками
+    [SerializeField] private float placeCooldownSeconds_Unused; 
 
     // --- ВНУТРЕННИЕ ПЕРЕМЕННЫЕ ---
     private GameObject currentGhost;
@@ -78,7 +65,7 @@ public class PlayerInteract : SignalBinder
 
     private void OnVAR_SelectedSlotChanged()
     {
-        ghostTimer = ghostTimeout;
+        if (settings != null) ghostTimer = settings.ghostTimeout;
         DestroyGhost();
 
         if (VAR_IsBuildFuseActive != null) VAR_IsBuildFuseActive.Value = VAR_SelectedSlot.Value != -1;
@@ -139,7 +126,7 @@ public class PlayerInteract : SignalBinder
         }
 
         // 6. ВЗАИМОДЕЙСТВИЕ (E - только если не в режиме стройки)
-        if (selectedIndex == -1)
+        if (selectedIndex == -1 && settings != null)
         {
             HandleInteraction(origin);
         }
@@ -177,14 +164,14 @@ public class PlayerInteract : SignalBinder
 
         // 2. Ищем землю/дерево в зависимости от слота
         LayerMask targetLayer = (selectedIndex == 0) ? groundLayer : treeLayer;
-        float currentBuildDist = (selectedIndex == 0) ? buildDistance : cameraBuildDistance;
+        float currentBuildDist = (selectedIndex == 0) ? settings.buildDistance : settings.cameraBuildDistance;
         RaycastHit hit;
         bool isLooking = Physics.Raycast(origin.position, origin.forward, out hit, currentBuildDist, targetLayer);
 
         if (isLooking)
         {
             // --- МЫ СМОТРИМ НА ЗЕМЛЮ ---
-            ghostTimer = ghostTimeout; // Сбрасываем таймер на максимум (5 сек)
+            ghostTimer = settings.ghostTimeout; // Сбрасываем таймер на максимум (5 сек)
 
             // UI Logic через SO
             if (VAR_IsBuildFuseActive != null) VAR_IsBuildFuseActive.Value = true;
@@ -201,11 +188,11 @@ public class PlayerInteract : SignalBinder
             }
 
             Quaternion rotation = Quaternion.FromToRotation(Vector3.up, hit.normal);
-            float ghostHeightAdjust = (selectedIndex == 0) ? trapGhostOffset : cameraGhostOffset;
+            float ghostHeightAdjust = (selectedIndex == 0) ? settings.trapGhostOffset : settings.cameraGhostOffset;
 
             if (selectedIndex == 1) // Поворот камеры
             {
-                if (cameraLookAtPlayer)
+                if (settings.cameraLookAtPlayer)
                 {
                     Vector3 lookPos = origin.position - hit.point;
                     // lookPos.y = 0; // Раскомментируйте, если нужно вращение только по горизонтали
@@ -229,7 +216,7 @@ public class PlayerInteract : SignalBinder
             DestroyGhost(); // Прячем визуал
 
             // UI Logic: Отвели взгляд — фитиль укорачивается по таймеру
-            float p = Mathf.Clamp01(ghostTimer / ghostTimeout);
+            float p = settings.ghostTimeout > 0 ? Mathf.Clamp01(ghostTimer / settings.ghostTimeout) : 0;
             if (VAR_IsBuildFuseActive != null) VAR_IsBuildFuseActive.Value = true;
             if (VAR_BuildFuseProgress != null) VAR_BuildFuseProgress.Value = p;
 
@@ -275,7 +262,7 @@ public class PlayerInteract : SignalBinder
         RaycastHit hit;
         int selectedIndex = VAR_SelectedSlot != null ? VAR_SelectedSlot.Value : -1;
         LayerMask targetLayer = (selectedIndex == 0) ? groundLayer : treeLayer;
-        float currentBuildDist = (selectedIndex == 0) ? buildDistance : cameraBuildDistance;
+        float currentBuildDist = (selectedIndex == 0) ? settings.buildDistance : settings.cameraBuildDistance;
 
         if (Physics.Raycast(origin.position, origin.forward, out hit, currentBuildDist, targetLayer))
         {
@@ -291,7 +278,7 @@ public class PlayerInteract : SignalBinder
                     VAR_TrapsCount.ApplyChange(-1);
                     canPlace = true;
                     objectToSpawn = trapPrefab;
-                    currentRealDepth = trapEmbedDepth;
+                    currentRealDepth = settings.trapEmbedDepth;
                 }
             }
             else if (selectedIndex == 1)
@@ -301,7 +288,7 @@ public class PlayerInteract : SignalBinder
                     VAR_CamerasCount.ApplyChange(-1);
                     canPlace = true;
                     objectToSpawn = cameraItemPrefab;
-                    currentRealDepth = cameraEmbedDepth;
+                    currentRealDepth = settings.cameraEmbedDepth;
                 }
             }
 
@@ -310,7 +297,7 @@ public class PlayerInteract : SignalBinder
                 Quaternion rotation = Quaternion.FromToRotation(Vector3.up, hit.normal);
                 if (selectedIndex == 1)
                 {
-                    if (cameraLookAtPlayer)
+                    if (settings.cameraLookAtPlayer)
                     {
                         Vector3 lookPos = origin.position - hit.point;
                         // lookPos.y = 0; // Раскомментируйте, если нужно вращение только по горизонтали
@@ -329,13 +316,13 @@ public class PlayerInteract : SignalBinder
 
                 if (dustEffectPrefab != null)
                 {
-                    float dustOffset = (selectedIndex == 0) ? trapDustOffset : cameraDustOffset;
+                    float dustOffset = (selectedIndex == 0) ? settings.trapDustOffset : settings.cameraDustOffset;
                     Vector3 dustPos = hit.point + (hit.normal * dustOffset);
                     Instantiate(dustEffectPrefab, dustPos, Quaternion.LookRotation(hit.normal));
                 }
                 
                 // После установки таймер обновляем, чтобы можно было ставить дальше
-                ghostTimer = ghostTimeout;
+                ghostTimer = settings.ghostTimeout;
             }
         }
     }
@@ -347,7 +334,25 @@ public class PlayerInteract : SignalBinder
         RaycastHit hit;
         bool lookingAtPickupable = false;
 
-        if (Physics.Raycast(origin.position, origin.forward, out hit, interactDistance, interactLayer))
+        // 1. Сначала проверяем КАМЕРЫ (своя дистанция и слой)
+        if (Physics.Raycast(origin.position, origin.forward, out hit, settings.cameraInteractDistance, cameraLayer))
+        {
+            SecurityCameraSetup camera = hit.collider.GetComponentInParent<SecurityCameraSetup>();
+            if (camera == null) camera = hit.collider.GetComponentInChildren<SecurityCameraSetup>();
+
+            if (camera != null)
+            {
+                lookingAtPickupable = true;
+                if (Input.GetKey(KeyCode.E))
+                {
+                    carrier.ProcessHold(hit.collider.gameObject);
+                }
+                return;
+            }
+        }
+
+        // 2. Проверяем остальное (interactLayer и обычная дистанция)
+        if (Physics.Raycast(origin.position, origin.forward, out hit, settings.interactDistance, interactLayer))
         {
             // Ищем компоненты ловушек через интерфейс для модульности
             IInteractableTrap trap = hit.collider.GetComponentInParent<IInteractableTrap>();
@@ -361,25 +366,6 @@ public class PlayerInteract : SignalBinder
                     carrier.ProcessHold(hit.collider.gameObject);
                 }
                 return;
-            }
-
-            // Проверяем камеру (отдельно, т.к. это не ловушка)
-            SecurityCameraSetup camera = hit.collider.GetComponentInParent<SecurityCameraSetup>();
-            if (camera == null) camera = hit.collider.GetComponentInChildren<SecurityCameraSetup>();
-
-            if (camera != null)
-            {
-                lookingAtPickupable = true;
-                if (Input.GetKey(KeyCode.E))
-                {
-                    carrier.ProcessHold(hit.collider.gameObject);
-                }
-                return;
-            }
-            else
-            {
-                // Лог для дебага, если мы навели на что-то на слое Interact, но это не ловушка
-                // Debug.Log($"[Interaction] Hit {hit.collider.name}, but no Trap or Camera found.");
             }
 
             if (Input.GetKeyDown(KeyCode.E))
@@ -422,7 +408,7 @@ public class PlayerInteract : SignalBinder
 
         // Проверяем что мы смотрим на нужный слой (земля или дерево)
         LayerMask targetLayer = (selectedIndex == 0) ? groundLayer : treeLayer;
-        float currentBuildDist = (selectedIndex == 0) ? buildDistance : cameraBuildDistance;
+        float currentBuildDist = (selectedIndex == 0) ? settings.buildDistance : settings.cameraBuildDistance;
         RaycastHit hit;
         bool isLookingAtTarget = Physics.Raycast(origin.position, origin.forward, out hit, currentBuildDist, targetLayer);
 
@@ -432,15 +418,15 @@ public class PlayerInteract : SignalBinder
             placeHoldTimer += Time.deltaTime;
 
             // Обновляем бар прогресса
-            if (VAR_PickupProgress != null)
-                VAR_PickupProgress.Value = placeHoldTimer / placeHoldTimeRequired;
+            if (VAR_PickupProgress != null && settings.placeHoldTimeRequired > 0)
+                VAR_PickupProgress.Value = Mathf.Clamp01(placeHoldTimer / settings.placeHoldTimeRequired);
 
             // Если удержали достаточно - устанавливаем
-            if (placeHoldTimer >= placeHoldTimeRequired)
+            if (placeHoldTimer >= settings.placeHoldTimeRequired)
             {
                 TryPlaceItem(origin);
                 ResetPlaceHoldTimer();
-                placeCooldownTimer = placeCooldownSeconds;
+                placeCooldownTimer = settings.placeCooldownSeconds;
             }
         }
         else

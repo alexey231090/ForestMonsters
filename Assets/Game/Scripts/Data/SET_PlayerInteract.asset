@@ -1,0 +1,28 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: cf49788264c91614a96d2769596ef481, type: 3}
+  m_Name: SET_PlayerInteract
+  m_EditorClassIdentifier: Assembly-CSharp::PlayerInteractSettings
+  interactDistance: 8
+  cameraInteractDistance: 11
+  buildDistance: 10
+  cameraBuildDistance: 10
+  placeHoldTimeRequired: 0.5
+  placeCooldownSeconds: 2
+  ghostTimeout: 5
+  cameraLookAtPlayer: 1
+  trapEmbedDepth: 0
+  cameraEmbedDepth: 0
+  trapGhostOffset: 0
+  cameraGhostOffset: 0
+  trapDustOffset: 0.1
+  cameraDustOffset: 0.1
